@@ -1,0 +1,95 @@
+
+# Stage 1: Dependencies
+FROM node:20-slim AS deps
+WORKDIR /app
+
+# Install build dependencies for better-sqlite3
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    python3 \
+    make \
+    g++ \
+    gcc \
+    openssl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY package.json package-lock.json* ./
+# Configure npm for better network resilience
+RUN npm config set fetch-retries 5 \
+    && npm config set fetch-retry-factor 2 \
+    && npm config set fetch-retry-mintimeout 20000 \
+    && npm config set fetch-retry-maxtimeout 120000
+
+# Install dependencies (including devDependencies for build) with cache
+RUN --mount=type=cache,target=/root/.npm npm ci
+
+# Stage 2: Builder
+FROM node:20-slim AS builder
+WORKDIR /app
+
+# Install OpenSSL in builder stage for prisma generate
+RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+# Set dummy DATABASE_URL for prisma generate (validation only)
+ENV DATABASE_URL "file:./dev.db"
+
+# Generate Prisma Client
+RUN npx prisma generate --schema=./prisma/schema.prisma
+
+# Build Next.js application
+ENV NEXT_TELEMETRY_DISABLED 1
+RUN npm run build
+
+# Prune devDependencies to keep image small
+RUN npm prune --production
+
+# Stage 3: Runner
+FROM node:20-slim AS runner
+WORKDIR /app
+
+ENV NODE_ENV production
+ENV NEXT_TELEMETRY_DISABLED 1
+
+# Install OpenSSL, CA certificates and build tools for Prisma
+RUN apt-get update && apt-get install -y \
+    openssl \
+    ca-certificates \
+    build-essential \
+    python3 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create a non-root user
+RUN groupadd --system --gid 1001 nodejs
+RUN useradd --system --uid 1001 --gid nodejs nextjs
+
+# Set up data directory for SQLite persistence
+RUN mkdir -p /app/data
+RUN chown nextjs:nodejs /app/data
+
+# Copy necessary files from builder
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/node_modules ./node_modules
+
+# Copy the dev database with all tests
+COPY  --chown=nextjs:nodejs dev.db /app/data/labcare.db
+
+# Automatically reference the standalone build
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
+
+EXPOSE 3000
+
+ENV PORT 3000
+ENV HOSTNAME "0.0.0.0"
+
+# Migrate DB at startup and start server
+CMD ["sh", "-c", "npx prisma migrate deploy && node server.js"]
