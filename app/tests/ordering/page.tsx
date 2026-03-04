@@ -4,12 +4,12 @@ import { useState, useEffect } from 'react';
 import { 
   DndContext, 
   closestCenter,
-  closestCorners,
   KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
   DragEndEvent,
+  DragStartEvent,
   DragOverlay
 } from '@dnd-kit/core';
 import { createPortal } from 'react-dom';
@@ -95,14 +95,16 @@ function SortableItem({ id, children, active }: { id: string, children: (props: 
   } = useSortable({ id });
 
   const style = {
-    transform: CSS.Transform.toString(transform),
+    // Use Translate only (no scale) to prevent ghost misalignment
+    transform: CSS.Translate.toString(transform),
     transition,
+    opacity: isDragging ? 0 : 1,  // hide the placeholder item (DragOverlay replaces it)
     zIndex: isDragging ? 50 : 'auto',
     position: 'relative' as const,
   };
 
   return (
-    <div id={id} ref={setNodeRef} style={style} className={`${active ? 'opacity-50' : ''} ${isDragging ? 'shadow-2xl' : ''}`}>
+    <div id={id} ref={setNodeRef} style={style}>
       {children({ attributes, listeners })}
     </div>
   );
@@ -217,10 +219,10 @@ export default function OrderingPage() {
     return flattened;
   };
 
-  const handleDragStartCategory = (event: any) => {
-    setActiveCategoryId(event.active.id);
-    const node = document.getElementById(event.active.id);
-    if (node) setActiveDragWidth(node.offsetWidth);
+  const handleDragStartCategory = (event: DragStartEvent) => {
+    setActiveCategoryId(event.active.id as string);
+    const width = event.active.rect.current.translated?.width ?? null;
+    setActiveDragWidth(width);
   };
 
   const handleDragEndCategory = (event: DragEndEvent) => {
@@ -252,10 +254,10 @@ export default function OrderingPage() {
     }
   };
 
-  const handleDragStartTest = (event: any) => {
-    setActiveTestId(event.active.id);
-    const node = document.getElementById(event.active.id);
-    if (node) setActiveDragWidth(node.offsetWidth);
+  const handleDragStartTest = (event: DragStartEvent) => {
+    setActiveTestId(event.active.id as string);
+    const width = event.active.rect.current.translated?.width ?? null;
+    setActiveDragWidth(width);
   };
 
   const handleDragEndTest = (event: DragEndEvent) => {
@@ -520,7 +522,7 @@ export default function OrderingPage() {
   if (loading) return <div className="flex justify-center p-20"><Loader2 className="animate-spin text-blue-600" /></div>;
 
   return (
-    <div className="p-8 space-y-8 animate-fade-in pb-24">
+    <div className="p-8 space-y-8 opacity-0 animate-[fadeInPlain_0.4s_ease-out_forwards] pb-24">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button 
@@ -580,7 +582,7 @@ export default function OrderingPage() {
           <div className="bg-white rounded-b-2xl shadow-xl shadow-slate-200/50 p-2 min-h-[400px]">
                 <DndContext 
                   sensors={categorySensors}
-                  collisionDetection={closestCorners}
+                  collisionDetection={closestCenter}
                   onDragStart={handleDragStartCategory}
                   onDragEnd={handleDragEndCategory}
                 >
@@ -637,7 +639,7 @@ export default function OrderingPage() {
              {selectedCategory ? (
                 <DndContext 
                   sensors={testSensors}
-                  collisionDetection={closestCorners}
+                  collisionDetection={closestCenter}
                   onDragStart={handleDragStartTest}
                   onDragEnd={handleDragEndTest}
                 >

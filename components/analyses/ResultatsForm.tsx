@@ -6,16 +6,24 @@ import {
   Save, Printer, CheckCircle, 
   Activity, ArrowLeft, Beaker, 
   Droplets, Microscope, Sparkles, AlertCircle,
-  ChevronRight, History, Calculator, MessageSquare
+  ChevronRight, History, Calculator, MessageSquare, TicketCheck
 } from 'lucide-react';
 import { getTestReferenceValues, formatReferenceRange } from '@/lib/utils';
 import { useReactToPrint } from 'react-to-print';
 import { RapportImpression } from '@/components/print/RapportImpression';
+import { RecuImpression } from '@/components/print/RecuImpression';
 import { Analysis, Result } from '@/lib/types';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { NotificationToast } from '@/components/ui/notification-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 
 interface ResultatsFormProps {
@@ -40,6 +48,7 @@ const HGPO75_SORT_ORDER = ['T0', 'T1H', 'T2H'];
 export function ResultatsForm({ analysisId }: ResultatsFormProps) {
   const router = useRouter();
   const printRef = useRef<HTMLDivElement>(null);
+  const recuPrintRef = useRef<HTMLDivElement>(null);
   const inputsRef = useRef<Record<string, HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null>>({});
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [loading, setLoading] = useState(true);
@@ -52,6 +61,10 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
   const [activeTab, setActiveTab] = useState('all');
   const [history, setHistory] = useState<Record<string, Result | null>>({});
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isImporting, setIsImporting] = useState(false);
+  const [diatronPreview, setDiatronPreview] = useState<{ index: number; sampleId: string; date: string; time: string }[] | null>(null);
+  const [lastFileContent, setLastFileContent] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const toggleSelection = (id: string) => {
     setSelectedIds(prev => 
@@ -373,6 +386,75 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
     }
   });
 
+  const handlePrintRecu = useReactToPrint({
+    contentRef: recuPrintRef,
+    documentTitle: `Recu_${analysis?.orderNumber || ''}`,
+  });
+
+  const handleDiatronFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsImporting(true);
+    try {
+      const content = await file.text();
+      setLastFileContent(content);
+      const res = await fetch(`/api/analyses/${analysisId}/import/diatron`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content })
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Erreur lors de l\'import');
+      }
+
+      const data = await res.json();
+      
+      if (data.preview) {
+        setDiatronPreview(data.records);
+      } else {
+        showNotification('success', data.message || 'Importation réussie');
+        await loadAnalysis();
+      }
+    } catch (error: any) {
+      console.error(error);
+      showNotification('error', error.message);
+    } finally {
+      setIsImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleDiatronSelect = async (index: number) => {
+    if (!lastFileContent) return;
+    
+    setIsImporting(true);
+    setDiatronPreview(null);
+    try {
+      const res = await fetch(`/api/analyses/${analysisId}/import/diatron`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: lastFileContent, selectedIndex: index })
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Erreur lors de l\'import');
+      }
+
+      const data = await res.json();
+      showNotification('success', data.message || 'Importation réussie');
+      await loadAnalysis();
+    } catch (error: any) {
+      console.error(error);
+      showNotification('error', error.message);
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
   if (loading || !analysis) {
     return (
       <div className="space-y-8 animate-pulse">
@@ -394,6 +476,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
     return (refVals.min !== null || refVals.max !== null) && isAbnormal(val, test);
   }).length;
   const isValidated = analysis.status === 'completed';
+  const hasNFS = analysis.results.some(r => r.test && NFS_SORT_ORDER.includes(r.test.code));
 
     const sortResults = (results: Result[]) => {
       const sorted: (Result & { renderCategory?: string })[] = [];
@@ -520,6 +603,9 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                     <Printer size={20} className="mr-2" /> {selectedIds.length > 0 ? `Imprimer (${selectedIds.length})` : 'Imprimer Rapport'}
                  </button>
               )}
+              <button onClick={handlePrintRecu} className="btn-premium bg-white/10 hover:bg-white/20 text-white backdrop-blur-md">
+                <TicketCheck size={20} className="mr-2" /> Reçu Patient
+              </button>
 
           </div>
         </div>
@@ -562,10 +648,30 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
             
             <div className="flex bg-slate-100 p-1 rounded-xl gap-1">
                <button onClick={() => setActiveTab('all')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'all' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500'}`}>Tous ({totalCount})</button>
-                 <button onClick={() => setActiveTab('urgent')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'urgent' ? 'bg-rose-500 text-white shadow-md' : 'text-slate-500'}`}>Anomalies ({abnormalCount})</button>
-              </div>
+                  <button onClick={() => setActiveTab('urgent')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'urgent' ? 'bg-rose-500 text-white shadow-md' : 'text-slate-500'}`}>Anomalies ({abnormalCount})</button>
+               </div>
+               
+               {!isValidated && hasNFS && (
+                 <div className="flex items-center gap-2">
+                   <input 
+                     type="file" 
+                     ref={fileInputRef} 
+                     onChange={handleDiatronFileChange} 
+                     accept=".txt" 
+                     className="hidden" 
+                   />
+                   <button 
+                     onClick={() => fileInputRef.current?.click()}
+                     disabled={isImporting}
+                     className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-all font-bold text-xs"
+                   >
+                     <Microscope size={14} className={isImporting ? 'animate-pulse' : ''} />
+                     {isImporting ? 'Importation...' : 'Importer Diatron'}
+                   </button>
+                 </div>
+               )}
 
-              {isValidated && (
+               {isValidated && (
                 <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-xl border border-blue-100 cursor-pointer hover:bg-blue-100 transition-colors" onClick={toggleSelectAll}>
                   <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${selectedIds.length === totalCount ? 'bg-blue-600 border-blue-600' : 'bg-white border-blue-300'}`}>
                     {selectedIds.length === totalCount && <CheckCircle size={14} className="text-white" />}
@@ -836,6 +942,12 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
         </div>
       </div>
 
+      <div style={{ position: 'absolute', top: 0, left: 0, width: 0, height: 0, overflow: 'hidden' }}>
+        <div ref={recuPrintRef}>
+          <RecuImpression analysis={analysis} />
+        </div>
+      </div>
+
       {/* Confirmation Dialog */}
       <ConfirmDialog
         open={confirmDialog.open}
@@ -852,6 +964,73 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
       {notification && (
         <NotificationToast type={notification.type} message={notification.message} />
       )}
+      {/* Diatron Selection Dialog */}
+      <Dialog open={!!diatronPreview} onOpenChange={(open) => !open && setDiatronPreview(null)}>
+        <DialogContent className="sm:max-w-2xl bg-white/95 backdrop-blur-xl border-white/20 shadow-2xl p-0 overflow-hidden flex flex-col max-h-[85vh]">
+          <DialogHeader className="p-8 pb-4 border-b border-slate-100 bg-white/50">
+            <div className="flex items-center gap-4">
+               <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/30">
+                  <Microscope size={24} />
+               </div>
+               <div>
+                  <DialogTitle className="text-2xl font-black text-slate-900 tracking-tight">Sélectionner un Résultat</DialogTitle>
+                  <p className="text-slate-500 font-medium">Fichier importé : Diatron Abacus 380</p>
+               </div>
+            </div>
+          </DialogHeader>
+          
+          <div className="p-8 overflow-y-auto custom-scrollbar flex-1 bg-slate-50/50">
+            <div className="mb-6 flex items-center gap-3 p-4 bg-blue-50 text-blue-800 rounded-xl border border-blue-100">
+               <AlertCircle size={20} className="shrink-0" />
+               <p className="text-sm font-medium">Plusieurs analyses ont été détectées dans ce fichier. Choisissez celle qui correspond à votre patient.</p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3">
+              {diatronPreview?.map((record, i) => (
+                <button
+                  key={record.index}
+                  onClick={() => handleDiatronSelect(record.index)}
+                  className="group relative w-full flex items-center justify-between p-5 rounded-2xl border border-white bg-white shadow-sm hover:shadow-xl hover:shadow-blue-500/10 hover:border-blue-500/50 transition-all duration-300 text-left overflow-hidden"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-blue-500/0 to-blue-500/0 group-hover:from-blue-50 group-hover:via-white group-hover:to-white opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  
+                  <div className="relative flex items-center gap-6">
+                     <div className="flex flex-col items-center justify-center w-14 h-14 rounded-xl bg-slate-100 group-hover:bg-blue-600 transition-colors duration-300">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 group-hover:text-blue-200 mb-0.5">ID</span>
+                        <span className="text-lg font-black text-slate-700 group-hover:text-white">{record.sampleId || '?'}</span>
+                     </div>
+                     
+                     <div>
+                        <div className="font-bold text-slate-900 text-lg group-hover:text-blue-700 transition-colors">
+                           Analyse du {record.date}
+                        </div>
+                        <div className="text-sm font-medium text-slate-500 flex items-center gap-2 mt-1">
+                           <span className="flex items-center gap-1 bg-slate-100 px-2 py-0.5 rounded text-xs text-slate-600 group-hover:bg-blue-100 group-hover:text-blue-700 transition-colors">
+                              <History size={12} /> {record.time}
+                           </span>
+                           <span className="text-slate-300">•</span>
+                           <span>Index #{record.index + 1}</span>
+                        </div>
+                     </div>
+                  </div>
+
+                  <div className="relative w-10 h-10 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-500 group-hover:shadow-lg group-hover:shadow-blue-500/30 transition-all duration-300 transform group-hover:translate-x-1">
+                    <ChevronRight size={20} />
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+          <DialogFooter className="p-6 border-t border-slate-100 bg-white shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-10">
+            <button
+              onClick={() => setDiatronPreview(null)}
+              className="px-6 py-3 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 hover:text-slate-900 transition-all"
+            >
+              Annuler l'importation
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
