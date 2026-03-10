@@ -14,6 +14,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      network: host
     restart: always
     environment:
       - VIRTUAL_HOST=labcare.localhost,10.246.17.89

@@ -6,12 +6,11 @@ import {
   Save, Printer, CheckCircle, 
   Activity, ArrowLeft, Beaker, 
   Droplets, Microscope, Sparkles, AlertCircle,
-  ChevronRight, History, Calculator, MessageSquare, TicketCheck
+  ChevronRight, History, Calculator, MessageSquare
 } from 'lucide-react';
 import { getTestReferenceValues, formatReferenceRange } from '@/lib/utils';
 import { useReactToPrint } from 'react-to-print';
 import { RapportImpression } from '@/components/print/RapportImpression';
-import { RecuImpression } from '@/components/print/RecuImpression';
 import { Analysis, Result } from '@/lib/types';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -48,7 +47,6 @@ const HGPO75_SORT_ORDER = ['T0', 'T1H', 'T2H'];
 export function ResultatsForm({ analysisId }: ResultatsFormProps) {
   const router = useRouter();
   const printRef = useRef<HTMLDivElement>(null);
-  const recuPrintRef = useRef<HTMLDivElement>(null);
   const inputsRef = useRef<Record<string, HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null>>({});
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [loading, setLoading] = useState(true);
@@ -386,11 +384,6 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
     }
   });
 
-  const handlePrintRecu = useReactToPrint({
-    contentRef: recuPrintRef,
-    documentTitle: `Recu_${analysis?.orderNumber || ''}`,
-  });
-
   const handleDiatronFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -603,9 +596,6 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                     <Printer size={20} className="mr-2" /> {selectedIds.length > 0 ? `Imprimer (${selectedIds.length})` : 'Imprimer Rapport'}
                  </button>
               )}
-              <button onClick={handlePrintRecu} className="btn-premium bg-white/10 hover:bg-white/20 text-white backdrop-blur-md">
-                <TicketCheck size={20} className="mr-2" /> Reçu Patient
-              </button>
 
           </div>
         </div>
@@ -939,12 +929,6 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
             results={results} 
             selectedResultIds={selectedIds} 
           />
-        </div>
-      </div>
-
-      <div style={{ position: 'absolute', top: 0, left: 0, width: 0, height: 0, overflow: 'hidden' }}>
-        <div ref={recuPrintRef}>
-          <RecuImpression analysis={analysis} />
         </div>
       </div>
 

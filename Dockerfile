@@ -54,10 +54,11 @@ WORKDIR /app
 ENV NODE_ENV production
 ENV NEXT_TELEMETRY_DISABLED 1
 
-# Install OpenSSL, CA certificates and build tools for Prisma
+# Install OpenSSL, CA certificates, curl and build tools for Prisma
 RUN apt-get update && apt-get install -y \
     openssl \
     ca-certificates \
+    curl \
     build-essential \
     python3 \
     && rm -rf /var/lib/apt/lists/*
