@@ -57,26 +57,39 @@ export async function POST(
     }
 
     // Update results based on mapping
-    const updates = [];
-    for (const res of analysis.results) {
-      const defaultValue = selectedRecord.results[res.test?.code || ''];
-      if (defaultValue) {
-        updates.push(
-          prisma.result.update({
+    const resultUpdates = analysis.results
+      .map(res => {
+        const value = selectedRecord.results[res.test?.code || ''];
+        if (value) {
+          return prisma.result.update({
             where: { id: res.id },
-            data: { value: defaultValue }
-          })
-        );
-      }
+            data: { value }
+          });
+        }
+        return null;
+      })
+      .filter((update): update is any => update !== null);
+
+    // Combine with histogram data update if present
+    const finalUpdates: any[] = [...resultUpdates];
+    if (selectedRecord.histograms) {
+      finalUpdates.push(
+        prisma.analysis.update({
+          where: { id },
+          data: {
+            histogramData: JSON.stringify(selectedRecord.histograms)
+          }
+        })
+      );
     }
 
-    if (updates.length > 0) {
-      await prisma.$transaction(updates);
+    if (finalUpdates.length > 0) {
+      await prisma.$transaction(finalUpdates);
     }
 
     return NextResponse.json({ 
       success: true, 
-      message: `${updates.length} résultats importés`,
+      message: `${resultUpdates.length} résultats importés`,
       recordInfo: {
         sampleId: selectedRecord.sampleId,
         date: selectedRecord.date,
@@ -84,8 +97,11 @@ export async function POST(
       }
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error importing Diatron data:', error);
-    return NextResponse.json({ error: 'Erreur lors de l\'importation' }, { status: 500 });
+    return NextResponse.json({ 
+      error: 'Erreur lors de l\'importation',
+      details: error.message 
+    }, { status: 500 });
   }
 }

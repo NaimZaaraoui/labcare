@@ -5,6 +5,8 @@ import { format } from 'date-fns';
 import { fr, is } from 'date-fns/locale';
 import { LucideMicroscope } from 'lucide-react';
 import { getTestReferenceValues, formatReferenceRange } from '@/lib/utils';
+import { HistogramView } from '../analyses/HistogramView';
+import { getHematologyInterpretations } from '@/lib/interpretations';
 
 interface RapportImpressionProps {
   analysis: Analysis;
@@ -24,6 +26,20 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
       if (min !== null && val < min) return 'L';
       return null;
     };
+
+    const ElectronicStamp = () => (
+      <div className="relative w-48 h-28 border-[1px] border-dashed border-blue-800/80 rounded-2xl flex flex-col items-center justify-center p-2 bg-white/50 backdrop-blur-[1px] shadow-sm print:border-blue-900 print:bg-transparent overflow-hidden">
+        {/* Decorative "ink" texture/noise using multiple borders or shadows if needed, but keeping it crisp */}
+        <div className="flex flex-col items-center text-center gap-0.5">
+          <span className="text-[11px] font-black text-blue-900 uppercase tracking-tight leading-none print:text-blue-900">Hôpital Menzel Bouzaïene</span>
+          <span className="text-[16px] font-black text-blue-900 uppercase tracking-tighter leading-none my-0.5 print:text-blue-900">C.S.S.B Gallel</span>
+          <span className="text-[12px] font-bold text-blue-800/90 leading-none print:text-blue-900">Service du Laboratoire</span>
+        </div>
+        
+        {/* Subtle stamp "imperfections" to look authentic but clear */}
+        <div className="absolute inset-0 bg-blue-800/5 pointer-events-none rounded-xl" />
+      </div>
+    );
 
     const patientName = `${analysis.patientFirstName || ''} ${analysis.patientLastName || ''}`.trim() || 'PATIENT SANS NOM';
     const dateEdition = format(new Date(), 'dd MMMM yyyy', { locale: fr });
@@ -128,6 +144,7 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
       .sort((a, b) => a.localeCompare(b));
     
     allOrderedCategories.push(...remaining);
+
     const renderHeader = () => (
       <thead className="display-table-header-group">
         <tr>
@@ -141,7 +158,7 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
                           <h1 className="text-4xl font-black text-slate-900 tracking-[-0.05em] uppercase print:text-black leading-none">
                             CSSB <span className="text-blue-600 print:text-black">GALLEL</span>
                           </h1>
-                          <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-1.5 flex items-center gap-2">
+                          <div className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] mt-1.5 flex items-center gap-2">
                             <span className="w-8 h-[1px] bg-blue-600 print:bg-black"></span>
                             SERVICE DE LABORATOIRE
                           </div>
@@ -209,7 +226,7 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
                     <p className="text-xs text-slate-500 leading-relaxed max-w-md print:text-black">
                       Les résultats indiqués ci-dessus ont été obtenus par des méthodes validées et standardisées. 
                       Une interprétation clinique par votre médecin traitant est nécessaire.<br />
-                      <span className="text-[8px] font-black text-slate-300 uppercase print:text-black/40">↑ = Résultat élevé | ↓ = Résultat bas</span>
+                      <span className="text-[8px] font-black text-slate-300 uppercase print:text-black/40">↑ = Résultat élevé | ↓ = Résultat bas | Antér. = Dernier résultat validé dans notre laboratoire</span>
                     </p>
                     <div className="mt-6 flex gap-8">
                       <div className="flex flex-col">
@@ -230,10 +247,11 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] print:text-black">Signature & Cachet</span>
                     </div>
                     <div className="text-center relative min-h-[100px] flex flex-col justify-end items-center">
-                      <div className="absolute top-0 w-32 h-20 border-2 border-dashed border-slate-100 rounded-xl flex items-center justify-center opacity-50 print:border-black/10">
-                        <span className="text-[8px] font-black text-slate-200 uppercase tracking-[0.2em] rotate-[-15deg] print:text-black/10">Zone de cachet</span>
-                      </div>
-                      <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest print:text-black relative z-10">Biologiste Responsable</p>
+                      
+                        <div className="absolute top-0 w-32 h-20 border-2 border-dashed border-slate-100 rounded-xl flex items-center justify-center opacity-50 print:border-black/10">
+                          <span className="text-[8px] font-black text-slate-200 uppercase tracking-[0.2em] rotate-[-15deg] print:text-black/10">Zone de cachet</span>
+                        </div>
+                      <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest print:text-black relative z-10 font-black">Biologiste Responsable</p>
                     </div>
                   </div>
                 </div>
@@ -277,6 +295,7 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
                     <tr className="bg-slate-50/50 print:bg-black/5">
                       <th className="py-2 pl-4 text-left text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 print:text-black">Examen / Paramètre</th>
                       <th className="py-2 text-left text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 print:text-black">Résultat</th>
+                      <th className="py-2 text-center text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 print:text-black w-20">Antér.</th>
                       <th className="py-2 text-center text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 print:text-black">Unité</th>
                       <th className="py-2 pr-4 text-right text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 print:text-black">Valeurs de Référence</th>
                     </tr>
@@ -289,7 +308,7 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
                         return (
                           <React.Fragment key={categoryName}>
                                 <tr>
-                                  <td colSpan={4} className="py-2">
+                                  <td colSpan={5} className="py-2">
                                     <div className="flex items-center gap-4">
                                       <span className="text-xs font-black text-slate-400 uppercase tracking-[0.4em] print:text-black/60">
                                         {categoryName === 'NFS' ? 'Hématologie (NFS)' : categoryName}
@@ -307,7 +326,7 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
                               if (isGroup) {
                                 return (
                                   <tr key={res.id} className="break-inside-avoid">
-                                    <td colSpan={4} className="py-1.75 bg-slate-50/30 print:bg-black/5">
+                                  <td colSpan={5} className="py-1.75 bg-slate-50/30 print:bg-black/5">
                                       <div className="flex items-center gap-3 px-4">
                                         <span className="text-[12px] font-black text-blue-600 uppercase tracking-tight print:text-black">{test?.name}</span>
                                         <div className="h-px flex-1 bg-slate-200/50 print:bg-black/10"></div>
@@ -327,23 +346,29 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
                                       </div>
                                     </td>
                                     <td className={`${(isNFS || test?.parentId) ? "py-1" : "py-1.25"} text-start`}>
-                                      <div className="flex flex-col items-start gap-1">
+                                      <div className="flex flex-col items-start gap-0.5">
                                         <div className="flex items-center justify-start gap-2">
                                           <span className={`text-[14px] text-slate-900 ${flag ? 'font-bold' : 'font-semibold'} print:text-black`}>
                                             {val || '—'}
                                           </span>
                                           {flag && (
-                                                  <span className="text-[12px] font-black text-slate-900 px-1 py-0.5 min-w-3.5">
-                                                    {flag === 'H' ? '↑' : '↓'}
-                                                  </span>
-                                                )}
+                                                   <span className="text-[12px] font-black text-slate-900 px-1 py-0.5 min-w-3.5">
+                                                     {flag === 'H' ? '↑' : '↓'}
+                                                   </span>
+                                                 )}
                                         </div>
+                                        
                                         {res.notes && (
-                                          <span className="text-[9px] font-medium text-slate-500 italic leading-none print:text-black/60">
+                                          <span className="text-[9px] font-medium text-slate-500 italic leading-none mt-1 print:text-black/60">
                                             ({res.notes})
                                           </span>
                                         )}
                                       </div>
+                                    </td>
+                                    <td className={`${(isNFS || test?.parentId) ? "py-1" : "py-1.25"} text-center`}>
+                                        <span className="text-xs font-bold text-slate-400 print:text-black/40">
+                                            {analysis.previousResults?.[res.testId] || '—'}
+                                        </span>
                                     </td>
                                   <td className={`${(isNFS || test?.parentId) ? "py-1" : "py-1.25"} px-4 text-center text-xs font-bold text-slate-500 print:text-black`}>{res.unit || test?.unit || '—'}</td>
                                   <td className={`${(isNFS || test?.parentId) ? "py-1" : "py-1.25"} pr-4 text-right text-xs font-bold text-slate-400 print:text-black`}>
@@ -377,18 +402,19 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
         <div className="absolute top-0 right-0 w-1/3 h-1 bg-slate-900 print:bg-black"></div>
         <div className="absolute top-0 left-0 w-12 h-1 bg-blue-600 print:bg-black"></div>
 
-        {!isValidated && (
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-[35deg] text-slate-100 text-[140px] font-black pointer-events-none select-none z-0 opacity-10 tracking-tighter whitespace-nowrap">
-            BROUILLON
-          </div>
-        )}
+        {/* Watermark moved inside loop for multi-page support */}
 
         {/* Each Category on Separate Page */}
         {allOrderedCategories.map((cat, index) => {
           const isNFS = cat === 'NFS';
           return (
-          <div key={cat} className={index > 0 ? "print:break-before-page" : ""}>
-          <table className="w-full border-collapse border-none mb-4">
+          <div key={cat} className={`${index > 0 ? "print:break-before-page" : ""} relative`}>
+            {!isValidated && (
+               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-[35deg] text-slate-500/[0.07] text-[120px] font-black pointer-events-none select-none z-0 tracking-tighter whitespace-nowrap px-12 py-4 rounded-[60px] print:text-black/[0.05] print:border-black/[0.05]">
+                 BROUILLON
+               </div>
+            )}
+          <table className="w-full border-collapse border-none mb-4 relative z-10">
             {renderHeader()}
             {renderTableContent([cat], cat === 'NFS')}
             {isNFS ? renderFooter(false) : renderFooter(true)}
@@ -396,6 +422,89 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
           </div>
         )
         })}
+
+        {analysis.histogramData && (
+          <div className="print:break-before-page mt-8 relative">
+            {!isValidated && (
+               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-[35deg] text-slate-500/[0.07] text-[120px] font-black pointer-events-none select-none z-90 tracking-tighter whitespace-nowrap px-12 py-4 rounded-[60px] print:text-black/[0.05] print:border-black/[0.05]">
+                 BROUILLON
+               </div>
+            )}
+            <table className="w-full border-collapse border-none mb-4 relative z-10">
+                {renderHeader()}
+                <tbody>
+                    <tr>
+                        <td>
+                            <div className="mb-8">
+                                
+                                  <div className="py-1.75 bg-slate-50/30 print:bg-black/5">
+                                      <div className="flex items-center gap-3 px-4">
+                                        <span className="text-[12px] font-black text-blue-600 uppercase tracking-tight print:text-black">MORPHOLOGIE & HISTOGRAMMES</span>
+                                        <div className="h-px flex-1 bg-slate-200/50 print:bg-black/10"></div>
+                                      </div>
+                                    </div>
+                               
+
+                                <div className="mt-8 grid grid-cols-3 gap-8">
+                                {(() => {
+                                    try {
+                                        if (!analysis.histogramData) return null;
+                                        const data = JSON.parse(analysis.histogramData);
+                                        const pltData = {
+                                          bins: data.rbc.bins.slice(0, 60),
+                                          markers: data.rbc.markers.filter((m: number) => m < 60)
+                                        };
+
+                                        return (
+                                          <>
+                                              <div className="space-y-4">
+                                                  <HistogramView data={data.wbc} title="DISTRIBUTION LEUCOCYTAIRE (WBC)" color="#000000" width={220} height={140} xAxisMax={400} />
+                                              </div>
+                                              <div className="space-y-4">
+                                                  <HistogramView data={data.rbc} title="DISTRIBUTION ÉRYTHROCYTAIRE (RBC)" color="#000000" width={220} height={140} xAxisMax={250} />
+                                              </div>
+                                              <div className="space-y-4">
+                                                  <HistogramView data={pltData} title="DISTRIBUTION PLAQUETTAIRE (PLT)" color="#000000" width={220} height={140} xAxisMax={60} />
+                                              </div>
+                                          </>
+                                        );
+                                    } catch (e) {
+                                        return null;
+                                    }
+                                })()}
+                                </div>
+                            </div>
+
+                            {(() => {
+                                try {
+                                    const interpretations = getHematologyInterpretations(analysis, results);
+                                    if (interpretations.length === 0) return (
+                                        
+                                            <p className="my-8 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Conclusion Morphologique : Absence d'anomalies majeures détectables</p>
+                                        
+                                    );
+                                    
+                                    return (
+                                        <div className='p-6'>
+                                            <h4 className="text-[11px] font-black text-blue-600 uppercase tracking-[0.2em] mb-4 print:text-black">Interprétations Diagnostiques</h4>
+                                            <div className="flex flex-wrap gap-2">
+                                                {interpretations.map(flag => (
+                                                    <span key={flag} className="px-3 py-1.5 bg-white border border-blue-100 rounded-lg text-[10px] font-medium text-blue-700 print:border-black/80 print:text-black">
+                                                        {flag}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                            </div>
+                                    );
+                                } catch (e) { return null; }
+                            })()}
+                        </td>
+                    </tr>
+                </tbody>
+                {renderFooter(true)}
+            </table>
+          </div>
+        )}
 
         <style jsx global>{`
           .break-inside-avoid {
@@ -433,6 +542,8 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
               .break-inside-avoid {
                 break-inside: avoid;
               }
+          }
+
           }
         `}</style>
       </div>

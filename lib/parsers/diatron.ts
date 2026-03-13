@@ -8,6 +8,22 @@ export interface DiatronResult {
   time: string;
   patientId?: string;
   results: Record<string, string>;
+  histograms?: {
+    wbc: {
+      bins: number[];
+      markers: number[];
+      flags?: string;
+    };
+    rbc: {
+      bins: number[];
+      markers: number[];
+      flags?: string;
+    };
+    plt: {
+      flags?: string;
+    };
+    warning?: string; // General instrument warning
+  };
 }
 
 export function parseDiatronFile(content: string): DiatronResult[] {
@@ -17,6 +33,15 @@ export function parseDiatronFile(content: string): DiatronResult[] {
 
   // Parse headers and find the last non-empty header to handle trailing tabs
   const allHeaders = lines[0].split('\t').map(h => h.trim());
+  
+  // Find fixed positions for histograms if present
+  const wbcHistIdx = allHeaders.indexOf('WBC Histogram');
+  const wbcM1Idx = allHeaders.indexOf('WBC Marker 1');
+  const wbcM2Idx = allHeaders.indexOf('WBC Marker 2');
+  const wbcM3Idx = allHeaders.indexOf('WBC Marker 3');
+  const rbcHistIdx = allHeaders.indexOf('RBC Histogram');
+  const rbcM1Idx = allHeaders.indexOf('RBC Marker 1');
+
   let lastNonEmptyIndex = allHeaders.length - 1;
   while (lastNonEmptyIndex >= 0 && !allHeaders[lastNonEmptyIndex]) {
     lastNonEmptyIndex--;
@@ -51,7 +76,7 @@ export function parseDiatronFile(content: string): DiatronResult[] {
       'IDRc': ['IDRc', 'IDR'],
       'IDR%': ['IDR%'],
       'PLT': ['PLT'],
-      'LYM': ['LYM', 'LYM%'], // Handle both absolute and % if needed, logic below separates them
+      'LYM': ['LYM', 'LYM%'], 
       'MID': ['MID', 'MID%'],
       'GRA': ['GRA', 'GRA%'], 
       'LYM%': ['LYM%', 'LYM_P'],
@@ -74,12 +99,40 @@ export function parseDiatronFile(content: string): DiatronResult[] {
       }
     });
 
+    // Extract Histograms and Flags
+    let histograms: any = undefined;
+    if (wbcHistIdx !== -1 && rbcHistIdx !== -1) {
+      histograms = {
+        wbc: {
+          bins: values.slice(wbcHistIdx, wbcM1Idx || wbcHistIdx + 256).map(Number),
+          markers: [
+            wbcM1Idx !== -1 ? Number(values[wbcM1Idx]) : 0,
+            wbcM2Idx !== -1 ? Number(values[wbcM2Idx]) : 0,
+            wbcM3Idx !== -1 ? Number(values[wbcM3Idx]) : 0,
+          ],
+          flags: record['GB flags'] || ''
+        },
+        rbc: {
+          bins: values.slice(rbcHistIdx, rbcM1Idx || rbcHistIdx + 256).map(Number),
+          markers: [
+            rbcM1Idx !== -1 ? Number(values[rbcM1Idx]) : 0
+          ],
+          flags: record['GR flags'] || ''
+        },
+        plt: {
+          flags: record['PLT flags'] || ''
+        },
+        warning: record['Avertissement'] || ''
+      };
+    }
+
     results.push({
       sampleId: record['ID Échantillon'] || '',
       date: record['Date'] || '',
       time: record['Heure'] || '',
       patientId: record['ID du patient'] || '',
-      results: mappedResults
+      results: mappedResults,
+      histograms
     });
   }
 

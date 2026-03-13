@@ -38,6 +38,9 @@ export interface Analysis {
   drawingDate: Date | null;
   status: string | null;
   printedAt: Date | null;
+  histogramData: string | null;
+  previousResults?: Record<string, string>;
+  patient?: Patient;
   results: Result[];
   createdAt: Date;
   updatedAt: Date;
@@ -77,3 +80,16 @@ export type CreateAnalysisInput = {
   patientGender?: string;
   testsIds: string[];
 };
+
+export interface Patient {
+  id: string;
+  firstName: string;
+  lastName: string;
+  birthDate: Date | null;
+  gender: string;
+  phoneNumber: string | null;
+  email: string | null;
+  address: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}

@@ -61,6 +61,15 @@ RUN apt-get update && apt-get install -y \
     curl \
     build-essential \
     python3 \
+    chromium \
+    fonts-liberation \
+    libasound2 \
+    libatk-bridge2.0-0 \
+    libatk1.0-0 \
+    libgbm1 \
+    libnss3 \
+    libpangocairo-1.0-0 \
+    libxss1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Create a non-root user

@@ -6,8 +6,10 @@ import {
   Save, Printer, CheckCircle, 
   Activity, ArrowLeft, Beaker, 
   Droplets, Microscope, Sparkles, AlertCircle,
-  ChevronRight, History, Calculator, MessageSquare
+  ChevronRight, History, Calculator, MessageSquare, Mail
 } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import { getTestReferenceValues, formatReferenceRange } from '@/lib/utils';
 import { useReactToPrint } from 'react-to-print';
 import { RapportImpression } from '@/components/print/RapportImpression';
@@ -23,6 +25,8 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { HistogramView } from './HistogramView';
+import { getHematologyInterpretations } from '@/lib/interpretations';
 
 
 interface ResultatsFormProps {
@@ -62,6 +66,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
   const [isImporting, setIsImporting] = useState(false);
   const [diatronPreview, setDiatronPreview] = useState<{ index: number; sampleId: string; date: string; time: string }[] | null>(null);
   const [lastFileContent, setLastFileContent] = useState<string | null>(null);
+  const [sendingEmail, setSendingEmail] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const toggleSelection = (id: string) => {
@@ -384,6 +389,37 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
     }
   });
 
+  const handleSendEmail = async () => {
+    if (!analysis) return;
+    
+    const recipientEmail = analysis.patient?.email;
+    if (!recipientEmail) {
+      showNotification('error', 'Le patient n\'a pas d\'adresse email renseignée.');
+      return;
+    }
+
+    setSendingEmail(true);
+    try {
+      const response = await fetch(`/api/analyses/${analysisId}/email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recipientEmail })
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Erreur lors de l\'envoi');
+      }
+
+      showNotification('success', `Email envoyé avec succès à ${recipientEmail}`);
+    } catch (error: any) {
+      console.error('Email error:', error);
+      showNotification('error', error.message || 'Échec de l\'envoi de l\'email');
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
   const handleDiatronFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -587,15 +623,28 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                 <button onClick={handleSave} disabled={saving} className="btn-premium bg-white/10 hover:bg-white/20 text-white backdrop-blur-md">
                    <Save size={20} className="mr-2" /> {saving ? '...' : 'Sauvegarder'}
                 </button>
+                <button onClick={handlePrint} className="btn-premium bg-slate-800 hover:bg-slate-700 text-white">
+                   <Printer size={20} className="mr-2" /> {selectedIds.length > 0 ? `Brouillon (${selectedIds.length})` : 'Imprimer Brouillon'}
+                </button>
                 <button onClick={handleValidate} disabled={validating} className="btn-primary-premium">
                    <CheckCircle size={20} className="mr-2" /> Valider l&apos;Analyse
                 </button>
                </>
-              ) : (
-                 <button onClick={handlePrint} className="btn-primary-premium bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200/50">
-                    <Printer size={20} className="mr-2" /> {selectedIds.length > 0 ? `Imprimer (${selectedIds.length})` : 'Imprimer Rapport'}
-                 </button>
-              )}
+               ) : (
+                  <div className="flex gap-4">
+                    <button 
+                      onClick={handleSendEmail} 
+                      disabled={sendingEmail} 
+                      className="btn-premium bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200"
+                    >
+                      <Mail size={20} className={`mr-2 ${sendingEmail ? 'animate-pulse' : ''}`} /> 
+                      {sendingEmail ? 'Envoi...' : 'Envoyer par Email'}
+                    </button>
+                    <button onClick={handlePrint} className="btn-primary-premium bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200/50">
+                        <Printer size={20} className="mr-2" /> {selectedIds.length > 0 ? `Imprimer (${selectedIds.length})` : 'Imprimer Rapport'}
+                    </button>
+                  </div>
+               )}
 
           </div>
         </div>
@@ -639,6 +688,9 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
             <div className="flex bg-slate-100 p-1 rounded-xl gap-1">
                <button onClick={() => setActiveTab('all')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'all' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500'}`}>Tous ({totalCount})</button>
                   <button onClick={() => setActiveTab('urgent')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'urgent' ? 'bg-rose-500 text-white shadow-md' : 'text-slate-500'}`}>Anomalies ({abnormalCount})</button>
+                  {analysis.histogramData && (
+                     <button onClick={() => setActiveTab('charts')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'charts' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500'}`}>Graphiques</button>
+                   )}
                </div>
                
                {!isValidated && hasNFS && (
@@ -672,8 +724,56 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
            </div>
 
 
-            <div className="space-y-4">
-                {(() => {
+             <div className="space-y-4">
+                 {activeTab === 'charts' && analysis.histogramData && (() => {
+                    try {
+                      const data = JSON.parse(analysis.histogramData);
+                      // PLT is the first part of RBC histogram (roughly bins 0-60 for a 0-60fL zoom)
+                      const pltData = {
+                        bins: data.rbc.bins.slice(0, 60),
+                        markers: data.rbc.markers.filter((m: number) => m < 60)
+                      };
+
+                      return (
+                        <div className="flex flex-col gap-6 py-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <HistogramView data={data.wbc} title="WBC (LEUCOCYTES)" color="#3b82f6" width={350} height={200} xAxisMax={400} />
+                            <HistogramView data={data.rbc} title="RBC (ÉRYTHROCYTES)" color="#ef4444" width={350} height={200} xAxisMax={250} />
+                            <HistogramView data={pltData} title="PLT (PLAQUETTES)" color="#10b981" width={350} height={200} xAxisMax={60} />
+                          </div>
+
+                          {(() => {
+                            const interpretations = getHematologyInterpretations(analysis, results);
+                            if (interpretations.length === 0) return (
+                              <div className="p-6 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center gap-3">
+                                <Sparkles className="text-blue-500" size={18} />
+                                <p className="text-sm font-bold text-slate-500">Aucune anomalie morphologique majeure détectée</p>
+                              </div>
+                            );
+
+                            return (
+                              <div className="p-6 bg-blue-50/50 border-2 border-blue-100 rounded-2xl">
+                                <h4 className="text-xs font-black text-blue-600 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                  <Activity size={14} /> Interprétations Diagnostiques
+                                </h4>
+                                <div className="flex flex-wrap gap-2">
+                                  {interpretations.map(flag => (
+                                    <span key={flag} className="px-4 py-2 bg-white border border-blue-200 rounded-xl text-xs font-black text-blue-700 shadow-sm">
+                                      {flag}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      );
+                    } catch (e) {
+                      return <div className="p-8 text-center text-slate-400">Erreur lors de l'affichage des graphiques.</div>;
+                    }
+                 })()}
+
+                 {activeTab !== 'charts' && (() => {
                   let currentCategory = '';
                   return sortedResults.map((result, index) => {
                      const test = result.test;
@@ -922,7 +1022,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
          )}
       </div>
 
-      <div style={{ position: 'absolute', top: 0, left: 0, width: 0, height: 0, overflow: 'hidden' }}>
+      <div style={{ position: 'absolute', left: '-9999px', width: '210mm', height: 'auto' }}>
         <div ref={printRef}>
           <RapportImpression 
             analysis={analysis} 

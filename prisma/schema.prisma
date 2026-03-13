@@ -101,6 +101,9 @@ model Analysis {
   // Print tracking
   printedAt   DateTime?
 
+  // Diatron Histogram Data (JSON string)
+  histogramData String?
+
   results     Result[]
 
   createdAt   DateTime @default(now())

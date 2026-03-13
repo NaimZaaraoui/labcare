@@ -36,21 +36,49 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
-    // Générer numéro d'ordre unique
+    // Générer numéro d'ordre unique (Robuste: cherche le max existant du jour)
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
-    const count = await prisma.analysis.count({
+    
+    const lastAnalysisToday = await prisma.analysis.findFirst({
       where: {
-        creationDate: {
-          gte: new Date(today.setHours(0, 0, 0, 0))
+        orderNumber: {
+          startsWith: dateStr
         }
+      },
+      orderBy: {
+        orderNumber: 'desc'
       }
     });
-    const orderNumber = `${dateStr}-${(count + 1).toString().padStart(4, '0')}`;
+
+    let nextOrderNum = 1;
+    if (lastAnalysisToday) {
+      const lastPart = lastAnalysisToday.orderNumber.split('-')[1];
+      nextOrderNum = parseInt(lastPart, 10) + 1;
+    }
+    const orderNumber = `${dateStr}-${nextOrderNum.toString().padStart(4, '0')}`;
     
-    // Générer numéro de quittance (receiptNumber)
-    const totalCount = await prisma.analysis.count();
-    const receiptNumber = `Q${(totalCount + 1).toString().padStart(6, '0')}`;
+    // Générer numéro de quittance (receiptNumber) - Robuste: cherche le max numérique
+    const lastAnalysisAny = await prisma.analysis.findFirst({
+      where: {
+        receiptNumber: {
+          startsWith: 'Q'
+        }
+      },
+      orderBy: {
+        receiptNumber: 'desc'
+      }
+    });
+
+    let nextReceiptNum = 1;
+    if (lastAnalysisAny && lastAnalysisAny.receiptNumber) {
+      const match = lastAnalysisAny.receiptNumber.match(/Q(\d+)/);
+      if (match) {
+        nextReceiptNum = parseInt(match[1], 10) + 1;
+      }
+    }
+    const receiptNumber = `Q${nextReceiptNum.toString().padStart(6, '0')}`;
     
     // Fonction récursive pour récupérer tous les tests enfants (panels)
     const resolveTests = async (ids: string[]): Promise<string[]> => {
@@ -96,13 +124,23 @@ export async function POST(request: NextRequest) {
     let finalPatientId = selectedPatientId;
 
     // If no existing patient selected, create one
+    const parseDate = (d: string | null | undefined) => {
+      if (!d) return null;
+      const date = new Date(d);
+      return isNaN(date.getTime()) ? null : date;
+    };
+
+    const birthDateObj = parseDate(patientBirthDate);
+    const calculatedAge = birthDateObj ? new Date().getFullYear() - birthDateObj.getFullYear() : null;
+
+    // Use a transaction or separate catch for patient creation
     if (!finalPatientId) {
        const newPatient = await prisma.patient.create({
          data: {
            firstName: patientFirstName,
            lastName: patientLastName,
            gender: patientGender,
-           birthDate: patientBirthDate ? new Date(patientBirthDate) : null,
+           birthDate: birthDateObj,
            phoneNumber: patientPhone,
            email: patientEmail,
            address: patientAddress
@@ -123,7 +161,7 @@ export async function POST(request: NextRequest) {
         // Keep legacy snapshot fields (calculate age if possible or leave null)
         patientFirstName,
         patientLastName,
-        patientAge: patientBirthDate ? new Date().getFullYear() - new Date(patientBirthDate).getFullYear() : null,
+        patientAge: calculatedAge,
         patientGender,
         receiptNumber: receiptNumberFromBody || receiptNumber, // Use provided receiptNumber or generated default
         status: 'pending', // Default status
@@ -143,10 +181,10 @@ export async function POST(request: NextRequest) {
     });
     
     return NextResponse.json(analysis, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erreur POST /api/analyses:', error);
     return NextResponse.json(
-      { error: 'Erreur lors de la création de l\'analyse' },
+      { error: 'Erreur lors de la création de l\'analyse', details: error.message },
       { status: 500 }
     );
   }

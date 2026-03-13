@@ -1,30 +1,20 @@
-version: '3'
 services:
-  nginx-proxy:
-    image: nginxproxy/nginx-proxy
-    ports:
-      - "0.0.0.0:80:80"
-    volumes:
-      - /var/run/docker.sock:/tmp/docker.sock:ro
-    networks:
-      - proxy-net
-
   labcare:
     container_name: labcare-app
     build:
       context: .
       dockerfile: Dockerfile
-      network: host
     restart: always
+    ports:
+      - "0.0.0.0:80:3000"
     environment:
-      - VIRTUAL_HOST=labcare.localhost,10.246.17.89
       - DATABASE_URL=file:/app/data/labcare.db
       - NODE_ENV=production
       - NEXT_TELEMETRY_DISABLED=1
     volumes:
       - labcare-db:/app/data
     networks:
-      - proxy-net
+      - app-net
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000"]
       interval: 30s
@@ -47,7 +37,8 @@ services:
 
 volumes:
   labcare-db:
-    driver: local   
+    driver: local
+
 networks:
-  proxy-net:
+  app-net:
     driver: bridge

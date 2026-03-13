@@ -13,6 +13,7 @@ export async function GET(
     const analysis = await (prisma.analysis as any).findUnique({
       where: { id },
       include: {
+        patient: true,
         results: {
           include: {
             test: {
@@ -33,8 +34,41 @@ export async function GET(
         { status: 404 }
       );
     }
+
+    // --- Fetch Previous Results ---
+    // Look for the most recent COMPLETED analysis for the same patient, BEFORE the current one
+    const previousAnalysis = await prisma.analysis.findFirst({
+      where: {
+        patientId: analysis.patientId,
+        status: 'completed',
+        creationDate: {
+          lt: analysis.creationDate
+        }
+      },
+      orderBy: {
+        creationDate: 'desc'
+      },
+      include: {
+        results: true
+      }
+    });
+
+    const previousResultsMap: Record<string, string> = {};
+    if (previousAnalysis) {
+      previousAnalysis.results.forEach((r: any) => {
+        if (r.value) {
+          previousResultsMap[r.testId] = r.value;
+        }
+      });
+    }
+
+    // Attach previous results to the response
+    const analysisWithHistory = {
+      ...analysis,
+      previousResults: previousResultsMap
+    };
     
-    return NextResponse.json(analysis);
+    return NextResponse.json(analysisWithHistory);
   } catch (error) {
     console.error('Erreur GET /api/analyses/[id]:', error);
     return NextResponse.json(
