@@ -92,6 +92,10 @@ model Analysis {
   // Daily Identifier (Resetting daily 1, 2, 3...)
   dailyId     String?
 
+  // Clinical Context
+  provenance            String?  // consultation, externe, urgence, interne, etc.
+  medecinPrescripteur   String?  // Nom du médecin prescripteur
+
   // Analysis Details
   creationDate DateTime @default(now())
   drawingDate  DateTime?
@@ -162,4 +166,18 @@ model Patient {
   updatedAt   DateTime @updatedAt
   
   @@map("patients")
+}
+
+// User Model
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("TECHNICIEN")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
 }

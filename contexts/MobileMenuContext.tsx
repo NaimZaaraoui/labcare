@@ -1,58 +1,32 @@
 'use client';
+import { createContext, useContext, useState, ReactNode, useCallback } from 'react';
 
-import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
-
-interface MobileMenuContextType {
+interface MenuCtx {
   isOpen: boolean;
+  isCollapsed: boolean;
   toggle: () => void;
   close: () => void;
   open: () => void;
+  toggleCollapse: () => void;
 }
 
-const MobileMenuContext = createContext<MobileMenuContextType>({
-  isOpen: false,
-  toggle: () => {},
-  close: () => {},
-  open: () => {},
+const Ctx = createContext<MenuCtx>({
+  isOpen: false, isCollapsed: false,
+  toggle: () => {}, close: () => {}, open: () => {}, toggleCollapse: () => {},
 });
 
 export function MobileMenuProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
-
-  useEffect(() => {
-    console.log('Menu state changed to:', isOpen);
-  }, [isOpen]);
-
-  const toggle = useCallback(() => {
-    setIsOpen(prev => {
-      console.log('Toggle: changing from', prev, 'to', !prev);
-      return !prev;
-    });
-  }, []);
-
-  const close = useCallback(() => {
-    setIsOpen(false);
-  }, []);
-
-  const open = useCallback(() => {
-    setIsOpen(true);
-  }, []);
-
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const toggle = useCallback(() => setIsOpen(p => !p), []);
+  const close = useCallback(() => setIsOpen(false), []);
+  const open = useCallback(() => setIsOpen(true), []);
+  const toggleCollapse = useCallback(() => setIsCollapsed(p => !p), []);
   return (
-    <MobileMenuContext.Provider 
-      value={{
-        isOpen,
-        toggle,
-        close,
-        open,
-      }}
-    >
+    <Ctx.Provider value={{ isOpen, isCollapsed, toggle, close, open, toggleCollapse }}>
       {children}
-    </MobileMenuContext.Provider>
+    </Ctx.Provider>
   );
 }
 
-export function useMobileMenu() {
-  const context = useContext(MobileMenuContext);
-  return context;
-}
+export function useMobileMenu() { return useContext(Ctx); }

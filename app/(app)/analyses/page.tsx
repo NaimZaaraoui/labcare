@@ -3,11 +3,11 @@ import { AnalysesList } from '@/components/analyses/AnalysesList';
 
 export default function AnalysesPage() {
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+    <div className="flex flex-col gap-6 pb-10">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Analyses</h1>
-          <p className="text-slate-500">Gestion des demandes d'analyses</p>
+          <h1 className="text-2xl font-bold text-slate-800">Registre des Analyses</h1>
+          <p className="text-sm text-slate-500 mt-1">Base de données complète et suivi des dossiers patients</p>
         </div>
       </div>
 

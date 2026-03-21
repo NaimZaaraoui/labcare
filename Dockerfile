@@ -38,7 +38,7 @@ COPY . .
 ENV DATABASE_URL "file:./dev.db"
 
 # Generate Prisma Client
-RUN npx prisma generate --schema=./prisma/schema.prisma
+RUN npx prisma generate
 
 # Build Next.js application
 ENV NEXT_TELEMETRY_DISABLED 1
@@ -99,6 +99,7 @@ USER nextjs
 EXPOSE 3000
 
 ENV PORT 3000
+ENV CHROMIUM_PATH /usr/bin/chromium
 ENV HOSTNAME "0.0.0.0"
 
 # Migrate DB at startup and start server

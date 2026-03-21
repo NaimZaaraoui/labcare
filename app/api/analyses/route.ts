@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
     const analyses = await prisma.analysis.findMany({
       where,
       include: {
+        patient: true,
         results: {
           include: {
             test: true
@@ -111,11 +112,13 @@ export async function POST(request: NextRequest) {
       selectedPatientId,
       patientFirstName, 
       patientLastName, 
-      patientBirthDate, // YYYY-MM-DD
+      patientBirthDate,
       patientGender, 
       patientPhone,
       patientEmail,
       patientAddress,
+      provenance,
+      medecinPrescripteur,
       receiptNumber: receiptNumberFromBody,
       testsIds 
     } = body;
@@ -154,17 +157,16 @@ export async function POST(request: NextRequest) {
     const analysis = await prisma.analysis.create({
       data: {
         orderNumber,
-        dailyId: patientId, // The "Paillasse" number
-        
-        patientId: finalPatientId, // Link to Patient Entity
-        
-        // Keep legacy snapshot fields (calculate age if possible or leave null)
+        dailyId: patientId,
+        patientId: finalPatientId,
         patientFirstName,
         patientLastName,
         patientAge: calculatedAge,
         patientGender,
-        receiptNumber: receiptNumberFromBody || receiptNumber, // Use provided receiptNumber or generated default
-        status: 'pending', // Default status
+        receiptNumber: receiptNumberFromBody || receiptNumber,
+        provenance: provenance || null,
+        medecinPrescripteur: medecinPrescripteur || null,
+        status: 'pending',
         results: {
           create: resolvedTestsIds.map((testId: string) => ({
             testId,

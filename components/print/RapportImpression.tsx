@@ -370,7 +370,7 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
                                             {analysis.previousResults?.[res.testId] || '—'}
                                         </span>
                                     </td>
-                                  <td className={`${(isNFS || test?.parentId) ? "py-1" : "py-1.25"} px-4 text-center text-xs font-bold text-slate-500 print:text-black`}>{res.unit || test?.unit || '—'}</td>
+                                  <td className={`${(isNFS || test?.parentId) ? "py-1" : "py-1.25"} px-4 text-center text-xs font-bold text-slate-500 print:text-black`}><span dangerouslySetInnerHTML={{ __html: res.unit || test?.unit || '—' }} /></td>
                                   <td className={`${(isNFS || test?.parentId) ? "py-1" : "py-1.25"} pr-4 text-right text-xs font-bold text-slate-400 print:text-black`}>
                                     {test && (() => {
                                       const refVals = getTestReferenceValues(test, analysis.patientGender);

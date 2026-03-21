@@ -4,6 +4,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    user: root
     restart: always
     ports:
       - "0.0.0.0:80:3000"
@@ -11,6 +12,11 @@ services:
       - DATABASE_URL=file:/app/data/labcare.db
       - NODE_ENV=production
       - NEXT_TELEMETRY_DISABLED=1
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - CHROMIUM_PATH=/usr/bin/chromium
+      - AUTH_SECRET=${AUTH_SECRET}
+      - NEXTAUTH_URL=http://localhost
+      - AUTH_TRUST_HOST=${AUTH_TRUST_HOST}
     volumes:
       - labcare-db:/app/data
     networks:

@@ -3,42 +3,45 @@ import puppeteer from 'puppeteer-core';
 export async function generateAnalysisPDF(analysisId: string) {
   let browser;
   try {
-    // Determine the Chromium path. 
-    // In Docker (Debian/Ubuntu), it's usually at /usr/bin/chromium
     const executablePath = process.env.CHROMIUM_PATH || '/usr/bin/chromium';
     
-    browser = await puppeteer.launch({
-      executablePath,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-gpu',
-      ],
-      headless: true,
-    });
+  browser = await puppeteer.launch({
+  executablePath,
+  args: [
+    '--no-sandbox',
+    '--disable-setuid-sandbox',
+    '--disable-dev-shm-usage',
+    '--disable-gpu',
+    '--no-zygote',
+    '--single-process',
+    '--disable-extensions',
+    '--disable-crash-reporter',
+    '--crash-dumps-dir=/tmp',
+  ],
+  headless: 'shell',
+});
 
     const page = await browser.newPage();
     
-    // Visit the export page
-    // We use localhost since the PDF generation happens inside the same Docker container
     const port = process.env.PORT || 3000;
     const url = `http://localhost:${port}/analyses/${analysisId}/export`;
     
     console.log(`Puppeteer visiting: ${url}`);
     
     await page.goto(url, {
-      waitUntil: 'networkidle2', // Wait for network requests to finish
-    });
+  waitUntil: 'networkidle0',  // ← change from networkidle2 to networkidle0
+  timeout: 30000,
+});
 
-    // Wait for our manual "render-complete" signal if needed, 
-    // but networkidle2 is usually enough for simple React apps.
-    await page.waitForSelector('#render-complete', { timeout: 10000 });
+// Wait for render-complete signal
+await page.waitForSelector('#render-complete', { timeout: 15000 });
 
-    // Generate PDF
+// Add extra wait for fonts and dynamic content to fully render
+await new Promise(resolve => setTimeout(resolve, 2000)); // ← add this
+
     const pdfBuffer = await page.pdf({
       format: 'A4',
-      printBackground: true, // Crucial for Tailwind colors/bg
+      printBackground: true,
       margin: {
         top: '10mm',
         right: '10mm',

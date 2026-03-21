@@ -2,43 +2,37 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Save, User, Plus, Beaker, ChevronRight, ChevronLeft, Check, Search, Sparkles, Activity, BadgeCheck, X, Receipt } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Save, User, Plus, Beaker, Check, Search, Activity, X, CalendarIcon, FileDigit } from 'lucide-react';
 import { Test } from '@/lib/types';
-
 import { NotificationToast } from '@/components/ui/notification-toast';
 
 export function AnalyseForm() {
   const router = useRouter();
-  const [tests, setTests] = useState<Test[]>([]);
-  const [bilans, setBilans] = useState<any[]>([]); // Using any for now or define interface
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [step, setStep] = useState(1);
-  const [searchTest, setSearchTest] = useState('');
-  
   const searchParams = useSearchParams();
   const urlPatientId = searchParams.get('patientId');
 
-  const [dailyId, setDailyId] = useState(''); 
-  const [receiptNumber, setReceiptNumber] = useState(''); // Analyis-specific field, not patient
+  const [tests, setTests] = useState<Test[]>([]);
+  const [bilans, setBilans] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [searchTest, setSearchTest] = useState('');
   
-    const [patient, setPatient] = useState({
-      // patientId: '', // Daily ID and UUID are separated
-      patientFirstName: '',
-      patientLastName: '',
-      patientBirthDate: '',
-      patientGender: 'M',
-      patientPhone: '',
-      patientEmail: '',
-      patientAddress: ''
-      // receiptNumber removed from here
-    });
+  const [dailyId, setDailyId] = useState(''); 
+  const [receiptNumber, setReceiptNumber] = useState('');
+  const [provenance, setProvenance] = useState('');
+  const [medecinPrescripteur, setMedecinPrescripteur] = useState('');
+  
+  const [patient, setPatient] = useState({
+    patientFirstName: '',
+    patientLastName: '',
+    patientBirthDate: '',
+    patientGender: 'M',
+    patientPhone: '',
+    patientEmail: '',
+    patientAddress: ''
+  });
   
   const [selectedTests, setSelectedTests] = useState<string[]>([]);
-
   const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null);
 
   const showNotification = (type: 'success' | 'error', message: string) => {
@@ -52,7 +46,6 @@ export function AnalyseForm() {
   const [isSearching, setIsSearching] = useState(false);
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   
-  // Debounced search effect
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       if (searchTerm.length > 2) {
@@ -61,7 +54,6 @@ export function AnalyseForm() {
         setSearchResults([]);
       }
     }, 500);
-
     return () => clearTimeout(delayDebounceFn);
   }, [searchTerm]);
 
@@ -90,7 +82,6 @@ export function AnalyseForm() {
         patientPhone: p.phoneNumber || '',
         patientEmail: p.email || '',
         patientAddress: p.address || '',
-        // patientId is NOT set here, as it refers to Daily ID in the UI context previously, which was wrong.
     });
     setSelectedPatientId(p.id);
     setSearchTerm('');
@@ -99,7 +90,6 @@ export function AnalyseForm() {
 
   const clearSelection = () => {
       setPatient({
-        ...patient,
         patientFirstName: '',
         patientLastName: '',
         patientBirthDate: '',
@@ -107,7 +97,6 @@ export function AnalyseForm() {
         patientPhone: '',
         patientEmail: '',
         patientAddress: '',
-        // patientId: '' 
       });
       setSelectedPatientId(null);
   };
@@ -124,9 +113,7 @@ export function AnalyseForm() {
         const res = await fetch(`/api/patients/${id}/history`);
         if (res.ok) {
             const data = await res.json();
-            // Pre-fill form
-             setPatient(prev => ({
-                ...prev,
+             setPatient({
                 patientFirstName: data.firstName,
                 patientLastName: data.lastName,
                 patientGender: data.gender,
@@ -134,15 +121,13 @@ export function AnalyseForm() {
                 patientPhone: data.phoneNumber || '',
                 patientEmail: data.email || '',
                 patientAddress: data.address || '',
-            }));
+            });
             setSelectedPatientId(data.id);
         }
     } catch(e) {
-        console.error("Error loading patient from URL", e);
+        console.error("Error loading patient", e);
     }
   };
-
-  // Removed incorrectly placed closing braces
 
   const loadData = async () => {
     try {
@@ -150,13 +135,10 @@ export function AnalyseForm() {
         fetch('/api/tests'),
         fetch('/api/bilans')
       ]);
-      const testsData = await resTests.json();
-      const bilansData = await resBilans.json();
-      setTests(testsData);
-      setBilans(bilansData);
+      setTests(await resTests.json());
+      setBilans(await resBilans.json());
     } catch (error) {
-      console.error('Erreur:', error);
-      showNotification('error', 'Erreur lors du chargement des données');
+      showNotification('error', 'Erreur chargement des données');
     } finally {
       setLoading(false);
     }
@@ -168,9 +150,7 @@ export function AnalyseForm() {
 
     setSelectedTests(prev => {
       const isSelecting = !prev.includes(testId);
-      // Logic for groups (legacy)
       const childrenIds = (test as any).children?.map((c: any) => c.id) || [];
-      
       if (isSelecting) {
         return Array.from(new Set([...prev, testId, ...childrenIds]));
       } else {
@@ -185,10 +165,8 @@ export function AnalyseForm() {
 
     setSelectedTests(prev => {
       if (allSelected) {
-        // Deselect all
         return prev.filter(id => !bilanTestIds.includes(id));
       } else {
-        // Select all
         return Array.from(new Set([...prev, ...bilanTestIds]));
       }
     });
@@ -209,441 +187,377 @@ export function AnalyseForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (step === 1) {
-      if (!dailyId) { // Check dailyId instead of valid patientId since we might not have a patient selected (new patient)
-         // Actually, wait, dailyId is required asterisk field.
-         // Let's just check dailyId here?
-      }
-      setStep(2);
+    if (!dailyId) {
+      showNotification('error', 'Le numéro de paillasse est requis');
       return;
     }
-    
     if (selectedTests.length === 0) {
       showNotification('error', 'Sélectionnez au moins un test');
       return;
     }
+    if (!patient.patientFirstName || !patient.patientLastName) {
+      showNotification('error', 'Le nom et prénom du patient sont requis');
+      return;
+    }
 
     setSubmitting(true);
-
     try {
-      if (!dailyId) {
-        showNotification('error', 'Le numéro de paillasse est requis');
-        setSubmitting(false);
-        return;
-      }
-
       const response = await fetch('/api/analyses', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          patientId: dailyId, // Send dailyId as the 'patientId' field expected by API for paillasse number
-          selectedPatientId, // Pass the internal ID if retrieved from search
-          patientFirstName: patient.patientFirstName,
-          patientLastName: patient.patientLastName,
-          patientGender: patient.patientGender,
-          patientBirthDate: patient.patientBirthDate,
-          patientPhone: patient.patientPhone,
-          patientEmail: patient.patientEmail,
-          patientAddress: patient.patientAddress,
-          receiptNumber: receiptNumber,
+          patientId: dailyId,
+          selectedPatientId,
+          ...patient,
+          receiptNumber,
+          provenance,
+          medecinPrescripteur,
           testsIds: selectedTests
         })
       });
 
       if (!response.ok) throw new Error();
-
       const analysis = await response.json();
       router.push(`/analyses/${analysis.id}`);
     } catch (error) {
       showNotification('error', 'Erreur lors de la création');
-    } finally {
       setSubmitting(false);
     }
   };
 
   if (loading) {
     return (
-      <div className="space-y-8 animate-pulse p-4">
-        <div className="h-20 bg-slate-100 rounded-3xl" />
-        <div className="h-96 bg-slate-100 rounded-3xl" />
+      <div className="flex h-[600px] items-center justify-center">
+         <div className="w-10 h-10 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-10 animate-fade-in max-w-4xl mx-auto pb-20">
-      {/* Header Info */}
-      <div className="text-center space-y-2 px-4">
-         <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">Nouvelle <span className="text-blue-600">Analyse</span></h1>
-         <p className="text-sm md:text-base text-slate-500 font-medium">Enregistrement d&apos;un nouveau dossier patient</p>
-      </div>
-
-      {/* Modern Stepper */}
-      <div className="relative flex justify-center items-center gap-8 md:gap-12 py-4">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-0.5 bg-slate-100 hidden md:block" />
-        
-        <div className="relative z-10 flex flex-col items-center gap-3">
-          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 ${
-            step >= 1 ? 'bg-blue-600 text-white shadow-xl shadow-blue-200' : 'bg-white text-slate-400 border border-slate-200'
-          }`}>
-            {step > 1 ? <BadgeCheck size={28} /> : <User size={28} />}
-          </div>
-          <span className={`text-xs font-black uppercase tracking-widest ${step >= 1 ? 'text-blue-600' : 'text-slate-400'}`}>Patient</span>
-        </div>
-
-        <div className="relative z-10 flex flex-col items-center gap-3">
-          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 ${
-            step >= 2 ? 'bg-blue-600 text-white shadow-xl shadow-blue-200' : 'bg-white text-slate-400 border border-slate-200'
-          }`}>
-            <Beaker size={28} />
-          </div>
-          <span className={`text-xs font-black uppercase tracking-widest ${step >= 2 ? 'text-blue-600' : 'text-slate-400'}`}>Tests</span>
-        </div>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-8">
-        {step === 1 && (
-          <div className="bento-card-glass p-6 md:p-10 border-none shadow-premium animate-fade-in">
-            <div className="flex items-center gap-4 mb-10">
-              <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
-                <Activity size={24} />
-              </div>
-              <div>
-                <h2 className="text-2xl font-black text-slate-900 tracking-tight">Identité du Patient</h2>
-                <p className="text-sm font-medium text-slate-500 italic">Veuillez remplir les informations obligatoires (*)</p>
-              </div>
+    <div className="flex flex-col gap-6 animate-fade-in relative pb-24 lg:pb-0 max-w-4xl mx-auto w-full">
+      
+      {/* LEFT COLUMN: Patient & Order Info (High Density) */}
+      <div className="w-full flex flex-col gap-6">
+         <div className="bento-panel flex flex-col gap-5 p-8 lg:p-10">
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+               <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                  <FileDigit size={16} />
+               </div>
+               <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest">Dossier / Paillasse</h2>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+               <div className="space-y-1.5 col-span-2 sm:col-span-1">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">N° Paillasse *</label>
+                  <input
+                     value={dailyId}
+                     onChange={(e) => setDailyId(e.target.value)}
+                     placeholder="Ex: 54"
+                     className="w-full bg-slate-50 border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 px-4 h-12 rounded-xl text-lg font-black text-blue-600 transition-all text-center placeholder:text-slate-300 outline-none"
+                     required
+                     autoFocus
+                  />
+               </div>
+               <div className="space-y-1.5 col-span-2 sm:col-span-1">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Quittance</label>
+                  <input
+                     value={receiptNumber}
+                     onChange={(e) => setReceiptNumber(e.target.value)}
+                     placeholder="Optionnel"
+                     className="input-premium h-12 text-center"
+                  />
+               </div>
             </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                 {/* DAILY ID & SEARCH & QUITTANCE */}
-                 <div className="md:col-span-2 space-y-6 bg-blue-50/50 p-6 rounded-3xl border border-blue-100">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                            <Label className="text-xs font-black uppercase tracking-widest text-slate-400">Numéro de Paillasse (Daily ID) *</Label>
-                            <input
-                                value={dailyId}
-                                onChange={(e) => setDailyId(e.target.value)}
-                                placeholder="Ex: 1, 2, 3..."
-                                className="input-premium h-16 text-2xl font-black text-center text-blue-600 tracking-wider"
-                                required
-                                autoFocus
-                            />
-                            <p className="text-[10px] text-center text-slate-400 font-medium">Numéro inscrit sur la tube</p>
-                        </div>
-                        <div className="space-y-2">
-                            <Label className="text-xs font-black uppercase tracking-widest text-slate-400">Quittance (N° reçu)</Label>
-                            <input
-                                value={receiptNumber}
-                                onChange={(e) => setReceiptNumber(e.target.value)}
-                                placeholder="Ex: 12345"
-                                className="input-premium h-16 text-xl font-bold text-center"
-                            />
-                            <p className="text-[10px] text-center text-slate-400 font-medium">Reçu de paiement (Optionnel: Ancien/Nouveau)</p>
-                        </div>
-                    </div>
-
-                    <div className="relative z-50">
-                        <Label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">Rechercher un Patient (Historique)</Label>
-                        <div className="relative">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-                            <input 
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                placeholder="Nom du patient..."
-                                className="input-premium pl-12 h-14 w-full"
-                                disabled={!!selectedPatientId}
-                            />
-                            {selectedPatientId && (
-                                <button 
-                                    onClick={clearSelection}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 p-1 bg-slate-200 rounded-full hover:bg-slate-300 transition-colors"
-                                >
-                                    <X size={14} />
-                                </button>
-                            )}
-                        </div>
-
-                        {/* Search Results Dropdown */}
-                        {searchResults.length > 0 && !selectedPatientId && (
-                            <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-100 max-h-60 overflow-y-auto z-50 p-2">
-                                {searchResults.map(p => (
-                                    <button
-                                        key={p.id}
-                                        type="button"
-                                        onClick={() => selectPatient(p)}
-                                        className="w-full text-left p-3 hover:bg-blue-50 rounded-xl transition-colors flex items-center justify-between group"
-                                    >
-                                        <div>
-                                            <span className="font-bold text-slate-700 block">{p.lastName} {p.firstName}</span>
-                                            <div className="flex items-center gap-2 text-xs text-slate-400">
-                                              <span>{p.birthDate ? new Date(p.birthDate).toLocaleDateString() : 'Date inconnue'}</span>
-                                              {p.phoneNumber && <span>• {p.phoneNumber}</span>}
-                                              {p.address && <span className="truncate max-w-[150px]">• {p.address}</span>}
-                                            </div>
-                                        </div>
-                                        <ChevronRight size={16} className="text-slate-300 group-hover:text-blue-500" />
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                 </div>
-
-                 {!selectedPatientId && (
-                    <div className="md:col-span-2 border-t border-slate-100 pt-4">
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Ou Nouveau Patient</p>
-                    </div>
-                 )}
-
-                <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-widest text-slate-400">Prénom</Label>
+            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-50">
+               <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Provenance</label>
+                  <select
+                     value={provenance}
+                     onChange={(e) => setProvenance(e.target.value)}
+                     className="input-premium h-10 text-xs"
+                  >
+                     <option value="">-- Non spécifié --</option>
+                     <option value="consultation">Consultation</option>
+                     <option value="externe">Externe</option>
+                     <option value="interne">Interne</option>
+                     <option value="urgence">Urgence</option>
+                     <option value="medecin_traitant">Médecin traitant</option>
+                     <option value="maternite">Maternité</option>
+                     <option value="chirurgie">Chirurgie</option>
+                  </select>
+               </div>
+               <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Médecin Prescripteur</label>
                   <input
-                    value={patient.patientFirstName}
-                    onChange={(e) => setPatient({...patient, patientFirstName: e.target.value})}
-                    placeholder="Jean"
-                    className={`input-premium h-14 font-bold ${selectedPatientId ? 'bg-slate-50 text-slate-500' : ''}`}
-                    readOnly={!!selectedPatientId}
+                     value={medecinPrescripteur}
+                     onChange={(e) => setMedecinPrescripteur(e.target.value)}
+                     placeholder="Dr. Nom Prénom"
+                     className="input-premium h-10 text-xs"
                   />
-                </div>
+               </div>
+            </div>
+         </div>
 
-                <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-widest text-slate-400">Nom</Label>
+         <div className="bento-panel flex flex-col gap-5 flex-1 p-8 lg:p-10">
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+               <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                  <User size={16} />
+               </div>
+               <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest">Patient</h2>
+            </div>
+
+            {/* Smart Search */}
+            <div className="relative z-50">
+              <div className="realtive flex items-center gap-2 w-full sm:max-w-xs group bg-slate-50 border border-slate-200 focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 transition-all input-premium">
+            
+                  <Search className="w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                   <input
-                    value={patient.patientLastName}
-                    onChange={(e) => setPatient({...patient, patientLastName: e.target.value})}
-                    placeholder="DUPONT"
-                    className={`input-premium h-14 font-bold ${selectedPatientId ? 'bg-slate-50 text-slate-500' : ''}`}
-                    readOnly={!!selectedPatientId}
+                     placeholder="Chercher un patient existant ..."
+                     value={searchTerm}
+                     onChange={(e) => setSearchTerm(e.target.value)}
+                     className="w-full bg-slate-50 h-10 pr-4 text-sm outline-none font-medium"
+                     disabled={!!selectedPatientId}
                   />
-                </div>
-
-                <div className="space-y-2">
-                   <Label className="text-xs font-black uppercase tracking-widest text-slate-400">Date de Naissance</Label>
-                   <input
-                     type="date"
-                     value={patient.patientBirthDate}
-                     onChange={(e) => setPatient({...patient, patientBirthDate: e.target.value})}
-                     className={`input-premium h-14 ${selectedPatientId ? 'bg-slate-50 text-slate-500' : ''}`}
-                     readOnly={!!selectedPatientId}
-                   />
-                </div>
-              
-              <div className="space-y-2">
-                 <Label className="text-xs font-black uppercase tracking-widest text-slate-400">Sexe</Label>
-                 <div className="flex gap-4">
-                   <button
-                     type="button"
-                     disabled={!!selectedPatientId}
-                     onClick={() => setPatient({...patient, patientGender: 'M'})}
-                     className={`flex-1 h-14 rounded-2xl font-black transition-all border-2 ${
-                       patient.patientGender === 'M'
-                         ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-200'
-                         : 'bg-white border-slate-100 text-slate-400 hover:border-blue-200'
-                     } ${selectedPatientId ? 'opacity-50 cursor-not-allowed' : ''}`}
-                   >Homme</button>
-                   <button
-                     type="button"
-                     disabled={!!selectedPatientId}
-                     onClick={() => setPatient({...patient, patientGender: 'F'})}
-                     className={`flex-1 h-14 rounded-2xl font-black transition-all border-2 ${
-                       patient.patientGender === 'F'
-                         ? 'bg-rose-500 border-rose-500 text-white shadow-lg shadow-rose-200'
-                         : 'bg-white border-slate-100 text-slate-400 hover:border-rose-200'
-                     } ${selectedPatientId ? 'opacity-50 cursor-not-allowed' : ''}`}
-                   >Femme</button>
-                 </div>
+                  {selectedPatientId && (
+                     <button 
+                         onClick={clearSelection}
+                         className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-slate-100 rounded-md hover:bg-slate-200 text-slate-500 transition-colors"
+                         title="Effacer la sélection"
+                     >
+                         <X size={14} />
+                     </button>
+                  )}
                </div>
 
-               {/* Optional Contact Fields for New Patient */}
-               {!selectedPatientId && (
-                 <>
-                    <div className="space-y-2">
-                      <Label className="text-xs font-black uppercase tracking-widest text-slate-400">Téléphone</Label>
-                      <input
-                        value={patient.patientPhone}
-                        onChange={(e) => setPatient({...patient, patientPhone: e.target.value})}
-                        placeholder="06..."
-                        className="input-premium h-14"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs font-black uppercase tracking-widest text-slate-400">Email</Label>
-                      <input
-                        type="email"
-                        value={patient.patientEmail}
-                        onChange={(e) => setPatient({...patient, patientEmail: e.target.value})}
-                        placeholder="email@example.com"
-                        className="input-premium h-14"
-                      />
-                    </div>
-                    <div className="md:col-span-2 space-y-2">
-                      <Label className="text-xs font-black uppercase tracking-widest text-slate-400">Adresse</Label>
-                      <input
-                        value={patient.patientAddress}
-                        onChange={(e) => setPatient({...patient, patientAddress: e.target.value})}
-                        placeholder="Adresse complète"
-                        className="input-premium h-14"
-                      />
-                    </div>
-                 </>
+               {/* Dropdown */}
+               {searchResults.length > 0 && !selectedPatientId && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] border border-slate-100 max-h-60 overflow-y-auto z-50 p-1.5">
+                     {searchResults.map(p => (
+                         <button
+                             key={p.id}
+                             type="button"
+                             onClick={() => selectPatient(p)}
+                             className="w-full text-left p-2 hover:bg-slate-50 rounded-lg transition-colors flex items-center justify-between group"
+                         >
+                             <div>
+                                 <span className="font-bold text-sm text-slate-700 block">{p.lastName} {p.firstName}</span>
+                                 <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-medium mt-0.5">
+                                   <span>{p.birthDate ? new Date(p.birthDate).toLocaleDateString() : 'Age inconnu'}</span>
+                                   {p.phoneNumber && <span>• {p.phoneNumber}</span>}
+                                 </div>
+                             </div>
+                             <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-500">
+                                <Plus size={14} />
+                             </div>
+                         </button>
+                     ))}
+                  </div>
                )}
-               
-
             </div>
-          </div>
-        )}
 
-        {step === 2 && (
-            <div className="bento-card-glass p-10 border-none shadow-premium animate-fade-in">
-              <div className="flex items-center justify-between mb-10">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
-                    <Beaker size={24} />
+            {/* Form Fields */}
+            <div className={`space-y-4 transition-all duration-300 ${selectedPatientId ? 'opacity-80' : ''}`}>
+               <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nom *</label>
+                     <input
+                        value={patient.patientLastName}
+                        onChange={(e) => setPatient({...patient, patientLastName: e.target.value.toUpperCase()})}
+                        className={`input-premium h-10 font-bold ${selectedPatientId ? 'bg-slate-100/50' : ''}`}
+                        readOnly={!!selectedPatientId}
+                     />
                   </div>
-                  <div>
-                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">Tests Biologiques</h2>
-                    <p className="text-sm font-medium text-slate-500">Sélectionnez les examens à réaliser</p>
+                  <div className="space-y-1.5">
+                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Prénom *</label>
+                     <input
+                        value={patient.patientFirstName}
+                        onChange={(e) => setPatient({...patient, patientFirstName: e.target.value})}
+                        className={`input-premium h-10 font-bold ${selectedPatientId ? 'bg-slate-100/50' : ''}`}
+                        readOnly={!!selectedPatientId}
+                     />
                   </div>
-                </div>
-                <span className="glass-badge badge-blue">{selectedTests.length} Selectionné{selectedTests.length > 1 ? 's' : ''}</span>
-              </div>
+               </div>
 
-              {/* Raccourcis Bilans */}
-              <div className="mb-8 p-6 bg-slate-50 rounded-[var(--radius-3xl)] border border-slate-100">
-                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                  <Sparkles size={14} className="text-blue-500" /> Raccourcis Rapides
-                </h3>
-                <div className="flex flex-wrap gap-3">
-                   {bilans.map(bilan => {
-                      const bilanTestIds = bilan.tests.map((t: any) => t.id);
-                      const isSelected = bilanTestIds.length > 0 && bilanTestIds.every((id: string) => selectedTests.includes(id));
-                      // Partial selection check could be added for UI nuance
-                      
-                      return (
+               <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sexe *</label>
+                     <div className="flex gap-2">
                         <button
-                          key={bilan.id}
-                          type="button"
-                          onClick={() => toggleBilan(bilan)}
-                          className={`px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all border-2 flex items-center gap-2 ${
-                            isSelected
-                              ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-200'
-                              : 'bg-white border-slate-200 text-slate-600 hover:border-blue-400'
-                          }`}
+                           type="button"
+                           disabled={!!selectedPatientId}
+                           onClick={() => setPatient({...patient, patientGender: 'M'})}
+                           className={`flex-1 h-10 rounded-xl text-xs font-bold transition-all border ${
+                              patient.patientGender === 'M'
+                                 ? 'bg-blue-50 border-blue-200 text-blue-700'
+                                 : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
+                           } ${selectedPatientId ? 'opacity-70 cursor-not-allowed' : ''}`}
+                        >M</button>
+                        <button
+                           type="button"
+                           disabled={!!selectedPatientId}
+                           onClick={() => setPatient({...patient, patientGender: 'F'})}
+                           className={`flex-1 h-10 rounded-xl text-xs font-bold transition-all border ${
+                              patient.patientGender === 'F'
+                                 ? 'bg-rose-50 border-rose-200 text-rose-700'
+                                 : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
+                           } ${selectedPatientId ? 'opacity-70 cursor-not-allowed' : ''}`}
+                        >F</button>
+                     </div>
+                  </div>
+                  <div className="space-y-1.5">
+                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Date  Naissance</label>
+                     <input
+                        type="date"
+                        value={patient.patientBirthDate}
+                        onChange={(e) => setPatient({...patient, patientBirthDate: e.target.value})}
+                        className={`input-premium h-10 text-xs ${selectedPatientId ? 'bg-slate-100/50' : ''}`}
+                        readOnly={!!selectedPatientId}
+                     />
+                  </div>
+               </div>
+
+               {!selectedPatientId && (
+                  <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-50">
+                     <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Téléphone</label>
+                        <input
+                           value={patient.patientPhone}
+                           onChange={(e) => setPatient({...patient, patientPhone: e.target.value})}
+                           className="input-premium h-10 text-xs"
+                        />
+                     </div>
+                     <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Email</label>
+                        <input
+                           type="email"
+                           value={patient.patientEmail}
+                           onChange={(e) => setPatient({...patient, patientEmail: e.target.value})}
+                           className="input-premium h-10 text-xs"
+                        />
+                     </div>
+                  </div>
+               )}
+            </div>
+         </div>
+      </div>
+
+      {/* RIGHT COLUMN: Tests & Bilans (High Density Grid) */}
+      <div className="w-full flex flex-col gap-6">
+         <div className="bento-panel flex flex-col h-full p-8 lg:p-10">
+            
+            <div className="flex flex-col gap-4 justify-between items-start mb-6 mr-4">
+               <div className="flex items-center gap-2 w-full sm:max-w-xs group bg-slate-50 border border-slate-200 focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 transition-all rounded-xl">
+                  <Search className="w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                  <input
+                     placeholder="Chercher analyse..."
+                     value={searchTest}
+                     onChange={(e) => setSearchTest(e.target.value)}
+                     className="w-full bg-slate-50 h-10 pr-4 text-sm outline-none font-medium"
+                  />
+               </div>
+               
+               <div className="flex gap-2 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0 hide-scrollbar">
+                  {bilans.map(bilan => {
+                     const bilanTestIds = bilan.tests.map((t: any) => t.id);
+                     const isSelected = bilanTestIds.length > 0 && bilanTestIds.every((id: string) => selectedTests.includes(id));
+                     return (
+                        <button
+                           key={bilan.id}
+                           type="button"
+                           onClick={() => toggleBilan(bilan)}
+                           className={`whitespace-nowrap px-4 py-2 text-[11px] font-bold uppercase tracking-widest transition-all rounded-xl border flex items-center gap-1.5 ${
+                              isSelected
+                                 ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/20'
+                                 : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                           }`}
                         >
-                           {isSelected ? <Check size={16} /> : <Plus size={16} />}
+                           {isSelected ? <Check size={14} /> : <Activity size={14} />}
                            {bilan.name}
                         </button>
-                      );
-                   })}
-                   
-                   {bilans.length === 0 && (
-                      <p className="text-[11px] font-medium text-slate-400 italic">Créez des "Bilans" dans les paramètres pour voir des raccourcis ici.</p>
-                   )}
-                </div>
-              </div>
-
-              <div className="relative mb-8 group">
-
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
-              <input
-                placeholder="Chercher un test par nom ou code (ex: NFS, Glycémie...)"
-                value={searchTest}
-                onChange={(e) => setSearchTest(e.target.value)}
-                className="input-premium pl-12 h-14"
-              />
+                     );
+                  })}
+               </div>
             </div>
 
-            <div className="max-h-[500px] overflow-y-auto space-y-8 pr-2 custom-scrollbar">
-              {Object.entries(groupedTests).map(([category, categoryTests]) => (
-                <div key={category} className="space-y-4">
-                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-3">
-                    {category}
-                    <span className="flex-1 h-px bg-slate-100" />
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {categoryTests.map((test) => {
-                        const isSelected = selectedTests.includes(test.id);
-                        const isGroup = test.isGroup;
-                        const isChild = !!test.parentId;
-
-                      
-                      return (
-                        <button
-                          key={test.id}
-                          type="button"
-                          onClick={() => toggleTest(test.id)}
-                          className={`group p-5 rounded-2xl border-2 text-left transition-all duration-300 relative overflow-hidden ${
-                            isSelected
-                              ? (isGroup ? 'bg-indigo-600 border-indigo-600 shadow-indigo-100' : 'bg-blue-600 border-blue-600 shadow-blue-100')
-                              : 'bg-white border-slate-100 text-slate-600 hover:border-blue-200 hover:bg-slate-50'
-                          } ${isChild ? 'ml-6 border-dashed opacity-90' : ''}`}
-                        >
-                          <div className="flex justify-between items-start mb-2 relative z-10">
-                            <div className="flex gap-2">
-                               <span className={`font-mono text-[10px] font-black px-2 py-0.5 rounded-lg ${
-                                 isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
-                               }`}>
-                                 {test.code}
-                               </span>
-                               {isGroup && (
-                                  <span className={`text-[9px] font-black px-2 py-0.5 rounded-lg ${isSelected ? 'bg-indigo-400 text-white' : 'bg-indigo-50 text-indigo-600'}`}>
-                                     BILAN ({ (test as any).children.length })
-                                  </span>
-                               )}
-                            </div>
-                            {isSelected && <Sparkles size={16} className={`${isGroup ? 'text-indigo-200' : 'text-blue-200'} animate-pulse`} />}
-                          </div>
-                          <p className={`font-black tracking-tight relative z-10 ${isSelected ? 'text-white' : 'text-slate-900'}`}>{test.name}</p>
-                          {test.unit && (
-                            <p className={`text-[10px] font-bold uppercase tracking-widest mt-1 relative z-10 ${isSelected ? 'text-blue-100' : 'text-slate-400'}`}>{test.unit}</p>
-                          )}
-                          
-                          {/* Hover decoration */}
-                          <div className={`absolute -right-4 -bottom-4 w-20 h-20 bg-current opacity-[0.03] rounded-full transition-transform duration-500 group-hover:scale-150`} />
-                        </button>
-                      );
-                    })}
+            <div className="flex-1 overflow-y-auto max-h-[500px] lg:max-h-[600px] pr-4 custom-scrollbar space-y-8">
+               {Object.entries(groupedTests).map(([category, categoryTests]) => (
+                  <div key={category} className="space-y-3">
+                     <div className="flex items-center gap-3 sticky top-0 bg-white/95 backdrop-blur-sm py-2 z-10 block">
+                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{category}</h3>
+                        <div className="h-px flex-1 bg-slate-100" />
+                     </div>
+                     
+                     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5">
+                        {categoryTests.map((test) => {
+                           const isSelected = selectedTests.includes(test.id);
+                           const isChild = !!test.parentId;
+                           return (
+                              <button
+                                 key={test.id}
+                                 type="button"
+                                 onClick={() => toggleTest(test.id)}
+                                 className={`group text-left px-3 py-2.5 rounded-xl border transition-all relative overflow-hidden flex flex-col justify-center ${
+                                    isSelected
+                                       ? 'bg-blue-50 border-blue-200 shadow-sm'
+                                       : 'bg-white border-slate-100 hover:border-blue-200 hover:bg-slate-50'
+                                 } ${isChild ? 'ml-4 opacity-80 border-dashed' : ''}`}
+                              >
+                                 <div className="flex items-start justify-between gap-2">
+                                    <div className="flex flex-col">
+                                       <span className={`text-[10px] font-black uppercase tracking-wider ${isSelected ? 'text-blue-600' : 'text-slate-400'}`}>
+                                          {test.code}
+                                       </span>
+                                       <span className={`text-xs font-bold leading-tight mt-0.5 ${isSelected ? 'text-blue-900' : 'text-slate-700'}`}>
+                                          {test.name}
+                                       </span>
+                                    </div>
+                                    <div className={`w-4 h-4 shrink-0 rounded border flex items-center justify-center transition-colors ${
+                                       isSelected ? 'bg-blue-600 border-blue-600 text-white' : 'border-slate-300 bg-slate-50 group-hover:border-blue-300'
+                                    }`}>
+                                       {isSelected && <Check size={10} strokeWidth={4} />}
+                                    </div>
+                                 </div>
+                              </button>
+                           );
+                        })}
+                     </div>
                   </div>
-                </div>
-              ))}
+               ))}
             </div>
-          </div>
-        )}
+         </div>
+      </div>
 
-        <div className="flex gap-4">
-          {step === 2 ? (
-            <button 
-              type="button" 
-              onClick={() => setStep(1)} 
-              className="h-16 px-8 rounded-2xl font-black text-slate-500 hover:bg-slate-100 transition-all flex items-center justify-center gap-2"
-            >
-              <ChevronLeft size={20} /> Retour
-            </button>
-          ) : (
-            <button 
-              type="button" 
-              onClick={() => router.back()} 
-              className="h-16 px-8 rounded-2xl font-black text-slate-500 hover:bg-slate-100 transition-all flex items-center justify-center gap-2"
-            >
-              Annuler
-            </button>
-          )}
-          
-          <button 
-            type="submit" 
-            disabled={submitting} 
-            className="flex-1 btn-primary-premium h-16 text-lg"
-          >
-            {submitting ? (
-              'Enregistrement...'
-            ) : step === 1 ? (
-              <>Suivant <ChevronRight size={20} className="ml-2" /></>
-            ) : (
-              <><Save size={20} className="mr-2" /> Créer le Dossier</>
-            )}
-          </button>
-        </div>
-      </form>
+      {/* STICKY BOTTOM ACTION BAR */}
+      <div className="fixed bottom-0 lg:bottom-6 left-0 right-0 lg:left-[280px] z-50 px-4 lg:px-8 pointer-events-none">
+         <div className="max-w-4xl mx-auto flex justify-end">
+            <div className="bento-panel py-3 px-4 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] flex items-center gap-6 pointer-events-auto w-full sm:w-auto border border-slate-200/50 bg-white/90 backdrop-blur-xl">
+               <div className="hidden sm:flex flex-col">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tests Sélectionnés</span>
+                  <span className="text-lg font-black text-blue-600">{selectedTests.length}</span>
+               </div>
+               
+               <button 
+                  onClick={() => router.back()} 
+                  className="btn-secondary h-12"
+               >
+                  Annuler
+               </button>
+               
+               <button 
+                  onClick={handleSubmit}
+                  disabled={submitting} 
+                  className="btn-primary h-12 shadow-blue-500/30 shadow-lg flex-1 sm:flex-none"
+               >
+                  {submitting ? (
+                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                     <><Save size={18} /> <span className="hidden sm:inline">Créer</span> Dossier</>
+                  )}
+               </button>
+            </div>
+         </div>
+      </div>
 
       {notification && (
         <NotificationToast type={notification.type} message={notification.message} />

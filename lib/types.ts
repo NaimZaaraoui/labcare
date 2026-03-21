@@ -1,3 +1,13 @@
+export interface Category {
+  id: string;
+  name: string;
+  rank: number;
+  icon: string | null;
+  parentId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface Test {
     id: string;
     name: string;
@@ -9,13 +19,14 @@ export interface Test {
     maxValueM: number | null;
     minValueF: number | null;
     maxValueF: number | null;
-    decimals: number;
+    decimals: number | null;
     resultType: string;
-    category: string | null;
+    categoryId: string | null;
+    category?: string | null; // deprecated
     options: string | null;
     isGroup: boolean;
     rank: number;
-    categoryRel?: { id: string; name: string; rank: number };
+    categoryRel?: Category;
     parentId: string | null;
     parent?: Test;
     children?: Test[];
@@ -23,13 +34,12 @@ export interface Test {
     updatedAt: Date;
 }
 
-
 export interface Analysis {
   id: string;
   orderNumber: string;
   receiptNumber: string | null;
   dailyId: string | null;
-  patientId: string;
+  patientId: string | null;
   patientFirstName: string | null;
   patientLastName: string | null;
   patientAge: number | null;
@@ -59,6 +69,39 @@ export interface Result {
   updatedAt: Date;
 }
 
+export interface Patient {
+  id: string;
+  firstName: string;
+  lastName: string;
+  birthDate: Date | null;
+  gender: string;
+  phoneNumber: string | null;
+  email: string | null;
+  address: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Bilan {
+  id: string;
+  name: string;
+  code: string | null;
+  tests?: Test[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  active: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Input Types
 export type CreateTestInput = {
   name: string;
   code: string;
@@ -80,16 +123,3 @@ export type CreateAnalysisInput = {
   patientGender?: string;
   testsIds: string[];
 };
-
-export interface Patient {
-  id: string;
-  firstName: string;
-  lastName: string;
-  birthDate: Date | null;
-  gender: string;
-  phoneNumber: string | null;
-  email: string | null;
-  address: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-}

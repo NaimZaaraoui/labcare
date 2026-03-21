@@ -1,5 +1,5 @@
 ## Project Summary
-LabCare CSSB est un système de gestion d'informations de laboratoire (LIMS) conçu pour les Centres de Santé de Services de Base. Il permet de gérer les analyses, de saisir les résultats, de valider les dossiers et d'imprimer des rapports professionnels.
+NexLab CSSB est un système de gestion d'informations de laboratoire (LIMS) conçu pour les Centres de Santé de Services de Base. Il permet de gérer les analyses, de saisir les résultats, de valider les dossiers et d'imprimer des rapports professionnels.
 
 ## Tech Stack
 - **Framework**: Next.js (App Router)

@@ -118,7 +118,6 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
     }
   };
 
-  // Confirmation Dialog State
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
     title: string;
@@ -141,7 +140,6 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
       data.results.forEach((result: Result) => {
         initialResults[result.id] = result.value || '';
         if (result.notes) initialNotes[result.id] = result.notes;
-        // Load history for each test
         loadHistory(data.patientId, result.testId, result.id);
       });
       setResults(initialResults);
@@ -183,7 +181,6 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
       if (!analysis) return currentResults;
       const updatedResults = { ...currentResults };
       
-      // Helper to get value by test code
       const getVal = (code: string) => {
         const res = analysis.results.find(r => r.test?.code === code);
         if (!res) return null;
@@ -191,7 +188,6 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
         return val ? parseFloat(val.replace(',', '.')) : null;
       };
 
-      // Helper to set value by test code
       const setVal = (code: string, value: number) => {
         const res = analysis.results.find(r => r.test?.code === code);
         if (res) {
@@ -205,15 +201,10 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
       const hct = getVal('HCT') || getVal('HT');
       const wbc = getVal('WBC') || getVal('GB');
 
-      // Indices érythrocytaires (calculs automatiques)
-      // VGM (Volume Globulaire Moyen) = (HT / GR) × 10 → fL
       if (rbc && hct && rbc > 0) setVal('VGM', (hct / rbc) * 10);
-      // TCMH (Teneur Corpusculaire Moyenne en Hémoglobine) = (HB × 10) / GR → pg
       if (hgb && rbc && rbc > 0) setVal('TCMH', (hgb * 10) / rbc);
-      // CCMH (Concentration Corpusculaire Moyenne en Hémoglobine) = (HB / HT) × 100 → g/dL
       if (hgb && hct && hct > 0) setVal('CCMH', (hgb / hct) * 100);
 
-    // Formule Leucocytaire (Valeurs Absolues)
     if (wbc) {
         const diffMap = [
           { pct: 'GRA%', abs: 'GRA' },
@@ -236,7 +227,6 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
       const nextIndex = (index + 1) % total;
     const nextId = sortedResults[nextIndex]?.id;
     
-    // Si le prochain élément est un groupe, on passe au suivant
     if (sortedResults[nextIndex]?.test?.isGroup) {
       handleKeyDown(e, nextIndex, total);
       return;
@@ -254,7 +244,6 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
     const min = refVals?.min ?? test.minValue;
     const max = refVals?.max ?? test.maxValue;
     
-    // Check individually
     if (min === null && max === null) return false;
     
     const num = parseFloat(value.replace(',', '.'));
@@ -269,7 +258,6 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
   const notificationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const showNotification = (type: 'success' | 'error', message: string) => {
-    // Clear any existing timeout
     if (notificationTimeoutRef.current) {
       clearTimeout(notificationTimeoutRef.current);
     }
@@ -277,7 +265,6 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
     console.log('🔔 Notification:', { type, message });
     setNotification({ type, message });
     
-    // Set new timeout (5000ms for better visibility)
     notificationTimeoutRef.current = setTimeout(() => {
       console.log('🔔 Notification cleared');
       setNotification(null);
@@ -285,7 +272,6 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
     }, 5000);
   };
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (notificationTimeoutRef.current) {
@@ -358,7 +344,6 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
   const handleValidate = () => {
     if (!analysis) return;
     
-    // Check if enough tests are completed
     if (completedCount < totalCount) {
        showNotification('error', 'Veuillez saisir tous les résultats avant de valider.');
        return;
@@ -376,7 +361,6 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
     contentRef: printRef,
     documentTitle: `Rapport_${analysis?.orderNumber}`,
     onAfterPrint: async () => {
-      // Track print event
       try {
         await fetch(`/api/analyses/${analysisId}`, {
           method: 'PATCH',
@@ -486,9 +470,9 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
 
   if (loading || !analysis) {
     return (
-      <div className="space-y-8 animate-pulse">
-        <div className="h-40 bg-slate-100 rounded-[var(--radius-3xl)]" />
-        <div className="h-96 bg-slate-100 rounded-[var(--radius-3xl)]" />
+      <div className="space-y-6 animate-pulse">
+        <div className="h-36 bg-slate-100 rounded-3xl" />
+        <div className="h-80 bg-slate-100 rounded-3xl" />
       </div>
     );
   }
@@ -518,18 +502,12 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
           sorted.push({ ...result, renderCategory });
           visited.add(testId);
           
-          // Find children in results
           const children = results.filter(r => r.test?.parentId === testId);
-          
-          // Apply rank sort for children
           children.sort((a, b) => (a.test?.rank || 0) - (b.test?.rank || 0));
-          
           children.forEach(child => addTestAndChildren(child.testId, renderCategory));
         }
       };
 
-      // Group results by category (using ID for grouping but Name/Rank for sorting)
-      // We map results to categories based on categoryId or category string fallback
       const categoryGroups: Record<string, Result[]> = {};
       const categoriesMeta: Record<string, { rank: number, name: string }> = {};
 
@@ -546,13 +524,6 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
         categoryGroups[catName].push(res);
       });
 
-      // Special handling for NFS grouping if legacy category string is 'Hématologie' but code is NFS involved?
-      // With new system, 'NFS' should be a Category if user wants it separate.
-      // Migration script handles creation of Category 'NFS' if it was a distinct category string.
-      // Previous logic split Hématologie into NFS/Hematologie.
-      // Now we rely on the DB Category. If DB has "Hématologie", all go there.
-      // If user wants splitting, they create a category 'NFS'.
-
       const categories = Object.keys(categoryGroups).sort((a, b) => {
         const metaA = categoriesMeta[a];
         const metaB = categoriesMeta[b];
@@ -567,13 +538,10 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
           return !parentId || !catResults.some(pr => pr.testId === parentId);
         });
 
-        // Sort Top Level by Rank
         topLevel.sort((a, b) => (a.test?.rank || 0) - (b.test?.rank || 0));
-
         topLevel.forEach(r => addTestAndChildren(r.testId, cat));
       });
       
-      // Any remaining (circular refs or disconnected nodes)
       results.forEach(r => {
         if (!visited.has(r.testId)) {
           sorted.push({ ...r, renderCategory: r.test?.category || 'Divers' });
@@ -586,111 +554,114 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
 
   const sortedResults = sortResults(analysis.results);
 
+  const progressPct = Math.round((completedCount / totalCount) * 100);
+
   return (
     <>
-      <div className="animate-fade-in space-y-10 pb-20">
-      {/* Premium Hero Header */}
-      <div className="relative p-10 bg-slate-900 rounded-[var(--radius-3xl)] text-white overflow-hidden group shadow-premium">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600 rounded-full blur-[120px] opacity-20 -mr-20 -mt-20 group-hover:opacity-30 transition-opacity" />
-        
-        <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
-          <div className="flex items-center gap-6">
+      <div className="animate-fade-in flex flex-col gap-6 pb-20">
+
+      {/* ─── Header Panel ─── */}
+      <div className="bento-panel p-8">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+          <div className="flex items-center gap-4">
             <button 
               onClick={() => router.push('/analyses')}
-              className="w-12 h-12 rounded-2xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all"
+              className="btn-secondary w-10 h-10 !p-0 shrink-0"
             >
-              <ArrowLeft size={20} />
+              <ArrowLeft size={18} />
             </button>
             <div>
-              <div className="flex items-center gap-3 mb-2">
-                <span className="glass-badge badge-blue bg-blue-500/20 text-blue-300 border-none">Analysis No. {analysis.orderNumber}</span>
-                <span className="text-slate-400 text-sm">•</span>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="status-pill bg-blue-50 text-blue-600">N° {analysis.orderNumber}</span>
+                <span className="text-slate-300 text-xs">•</span>
                 <span className="text-slate-400 text-sm font-medium">{format(new Date(analysis.creationDate), 'dd MMMM yyyy', { locale: fr })}</span>
               </div>
-              <h1 className={`text-4xl font-black tracking-tight leading-none ${!analysis.patientFirstName && !analysis.patientLastName ? 'text-slate-400 italic' : ''}`}>
+              <h1 className={`text-2xl font-bold text-slate-800 tracking-tight ${!analysis.patientFirstName && !analysis.patientLastName ? 'text-slate-400 italic' : ''}`}>
                 {(analysis.patientFirstName || analysis.patientLastName) ? (
-                   <>
-                      {analysis.patientFirstName} <span className="text-blue-500">{analysis.patientLastName}</span>
-                   </>
+                   <>{analysis.patientFirstName} <span className="text-blue-600">{analysis.patientLastName}</span></>
                 ) : 'Patient Sans Nom'}
               </h1>
             </div>
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex gap-3">
             {!isValidated ? (
                <>
-                <button onClick={handleSave} disabled={saving} className="btn-premium bg-white/10 hover:bg-white/20 text-white backdrop-blur-md">
-                   <Save size={20} className="mr-2" /> {saving ? '...' : 'Sauvegarder'}
+                <button onClick={handleSave} disabled={saving} className="btn-secondary h-10">
+                   <Save size={16} /> {saving ? '...' : 'Sauvegarder'}
                 </button>
-                <button onClick={handlePrint} className="btn-premium bg-slate-800 hover:bg-slate-700 text-white">
-                   <Printer size={20} className="mr-2" /> {selectedIds.length > 0 ? `Brouillon (${selectedIds.length})` : 'Imprimer Brouillon'}
+                <button onClick={handlePrint} className="btn-secondary h-10">
+                   <Printer size={16} /> {selectedIds.length > 0 ? `Brouillon (${selectedIds.length})` : 'Brouillon'}
                 </button>
-                <button onClick={handleValidate} disabled={validating} className="btn-primary-premium">
-                   <CheckCircle size={20} className="mr-2" /> Valider l&apos;Analyse
+                <button onClick={handleValidate} disabled={validating} className="btn-primary h-10">
+                   <CheckCircle size={16} /> Valider
                 </button>
                </>
                ) : (
-                  <div className="flex gap-4">
-                    <button 
-                      onClick={handleSendEmail} 
-                      disabled={sendingEmail} 
-                      className="btn-premium bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200"
-                    >
-                      <Mail size={20} className={`mr-2 ${sendingEmail ? 'animate-pulse' : ''}`} /> 
-                      {sendingEmail ? 'Envoi...' : 'Envoyer par Email'}
-                    </button>
-                    <button onClick={handlePrint} className="btn-primary-premium bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200/50">
-                        <Printer size={20} className="mr-2" /> {selectedIds.length > 0 ? `Imprimer (${selectedIds.length})` : 'Imprimer Rapport'}
-                    </button>
-                  </div>
-               )}
-
+                 <>
+                   <button 
+                     onClick={handleSendEmail} 
+                     disabled={sendingEmail} 
+                     className="btn-secondary h-10"
+                   >
+                     <Mail size={16} className={sendingEmail ? 'animate-pulse' : ''} /> 
+                     {sendingEmail ? 'Envoi...' : 'Email'}
+                   </button>
+                   <button onClick={handlePrint} className="btn-primary h-10 !bg-emerald-500 hover:!bg-emerald-600">
+                       <Printer size={16} /> {selectedIds.length > 0 ? `Imprimer (${selectedIds.length})` : 'Imprimer'}
+                   </button>
+                 </>
+              )}
           </div>
         </div>
 
-        <div className="mt-10 grid grid-cols-2 lg:grid-cols-4 gap-8 border-t border-white/10 pt-8 relative z-10 text-sm">
-           <div className="space-y-1">
-              <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">ID Paillasse</p>
-              <p className="font-mono font-bold text-lg">{analysis.dailyId}</p>
+        {/* Metadata Row */}
+        <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-6 border-t border-slate-100 pt-6">
+           <div>
+              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">ID Paillasse</div>
+              <div className="font-mono font-bold text-lg text-slate-800">{analysis.dailyId}</div>
            </div>
-           <div className="space-y-1">
-              <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Âge / Sexe</p>
-              <p className="font-bold text-lg">{analysis.patientAge || '?'} ans • {analysis.patientGender}</p>
+           <div>
+              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Âge / Sexe</div>
+              <div className="font-bold text-lg text-slate-800">{analysis.patientAge || '?'} ans • {analysis.patientGender}</div>
            </div>
-           <div className="space-y-1">
-              <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Progression</p>
-              <p className="font-bold text-emerald-400 text-lg flex items-center gap-2">
-                 {Math.round((completedCount/totalCount)*100)}% 
-                 <span className="w-20 h-1.5 bg-white/10 rounded-full overflow-hidden inline-block">
-                    <span className="h-full bg-emerald-500 block transition-all" style={{ width: `${(completedCount/totalCount)*100}%` }} />
-                 </span>
-              </p>
+           <div>
+              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Progression</div>
+              <div className="flex items-center gap-3">
+                <span className={`font-bold text-lg ${progressPct === 100 ? 'text-emerald-600' : 'text-blue-600'}`}>{progressPct}%</span>
+                <div className="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div className={`h-full rounded-full transition-all ${progressPct === 100 ? 'bg-emerald-500' : 'bg-blue-500'}`} style={{ width: `${progressPct}%` }} />
+                </div>
+              </div>
            </div>
-           <div className="space-y-1">
-              <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Anomalies</p>
-              <p className={`font-bold text-lg ${abnormalCount > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
+           <div>
+              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Anomalies</div>
+              <div className={`font-bold text-lg ${abnormalCount > 0 ? 'text-red-500' : 'text-emerald-600'}`}>
                  {abnormalCount} Détectée{abnormalCount > 1 ? 's' : ''}
-              </p>
+              </div>
            </div>
         </div>
       </div>
 
-      <div className="bento-card p-8">
-         <div className="flex items-center justify-between mb-8">
+      {/* ─── Results Panel ─── */}
+      <div className="bento-panel p-6">
+         {/* Toolbar */}
+         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
             <div className="flex items-center gap-3">
-               <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                  <Activity size={20} />
+               <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                  <Activity size={16} />
                </div>
-               <h2 className="text-2xl font-black text-slate-900">Résultats des Tests</h2>
+               <h2 className="text-lg font-bold text-slate-800">Résultats des Tests</h2>
             </div>
             
-            <div className="flex bg-slate-100 p-1 rounded-xl gap-1">
-               <button onClick={() => setActiveTab('all')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'all' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500'}`}>Tous ({totalCount})</button>
-                  <button onClick={() => setActiveTab('urgent')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'urgent' ? 'bg-rose-500 text-white shadow-md' : 'text-slate-500'}`}>Anomalies ({abnormalCount})</button>
+            <div className="flex items-center gap-3 flex-wrap">
+               {/* Tabs */}
+               <div className="flex bg-slate-50 border border-slate-100 p-1 rounded-xl gap-1">
+                  <button onClick={() => setActiveTab('all')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'all' ? 'bg-white shadow-sm text-blue-600 border border-slate-100' : 'text-slate-500 hover:text-slate-700'}`}>Tous ({totalCount})</button>
+                  <button onClick={() => setActiveTab('urgent')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'urgent' ? 'bg-red-500 text-white shadow-sm' : 'text-slate-500 hover:text-red-500'}`}>Anomalies ({abnormalCount})</button>
                   {analysis.histogramData && (
-                     <button onClick={() => setActiveTab('charts')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'charts' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500'}`}>Graphiques</button>
-                   )}
+                     <button onClick={() => setActiveTab('charts')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'charts' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-blue-600'}`}>Graphiques</button>
+                  )}
                </div>
                
                {!isValidated && hasNFS && (
@@ -705,37 +676,38 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                    <button 
                      onClick={() => fileInputRef.current?.click()}
                      disabled={isImporting}
-                     className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-all font-bold text-xs"
+                     className="btn-secondary h-9 text-xs"
                    >
                      <Microscope size={14} className={isImporting ? 'animate-pulse' : ''} />
-                     {isImporting ? 'Importation...' : 'Importer Diatron'}
+                     {isImporting ? 'Import...' : 'Diatron'}
                    </button>
                  </div>
                )}
 
                {isValidated && (
-                <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-xl border border-blue-100 cursor-pointer hover:bg-blue-100 transition-colors" onClick={toggleSelectAll}>
-                  <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${selectedIds.length === totalCount ? 'bg-blue-600 border-blue-600' : 'bg-white border-blue-300'}`}>
-                    {selectedIds.length === totalCount && <CheckCircle size={14} className="text-white" />}
-                  </div>
-                  <span className="text-xs font-bold uppercase tracking-tight">Sélectionner tout pour impression</span>
-                </div>
-              )}
-           </div>
+                 <button className="btn-secondary h-9 text-xs" onClick={toggleSelectAll}>
+                   <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all ${selectedIds.length === totalCount ? 'bg-blue-600 border-blue-600' : 'border-slate-300'}`}>
+                     {selectedIds.length === totalCount && <CheckCircle size={10} className="text-white" />}
+                   </div>
+                   Tout sélectionner
+                 </button>
+               )}
+            </div>
+         </div>
 
 
-             <div className="space-y-4">
+             <div className="space-y-1">
+                 {/* Charts Tab */}
                  {activeTab === 'charts' && analysis.histogramData && (() => {
                     try {
                       const data = JSON.parse(analysis.histogramData);
-                      // PLT is the first part of RBC histogram (roughly bins 0-60 for a 0-60fL zoom)
                       const pltData = {
                         bins: data.rbc.bins.slice(0, 60),
                         markers: data.rbc.markers.filter((m: number) => m < 60)
                       };
 
                       return (
-                        <div className="flex flex-col gap-6 py-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="flex flex-col gap-6 py-4">
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <HistogramView data={data.wbc} title="WBC (LEUCOCYTES)" color="#3b82f6" width={350} height={200} xAxisMax={400} />
                             <HistogramView data={data.rbc} title="RBC (ÉRYTHROCYTES)" color="#ef4444" width={350} height={200} xAxisMax={250} />
@@ -745,20 +717,20 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                           {(() => {
                             const interpretations = getHematologyInterpretations(analysis, results);
                             if (interpretations.length === 0) return (
-                              <div className="p-6 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center gap-3">
-                                <Sparkles className="text-blue-500" size={18} />
-                                <p className="text-sm font-bold text-slate-500">Aucune anomalie morphologique majeure détectée</p>
+                              <div className="p-5 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center gap-2">
+                                <Sparkles className="text-blue-500" size={16} />
+                                <p className="text-sm font-semibold text-slate-500">Aucune anomalie morphologique majeure détectée</p>
                               </div>
                             );
 
                             return (
-                              <div className="p-6 bg-blue-50/50 border-2 border-blue-100 rounded-2xl">
-                                <h4 className="text-xs font-black text-blue-600 uppercase tracking-widest mb-4 flex items-center gap-2">
-                                  <Activity size={14} /> Interprétations Diagnostiques
+                              <div className="p-5 bg-blue-50/50 border border-blue-100 rounded-2xl">
+                                <h4 className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                  <Activity size={12} /> Interprétations Diagnostiques
                                 </h4>
                                 <div className="flex flex-wrap gap-2">
                                   {interpretations.map(flag => (
-                                    <span key={flag} className="px-4 py-2 bg-white border border-blue-200 rounded-xl text-xs font-black text-blue-700 shadow-sm">
+                                    <span key={flag} className="status-pill bg-white border border-blue-200 text-blue-700 shadow-sm">
                                       {flag}
                                     </span>
                                   ))}
@@ -773,7 +745,8 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                     }
                  })()}
 
-                 {activeTab !== 'charts' && (() => {
+                 {/* Results List */}
+                 {activeTab !== 'charts' ? (() => {
                   let currentCategory = '';
                   return sortedResults.map((result, index) => {
                      const test = result.test;
@@ -787,19 +760,13 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                      if (showCategoryHeader) {
                        currentCategory = renderCategory;
                        categoryHeader = (
-                         <div key={`cat-${renderCategory}`} className="flex items-center gap-4 py-6 mb-4 mt-10 border-b-2 border-slate-900">
-                            <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-lg">
-                               <Sparkles size={20} />
-                            </div>
-                            <div>
-                               <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">
-                                 {renderCategory === 'HEMA' || renderCategory === 'Hématologie' ? 'HÉMATOLOGIE' : 
-                                  renderCategory === 'BIO' || renderCategory === 'Biochimie' ? 'BIOCHIMIE' : 
-                                  renderCategory === 'NFS' ? 'HÉMATOLOGIE (NFS)' : renderCategory}
-                               </h3>
-                               <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Ensemble de tests</p>
-                            </div>
-                            <div className="h-[1px] flex-1 bg-slate-100 ml-4"></div>
+                         <div key={`cat-${renderCategory}`} className="flex items-center gap-3 pt-6 pb-3 mt-4 first:mt-0 first:pt-0">
+                            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                              {renderCategory === 'HEMA' || renderCategory === 'Hématologie' ? 'Hématologie' : 
+                               renderCategory === 'BIO' || renderCategory === 'Biochimie' ? 'Biochimie' : 
+                               renderCategory === 'NFS' ? 'NFS' : renderCategory}
+                            </h3>
+                            <div className="h-px flex-1 bg-slate-100" />
                          </div>
                        );
                      }
@@ -809,8 +776,6 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                     const isNumeric = test.resultType === 'numeric' || !test.resultType;
                     const isGroup = test.isGroup;
                     const prevResult = history[result.id];
-                    
-                    // Renommage éventuel (sécurité)
                     const displayName = test.name;
                     
                     const isFormula = [
@@ -825,203 +790,203 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                     return (
                       <div key={result.id}>
                         {categoryHeader}
-                        <div className={`group transition-all ${isGroup ? 'mt-8 mb-4' : 'mb-2'}`}>
-                           {isGroup ? (
-                              <div className="flex items-center gap-4 py-4 border-b border-slate-200 bg-slate-50/50 px-4 rounded-xl">
-                                 <div>
-                                    <h3 className="text-base font-black text-slate-700 uppercase tracking-tight">{displayName}</h3>
-                                 </div>
-                                 <div className="h-[1px] flex-1 bg-slate-200 ml-4"></div>
-                              </div>
-                           ) : (
-                               <>
-                               <div className={`bento-card border-none hover:bg-slate-50 transition-all p-4 flex flex-col lg:flex-row items-center justify-between gap-6 ${test.parentId ? 'ml-8 border-l-4 border-slate-200 bg-slate-50/50' : ''} ${abnormal ? 'bg-rose-50/30 ring-1 ring-rose-100' : 'bg-white shadow-sm hover:shadow-md'}`}>
-                                  {isValidated && (
-                                     <div 
-                                        onClick={() => toggleSelection(result.id)}
-                                        className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center cursor-pointer transition-all shrink-0 ${selectedIds.includes(result.id) ? 'bg-blue-600 border-blue-600' : 'bg-white border-slate-200'}`}
-                                     >
-                                        {selectedIds.includes(result.id) && <CheckCircle size={14} className="text-white" />}
-                                     </div>
-                                  )}
-                                  <div className="flex items-center gap-4 flex-1">
-                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${abnormal ? 'bg-rose-100 text-rose-600' : 'bg-slate-100 text-slate-400 group-hover:bg-blue-600 group-hover:text-white'}`}>
-                                       {test.category === 'HEMA' ? <Droplets size={18} /> : test.category === 'BIO' ? <Microscope size={18} /> : <Beaker size={18} />}
-                                    </div>
-                                    <div className="flex flex-col">
-                                       <div className="flex items-center gap-2">
-                                          <h4 className="font-bold text-slate-900 text-sm group-hover:text-blue-600 transition-colors uppercase tracking-tight">{displayName}</h4>
-                                          {isFormula && <Calculator size={12} className="text-blue-500" />}
-                                       </div>
-                                       <span className="text-[10px] font-mono text-slate-400 font-bold uppercase tracking-widest">{test.code}</span>
-                                    </div>
+                        {isGroup ? (
+                           <div className="flex items-center gap-3 py-3 mt-4 mb-1">
+                              <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wide">{displayName}</h3>
+                              <div className="h-px flex-1 bg-slate-100" />
+                           </div>
+                        ) : (
+                            <>
+                            {/* Result Row */}
+                            <div className={`group flex flex-col lg:flex-row items-stretch lg:items-center gap-3 lg:gap-4 px-4 py-3 rounded-2xl transition-colors ${test.parentId ? 'ml-6 border-l-2 border-l-blue-200' : ''} ${abnormal ? 'bg-red-50/60' : 'hover:bg-slate-50/50'}`}>
+                               
+                               {/* Selection Checkbox */}
+                               {isValidated && (
+                                  <div 
+                                     onClick={() => toggleSelection(result.id)}
+                                     className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-all shrink-0 ${selectedIds.includes(result.id) ? 'bg-blue-600 border-blue-600' : 'border-slate-300 hover:border-blue-400'}`}
+                                  >
+                                     {selectedIds.includes(result.id) && <CheckCircle size={10} className="text-white" />}
                                   </div>
+                               )}
 
-                                   <div className="flex-1 flex flex-col items-center gap-2">
-                                      <div className="relative w-full flex justify-center">
-                                           {test.resultType === 'long_text' ? (
-                                              <textarea
+                               {/* Test Name + Icon */}
+                               <div className="flex items-center gap-3 lg:w-56 shrink-0">
+                                 <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${abnormal ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-500'}`}>
+                                    {test.category === 'HEMA' ? <Droplets size={14} /> : test.category === 'BIO' ? <Microscope size={14} /> : <Beaker size={14} />}
+                                 </div>
+                                 <div className="flex flex-col min-w-0">
+                                    <div className="flex items-center gap-1.5">
+                                       <span className="font-semibold text-sm text-slate-800 truncate">{displayName}</span>
+                                       {isFormula && <Calculator size={12} className="text-blue-400 shrink-0" />}
+                                    </div>
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{test.code}</span>
+                                 </div>
+                               </div>
+
+                               {/* Input Field */}
+                                <div className="flex-1 flex flex-col items-center gap-1">
+                                   <div className="w-full flex justify-center">
+                                        {test.resultType === 'long_text' ? (
+                                           <textarea
+                                             ref={(el) => { inputsRef.current[result.id] = el; }}
+                                             value={results[result.id]}
+                                             onChange={(e) => handleResultChange(result.id, e.target.value)}
+                                             onKeyDown={(e) => handleKeyDown(e, index, sortedResults.length)}
+                                               disabled={isValidated || isFormula}
+                                               rows={3}
+                                               className="input-premium py-3 px-4 text-sm w-full max-w-md min-h-[80px] rounded-xl resize-none"
+                                               placeholder="Saisissez les résultats détaillés ici..."
+                                             />
+                                          ) : test.resultType === 'dropdown' ? (
+                                           <select
+                                             ref={(el) => { inputsRef.current[result.id] = el; }}
+                                             value={results[result.id]}
+                                             onChange={(e) => handleResultChange(result.id, e.target.value)}
+                                             onKeyDown={(e) => handleKeyDown(e, index, sortedResults.length)}
+                                             disabled={isValidated || isFormula}
+                                             className={`h-10 w-full max-w-[200px] px-4 rounded-xl border text-sm font-bold transition-all outline-none focus:ring-4 focus:ring-blue-500/10 ${results[result.id] ? 'text-blue-700 border-blue-200 bg-blue-50/50' : 'text-slate-600 border-slate-200 bg-slate-50 hover:bg-white'}`}
+                                           >
+                                              <option value="">-- Sélectionner --</option>
+                                              {test.options?.split(',').map(opt => (
+                                                 <option key={opt.trim()} value={opt.trim()}>{opt.trim()}</option>
+                                              ))}
+                                           </select>
+                                        ) : (
+                                           <div className="relative">
+                                              <input 
                                                 ref={(el) => { inputsRef.current[result.id] = el; }}
                                                 value={results[result.id]}
                                                 onChange={(e) => handleResultChange(result.id, e.target.value)}
-                                                onKeyDown={(e) => handleKeyDown(e, index, sortedResults.length)}
-                                                  disabled={isValidated || isFormula}
-                                                  rows={3}
-                                                  className="input-premium py-3 px-4 text-sm w-full max-w-lg min-h-[80px]"
-                                                  placeholder="Saisissez les résultats détaillés ici..."
-                                                />
-                                             ) : test.resultType === 'dropdown' ? (
-                                              <select
-                                                ref={(el) => { inputsRef.current[result.id] = el; }}
-                                                value={results[result.id]}
-                                                onChange={(e) => handleResultChange(result.id, e.target.value)}
+                                                onBlur={(e) => {
+                                                  if (isNumeric && e.target.value) {
+                                                    const decimals = parseInt(String(test.decimals ?? 1), 10);
+                                                    const formatted = formatValue(e.target.value, decimals);
+                                                    handleResultChange(result.id, formatted);
+                                                  }
+                                                }}
                                                 onKeyDown={(e) => handleKeyDown(e, index, sortedResults.length)}
                                                 disabled={isValidated || isFormula}
-                                                className={`h-12 w-48 input-premium text-sm font-bold ${results[result.id] ? 'text-blue-600 border-blue-200' : 'text-slate-400'}`}
-                                              >
-                                                 <option value="">-- Sélectionner --</option>
-                                                 {test.options?.split(',').map(opt => (
-                                                    <option key={opt.trim()} value={opt.trim()}>{opt.trim()}</option>
-                                                 ))}
-                                              </select>
-                                           ) : (
-                                              <div className="relative">
-                                                 <input 
-                                                   ref={(el) => { inputsRef.current[result.id] = el; }}
-                                                   value={results[result.id]}
-                                                   onChange={(e) => handleResultChange(result.id, e.target.value)}
-                                                   onBlur={(e) => {
-                                                     if (isNumeric && e.target.value) {
-                                                       const decimals = parseInt(String(test.decimals ?? 1), 10);
-                                                       const formatted = formatValue(e.target.value, decimals);
-                                                       handleResultChange(result.id, formatted);
-                                                     }
-                                                   }}
-                                                   onKeyDown={(e) => handleKeyDown(e, index, sortedResults.length)}
-                                                   disabled={isValidated || isFormula}
-                                                 placeholder="--"
-                                                 className={`h-12 input-premium font-black transition-all ${isNumeric ? 'w-32 text-xl text-center' : 'w-64 text-sm px-4'} ${abnormal ? 'text-rose-600 border-rose-200 bg-rose-50/50' : 'text-slate-900 focus:border-blue-600'}`}
-                                               />
-                                               {abnormal && <AlertCircle className="absolute -right-8 top-1/2 -translate-y-1/2 text-rose-500" size={18} />}
-                                            </div>
-                                         )}
-                                      </div>
-                                    
-                                    {prevResult && (
-                                       <div className="flex items-center gap-1.5 text-[10px] text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full border border-slate-100">
-                                          <History size={10} />
-                                          <span>Précédent: </span>
-                                          <span className="font-bold text-slate-600">{prevResult.value} {prevResult.unit}</span>
-                                          <span className="opacity-50">({format(new Date(prevResult.createdAt), 'dd/MM/yy')})</span>
-                                       </div>
-                                    )}
-                                 </div>
-
-                                    <div className="flex items-center gap-8 flex-1 justify-end">
-                                      <div className="flex flex-col items-end gap-2">
-                                         <div className="flex items-center gap-8 justify-end">
-                                            <div className="text-right">
-                                               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Unité</p>
-                                               <span className="text-[11px] font-bold text-slate-600 bg-slate-50 px-2 py-0.5 rounded border border-slate-100">{test.unit || '--'}</span>
-                                            </div>
-                                            <div className="text-right w-24">
-                                               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Référence</p>
-                                               <p className="text-[11px] font-bold text-slate-900">
-                                                  {(() => {
-                                                    if (!isNumeric) return 'QUALIT.';
-                                                    const refVals = getTestReferenceValues(test, analysis.patientGender);
-                                                    return formatReferenceRange(refVals.min, refVals.max);
-                                                  })()}
-                                               </p>
-                                            </div>
+                                              placeholder="--"
+                                              className={`h-10 rounded-xl border transition-all outline-none focus:ring-4 font-bold ${isNumeric ? 'w-28 text-lg text-center tracking-tight' : 'w-48 text-sm px-4'} ${abnormal ? 'text-red-600 border-red-300 bg-red-50 focus:border-red-400 focus:ring-red-500/10' : 'text-slate-800 border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-blue-500/10 hover:border-slate-300'} ${isFormula ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-transparent' : ''}`}
+                                            />
+                                            {abnormal && <AlertCircle className="absolute -right-7 top-1/2 -translate-y-1/2 text-red-500" size={16} />}
                                          </div>
-                                         
-                                         <button 
-                                            onClick={() => toggleNote(result.id)}
-                                            className={`text-[10px] font-bold flex items-center gap-1 transition-colors ${notes[result.id] ? 'text-blue-600' : 'text-slate-400 hover:text-blue-500'}`}
-                                            tabIndex={-1}
-                                         >
-                                            <MessageSquare size={12} />
-                                            {notes[result.id] ? 'Modifier Note' : 'Ajouter Note'}
-                                         </button>
-                                      </div>
+                                      )}
                                    </div>
-                                </div>
-                                
-                                {/* Notes Field - Redesigned UI */}
-                                {expandedNotes.includes(result.id) && (
-                                   <div className={`mt-4 ml-14 mr-4 animate-fade-in ${isValidated ? 'opacity-70' : ''}`}>
-                                      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 shadow-sm relative group/note">
-                                         <div className="flex items-center justify-between mb-3">
-                                            <div className="flex items-center gap-2 text-slate-500">
-                                               <MessageSquare size={14} className="text-blue-500" />
-                                               <span className="text-[10px] font-black uppercase tracking-widest">Note Technique</span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                {notes[result.id] && (
-                                                    <button 
-                                                        onClick={() => deleteNote(result.id)}
-                                                        className="px-3 py-1.5 rounded-lg bg-rose-50 text-rose-600 text-[10px] font-bold hover:bg-rose-100 transition-colors flex items-center gap-1.5"
-                                                        disabled={isValidated}
-                                                    >
-                                                        Supprimer
-                                                    </button>
-                                                )}
+                                 
+                                 {/* Previous Result (Delta Check) */}
+                                 {prevResult && (
+                                    <div className="flex items-center gap-1.5 text-[10px] text-slate-400 mt-0.5">
+                                       <History size={10} />
+                                       <span>Préc: </span>
+                                       <span className="font-semibold text-slate-600">{prevResult.value} {prevResult.unit}</span>
+                                       <span className="opacity-60">({format(new Date(prevResult.createdAt), 'dd/MM/yy')})</span>
+                                    </div>
+                                 )}
+                              </div>
+
+                               {/* Unit + Reference + Note */}
+                                 <div className="flex items-center gap-4 lg:w-52 shrink-0 justify-end">
+                                    <div className="text-right">
+                                       <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Unité</div>
+                                       <span className="text-xs font-semibold text-slate-600" dangerouslySetInnerHTML={{ __html: test.unit || '--' }} />
+                                    </div>
+                                    <div className="text-right w-20">
+                                       <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Réf.</div>
+                                       <span className="text-xs font-semibold text-slate-800">
+                                          {(() => {
+                                            if (!isNumeric) return 'QUALIT.';
+                                            const refVals = getTestReferenceValues(test, analysis.patientGender);
+                                            return formatReferenceRange(refVals.min, refVals.max);
+                                          })()}
+                                       </span>
+                                    </div>
+                                    <button 
+                                       onClick={() => toggleNote(result.id)}
+                                       className={`p-1.5 rounded-lg transition-colors ${notes[result.id] ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:text-blue-500 hover:bg-slate-50'}`}
+                                       tabIndex={-1}
+                                       title={notes[result.id] ? 'Modifier Note' : 'Ajouter Note'}
+                                    >
+                                       <MessageSquare size={14} />
+                                    </button>
+                                 </div>
+                            </div>
+                            
+                            {/* Notes Expanded */}
+                            {expandedNotes.includes(result.id) && (
+                               <div className={`ml-10 mr-4 mb-2 ${isValidated ? 'opacity-70' : ''}`}>
+                                  <div className="bg-slate-50 border border-slate-100 rounded-xl p-4">
+                                     <div className="flex items-center justify-between mb-3">
+                                        <div className="flex items-center gap-2 text-slate-500">
+                                           <MessageSquare size={12} className="text-blue-500" />
+                                           <span className="text-[10px] font-bold uppercase tracking-widest">Note Technique</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            {notes[result.id] && (
                                                 <button 
-                                                    onClick={() => toggleNote(result.id)}
-                                                    className="px-3 py-1.5 rounded-lg bg-slate-200/50 text-slate-600 text-[10px] font-bold hover:bg-slate-200 transition-colors"
-                                                >
-                                                    Annuler
-                                                </button>
-                                                <button 
-                                                    onClick={() => applyNote(result.id)}
-                                                    className="px-4 py-1.5 rounded-lg bg-blue-600 text-white text-[10px] font-bold hover:bg-blue-700 transition-all shadow-md shadow-blue-200 active:scale-95"
+                                                    onClick={() => deleteNote(result.id)}
+                                                    className="px-2.5 py-1 rounded-lg bg-red-50 text-red-600 text-[10px] font-bold hover:bg-red-100 transition-colors"
                                                     disabled={isValidated}
                                                 >
-                                                    Appliquer
+                                                    Supprimer
                                                 </button>
-                                            </div>
-                                         </div>
-                                         <textarea
-                                            value={draftNotes[result.id] || ''}
-                                            onChange={(e) => handleNoteChange(result.id, e.target.value)}
-                                            placeholder="Saisissez une observation (ex: prélèvement hémolysé, contrôle refait...)"
-                                            disabled={isValidated}
-                                            className="w-full bg-white border border-slate-200 rounded-xl p-3 text-xs focus:ring-4 focus:ring-blue-100 focus:border-blue-400 outline-none resize-none transition-all min-h-[80px]"
-                                            rows={2}
-                                         />
-                                      </div>
-                                   </div>
-                                )}
-                                
-                                {/* Static Note Display if not expanded but exists */}
-                                {!expandedNotes.includes(result.id) && notes[result.id] && (
-                                    <div className="mt-2 ml-14 mr-4 flex items-center gap-2 text-[10px] text-blue-600 font-medium bg-blue-50/30 px-3 py-2 rounded-xl border border-blue-50 w-fit cursor-pointer hover:bg-blue-50 transition-colors" onClick={() => toggleNote(result.id)}>
-                                        <MessageSquare size={12} />
-                                        <span className="truncate max-w-md">Note: {notes[result.id]}</span>
-                                    </div>
-                                )}
-                                </>
-                             )}
-                          </div>
+                                            )}
+                                            <button 
+                                                onClick={() => toggleNote(result.id)}
+                                                className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 text-[10px] font-bold hover:bg-slate-200 transition-colors"
+                                            >
+                                                Annuler
+                                            </button>
+                                            <button 
+                                                onClick={() => applyNote(result.id)}
+                                                className="btn-primary !rounded-lg !px-3 !py-1 text-[10px]"
+                                                disabled={isValidated}
+                                            >
+                                                Appliquer
+                                            </button>
+                                        </div>
+                                     </div>
+                                     <textarea
+                                        value={draftNotes[result.id] || ''}
+                                        onChange={(e) => handleNoteChange(result.id, e.target.value)}
+                                        placeholder="Saisissez une observation (ex: prélèvement hémolysé, contrôle refait...)"
+                                        disabled={isValidated}
+                                        className="w-full bg-white border border-slate-100 rounded-lg p-3 text-xs focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none resize-none transition-all min-h-[72px]"
+                                        rows={2}
+                                     />
+                                  </div>
+                               </div>
+                            )}
+                            
+                            {/* Static Note Indicator */}
+                            {!expandedNotes.includes(result.id) && notes[result.id] && (
+                                <div className="ml-10 mr-4 mb-1 flex items-center gap-1.5 text-[10px] text-blue-600 font-medium px-3 py-1.5 rounded-lg bg-blue-50/50 w-fit cursor-pointer hover:bg-blue-50 transition-colors" onClick={() => toggleNote(result.id)}>
+                                    <MessageSquare size={10} />
+                                    <span className="truncate max-w-md">Note: {notes[result.id]}</span>
+                                </div>
+                            )}
+                            </>
+                         )}
                       </div>
                     );
                  });
-               })()}
-            </div>
+                })() : null}
+             </div>
 
 
          {analysis.results.length === 0 && (
-            <div className="py-20 text-center">
-               <div className="w-20 h-20 bg-slate-100 rounded-3xl mx-auto flex items-center justify-center text-slate-400 mb-6">
-                  <Beaker size={40} />
+            <div className="py-16 text-center flex flex-col items-center">
+               <div className="w-16 h-16 bg-slate-50 rounded-full mx-auto flex items-center justify-center text-slate-300 mb-4">
+                  <Beaker size={32} />
                </div>
-               <h3 className="text-xl font-bold text-slate-900">Aucun test configuré</h3>
-               <p className="text-slate-500 mt-2">Veuillez vérifier la configuration de cette analyse.</p>
+               <h3 className="text-lg font-bold text-slate-700">Aucun test configuré</h3>
+               <p className="text-sm text-slate-400 mt-1">Veuillez vérifier la configuration de cette analyse.</p>
             </div>
          )}
       </div>
 
+      {/* Hidden Print Area */}
       <div style={{ position: 'absolute', left: '-9999px', width: '210mm', height: 'auto' }}>
         <div ref={printRef}>
           <RapportImpression 
@@ -1032,7 +997,6 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
         </div>
       </div>
 
-      {/* Confirmation Dialog */}
       <ConfirmDialog
         open={confirmDialog.open}
         onOpenChange={(open) => setConfirmDialog(prev => ({ ...prev, open }))}
@@ -1044,28 +1008,28 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
 
       </div>
 
-      {/* Notification Toast - Moved outside animate-fade-in div to fix position:fixed behavior */}
       {notification && (
         <NotificationToast type={notification.type} message={notification.message} />
       )}
+
       {/* Diatron Selection Dialog */}
       <Dialog open={!!diatronPreview} onOpenChange={(open) => !open && setDiatronPreview(null)}>
-        <DialogContent className="sm:max-w-2xl bg-white/95 backdrop-blur-xl border-white/20 shadow-2xl p-0 overflow-hidden flex flex-col max-h-[85vh]">
-          <DialogHeader className="p-8 pb-4 border-b border-slate-100 bg-white/50">
-            <div className="flex items-center gap-4">
-               <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/30">
-                  <Microscope size={24} />
+        <DialogContent className="sm:max-w-2xl bg-white border-slate-200 shadow-2xl p-0 overflow-hidden flex flex-col max-h-[85vh]">
+          <DialogHeader className="p-6 pb-4 border-b border-slate-100">
+            <div className="flex items-center gap-3">
+               <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center">
+                  <Microscope size={20} />
                </div>
                <div>
-                  <DialogTitle className="text-2xl font-black text-slate-900 tracking-tight">Sélectionner un Résultat</DialogTitle>
-                  <p className="text-slate-500 font-medium">Fichier importé : Diatron Abacus 380</p>
+                  <DialogTitle className="text-lg font-bold text-slate-800">Sélectionner un Résultat</DialogTitle>
+                  <p className="text-sm text-slate-500">Fichier importé : Diatron Abacus 380</p>
                </div>
             </div>
           </DialogHeader>
           
-          <div className="p-8 overflow-y-auto custom-scrollbar flex-1 bg-slate-50/50">
-            <div className="mb-6 flex items-center gap-3 p-4 bg-blue-50 text-blue-800 rounded-xl border border-blue-100">
-               <AlertCircle size={20} className="shrink-0" />
+          <div className="p-6 overflow-y-auto flex-1">
+            <div className="mb-5 flex items-center gap-2.5 p-4 bg-blue-50 text-blue-700 rounded-xl border border-blue-100">
+               <AlertCircle size={18} className="shrink-0" />
                <p className="text-sm font-medium">Plusieurs analyses ont été détectées dans ce fichier. Choisissez celle qui correspond à votre patient.</p>
             </div>
 
@@ -1074,41 +1038,39 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                 <button
                   key={record.index}
                   onClick={() => handleDiatronSelect(record.index)}
-                  className="group relative w-full flex items-center justify-between p-5 rounded-2xl border border-white bg-white shadow-sm hover:shadow-xl hover:shadow-blue-500/10 hover:border-blue-500/50 transition-all duration-300 text-left overflow-hidden"
+                  className="group w-full flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-white hover:border-blue-300 hover:shadow-md transition-all text-left"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-blue-500/0 to-blue-500/0 group-hover:from-blue-50 group-hover:via-white group-hover:to-white opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  
-                  <div className="relative flex items-center gap-6">
-                     <div className="flex flex-col items-center justify-center w-14 h-14 rounded-xl bg-slate-100 group-hover:bg-blue-600 transition-colors duration-300">
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 group-hover:text-blue-200 mb-0.5">ID</span>
-                        <span className="text-lg font-black text-slate-700 group-hover:text-white">{record.sampleId || '?'}</span>
+                  <div className="flex items-center gap-4">
+                     <div className="flex flex-col items-center justify-center w-12 h-12 rounded-xl bg-slate-50 group-hover:bg-blue-600 transition-colors">
+                        <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400 group-hover:text-blue-200">ID</span>
+                        <span className="text-base font-bold text-slate-700 group-hover:text-white">{record.sampleId || '?'}</span>
                      </div>
                      
                      <div>
-                        <div className="font-bold text-slate-900 text-lg group-hover:text-blue-700 transition-colors">
+                        <div className="font-semibold text-slate-800 group-hover:text-blue-700 transition-colors">
                            Analyse du {record.date}
                         </div>
-                        <div className="text-sm font-medium text-slate-500 flex items-center gap-2 mt-1">
-                           <span className="flex items-center gap-1 bg-slate-100 px-2 py-0.5 rounded text-xs text-slate-600 group-hover:bg-blue-100 group-hover:text-blue-700 transition-colors">
+                        <div className="text-sm text-slate-500 flex items-center gap-2 mt-0.5">
+                           <span className="flex items-center gap-1 text-xs">
                               <History size={12} /> {record.time}
                            </span>
                            <span className="text-slate-300">•</span>
-                           <span>Index #{record.index + 1}</span>
+                           <span className="text-xs">Index #{record.index + 1}</span>
                         </div>
                      </div>
                   </div>
 
-                  <div className="relative w-10 h-10 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-500 group-hover:shadow-lg group-hover:shadow-blue-500/30 transition-all duration-300 transform group-hover:translate-x-1">
-                    <ChevronRight size={20} />
+                  <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-500 transition-all">
+                    <ChevronRight size={16} />
                   </div>
                 </button>
               ))}
             </div>
           </div>
-          <DialogFooter className="p-6 border-t border-slate-100 bg-white shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-10">
+          <DialogFooter className="p-5 border-t border-slate-100">
             <button
               onClick={() => setDiatronPreview(null)}
-              className="px-6 py-3 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 hover:text-slate-900 transition-all"
+              className="btn-secondary"
             >
               Annuler l'importation
             </button>

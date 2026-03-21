@@ -1,126 +1,168 @@
 'use client';
 
+import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { 
-  LayoutDashboard, 
-  Beaker, 
-  FlaskConical, 
-  Settings, 
-  LogOut, 
-  PlusCircle,
-  Users,
-  X,
-  FileText
+import { NAVIGATION_GROUPS } from '@/lib/constants';
+import {
+  LogOut,
+  Microscope,
+  ChevronLeft,
 } from 'lucide-react';
 import { useMobileMenu } from '@/contexts/MobileMenuContext';
-import { useEffect, useRef } from 'react';
-
-const menuItems = [
-  { label: 'Dashboard', icon: LayoutDashboard, href: '/' },
-  { label: 'Analyses', icon: FlaskConical, href: '/analyses' },
-  { label: 'Patients', icon: Users, href: '/dashboard/patients' },
-  { label: 'Nouvelle Analyse', icon: PlusCircle, href: '/analyses/nouvelle' },
-
-  { label: 'Tests', icon: Beaker, href: '/tests' },
-  { label: 'Documents', icon: FileText, href: '/dashboard/documents' },
-  { label: 'Paramètres', icon: Settings, href: '/dashboard/settings' },
-];
 
 export function Navigation() {
   const pathname = usePathname();
-  const { isOpen, close } = useMobileMenu();
-  const prevPathnameRef = useRef(pathname);
+  const { isCollapsed, toggleCollapse, isOpen: mobileOpen, close: closeMobile } = useMobileMenu();
 
-  // Close menu only when pathname actually changes (navigation happens)
-  useEffect(() => {
-    if (prevPathnameRef.current !== pathname) {
-      close();
-      prevPathnameRef.current = pathname;
-    }
-  }, [pathname, close]);
+  const isActive = (href: string) => {
+    if (href === '/' || href === '/dashboard') return pathname === '/' || pathname === '/dashboard';
+    return pathname.startsWith(href);
+  };
+
+  const handleNavClick = () => closeMobile();
+  // We consider it open if not explicitly collapsed
+  const sidebarOpen = isCollapsed === false ? true : !isCollapsed;
 
   return (
     <>
-      {/* Mobile Backdrop */}
-      {isOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={close}
+      {/* Desktop Sidebar */}
+      <aside
+        className={`fixed top-0 left-0 h-full bg-white z-40 transition-all duration-300 hidden lg:flex flex-col shadow-[4px_0_24px_rgb(0,0,0,0.02)] ${
+          sidebarOpen ? 'w-64' : 'w-20'
+        }`}
+      >
+        {/* Logo */}
+        <div className="h-24 px-6 flex items-center gap-4">
+          <div className="w-10 h-10 rounded-2xl bg-blue-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/20">
+            <Microscope className="w-5 h-5 text-white" />
+          </div>
+          {sidebarOpen && (
+            <div className="overflow-hidden">
+              <h1 className="text-xl font-bold text-slate-800">
+                NexLab
+              </h1>
+              <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">CSSB System</p>
+            </div>
+          )}
+        </div>
+
+        {/* Navigation */}
+        <nav className="p-4 space-y-6 flex-1 overflow-y-auto">
+          {NAVIGATION_GROUPS.map((group, gIdx) => (
+            <div key={gIdx} className="space-y-2">
+              {sidebarOpen && (
+                <div className="px-4 text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-2">
+                  {group.title}
+                </div>
+              )}
+              <div className="space-y-1.5">
+                {group.links.map((item) => {
+                  const active = isActive(item.href);
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`flex items-center gap-3 py-3 rounded-2xl font-semibold transition-all duration-200 ${
+                        active
+                          ? 'bg-blue-50 text-blue-600 px-4'
+                          : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50 px-4'
+                      } ${!sidebarOpen && 'justify-center px-0'}`}
+                    >
+                      <item.icon className={`w-5 h-5 flex-shrink-0 ${active ? 'text-blue-500' : 'text-slate-400'}`} />
+                      {sidebarOpen && (
+                        <span className="text-sm flex-1">{item.name}</span>
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </nav>
+
+        {/* Bottom Actions */}
+        <div className="p-4 space-y-2 mt-auto">
+          <button className={`w-full flex items-center gap-3 py-3 rounded-2xl font-semibold text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors ${
+            !sidebarOpen ? 'justify-center px-0' : 'px-4'
+          }`}>
+            <LogOut className="w-5 h-5 flex-shrink-0 text-slate-400 group-hover:text-red-500" />
+            {sidebarOpen && <span className="text-sm">Déconnexion</span>}
+          </button>
+        </div>
+
+        {/* Toggle Button */}
+        <button
+          onClick={toggleCollapse}
+          className="absolute -right-3 top-10 w-7 h-7 bg-white shadow-md border border-slate-100 rounded-full flex items-center justify-center hover:bg-slate-50 transition-colors text-slate-400"
+        >
+          <ChevronLeft
+            className={`w-4 h-4 transition-transform ${!sidebarOpen && 'rotate-180'}`}
+          />
+        </button>
+      </aside>
+
+      {/* Mobile Overlay */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-30 lg:hidden"
+          onClick={closeMobile}
         />
       )}
 
-      {/* Navigation Sidebar */}
-      <nav className={`
-        sidebar-floating
-        transition-transform duration-300 ease-in-out
-        ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-        flex flex-col
-        p-6 pt-8
-      `}>
-        {/* Close Button (Mobile Only) */}
-        <button
-          onClick={close}
-          className="absolute top-6 right-6 w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center lg:hidden"
-        >
-          <X size={20} className="text-slate-600" />
-        </button>
-
-        <div className="flex items-center gap-3 mb-12 px-2">
-          <div className="w-10 h-10 bg-slate-900 rounded-2xl flex items-center justify-center shadow-lg shadow-slate-200">
-            <svg viewBox="0 0 40 40" className="w-7 h-7 fill-none stroke-white" strokeWidth="3">
-              <path d="M32 20c0-6.627-5.373-12-12-12S8 13.373 8 20s5.373 12 12 12c3.314 0 6.314-1.343 8.485-3.515" strokeLinecap="round" />
-              <path d="M20 14v12M14 20h12" stroke="white" strokeWidth="4" strokeLinecap="round" />
-            </svg>
+      {/* Mobile Sidebar */}
+      <aside
+        className={`fixed top-0 left-0 h-full w-72 bg-white z-40 transition-transform lg:hidden shadow-2xl ${
+          mobileOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="h-24 px-6 flex items-center gap-4 border-b border-slate-100">
+          <div className="w-10 h-10 rounded-2xl bg-blue-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/20">
+            <Microscope className="w-5 h-5 text-white" />
           </div>
-            <div className="flex flex-col">
-              <span className="font-black text-xl tracking-tight text-slate-900 leading-none">LABCARE</span>
-              <span className="text-[9px] uppercase font-bold tracking-[0.15em] mt-1">LIMS Precision</span>
+          <div className="overflow-hidden">
+            <h1 className="text-xl font-bold text-slate-800">NexLab</h1>
+             <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">CSSB System</p>
+          </div>
+        </div>
+
+        <nav className="p-4 space-y-6 flex-1 overflow-y-auto">
+          {NAVIGATION_GROUPS.map((group, gIdx) => (
+            <div key={gIdx} className="space-y-2">
+              <div className="px-4 text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-2">
+                {group.title}
+              </div>
+              <div className="space-y-1.5">
+                {group.links.map((item) => {
+                  const active = isActive(item.href);
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={handleNavClick}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-2xl font-semibold transition-all ${
+                        active
+                          ? 'bg-blue-50 text-blue-600'
+                          : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                      }`}
+                    >
+                      <item.icon className={`w-5 h-5 flex-shrink-0 ${active ? 'text-blue-500' : 'text-slate-400'}`} />
+                      <span className="text-sm flex-1">{item.name}</span>
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
+          ))}
+        </nav>
+        
+         <div className="p-4 space-y-2 mt-auto border-t border-slate-100">
+          <button className="w-full flex items-center gap-3 py-3 px-4 rounded-2xl font-semibold text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors">
+            <LogOut className="w-5 h-5 flex-shrink-0 text-slate-400 group-hover:text-red-500" />
+            <span className="text-sm">Déconnexion</span>
+          </button>
         </div>
-
-        <div className="flex-1 space-y-2 overflow-y-auto pr-2 custom-scrollbar">
-          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4 mb-4">Principal</div>
-          {menuItems.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link 
-                key={item.href} 
-                href={item.href}
-                className={`flex items-center gap-4 px-4 py-4 rounded-2xl transition-all duration-300 group relative ${
-                  isActive 
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' 
-                    : 'text-slate-500 hover:bg-slate-50 hover:text-blue-600'
-                }`}
-              >
-                <item.icon size={20} className={isActive ? 'text-white' : 'group-hover:scale-110 transition-transform'} />
-                <span className="font-bold text-sm tracking-tight">{item.label}</span>
-                {isActive && (
-                  <div className="absolute left-0 w-1 h-6 bg-white rounded-full ml-1" />
-                )}
-              </Link>
-            );
-          })}
-        </div>
-
-        <style jsx global>{`
-          .custom-scrollbar::-webkit-scrollbar {
-            width: 4px;
-          }
-          .custom-scrollbar::-webkit-scrollbar-track {
-            background: transparent;
-          }
-          .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #e2e8f0;
-            border-radius: 10px;
-          }
-          .custom-scrollbar:hover::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-          }
-        `}</style>
-
-
-      </nav>
+      </aside>
     </>
   );
 }

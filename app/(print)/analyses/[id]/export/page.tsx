@@ -1,0 +1,73 @@
+'use client';
+
+import { Geist } from "next/font/google";
+import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
+import { RapportImpression } from '@/components/print/RapportImpression';
+import { Analysis } from '@/lib/types';
+
+const geist = Geist({
+  subsets: ["latin"],
+  variable: "--font-geist",
+  display: "swap",
+});
+
+export default function ExportPage() {
+  const { id } = useParams<{ id: string }>();
+  const [analysis, setAnalysis] = useState<Analysis | null>(null);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const fetchAnalysis = async () => {
+      try {
+        const res = await fetch(`/api/analyses/${id}`);
+        if (res.ok) {
+          const data = await res.json();
+          setAnalysis(data);
+          
+          // Mark as printed if not already marked
+          if (!data.printedAt) {
+            await fetch(`/api/analyses/${id}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ printedAt: new Date().toISOString() })
+            });
+          }
+
+          setTimeout(() => setReady(true), 2000);
+        }
+      } catch (error) {
+        console.error('Error fetching analysis for export:', error);
+      }
+    };
+
+    if (id) fetchAnalysis();
+  }, [id]);
+
+  if (!analysis) return null;
+
+  const resultsRecord: Record<string, string> = {};
+  analysis.results?.forEach(r => {
+    resultsRecord[r.id] = r.value || '';
+  });
+
+  return (
+    <div className={`${geist.variable} font-sans`}>
+      <style>{`
+        *, body, html {
+          font-family: var(--font-geist), ui-sans-serif, system-ui, sans-serif !important;
+        }
+        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        body { margin: 0 !important; padding: 0 !important; background: white !important; }
+      `}</style>
+
+      <RapportImpression
+        analysis={analysis}
+        results={resultsRecord}
+        selectedResultIds={[]}
+      />
+
+      {ready && <div id="render-complete" style={{ display: 'none' }} />}
+    </div>
+  );
+}
