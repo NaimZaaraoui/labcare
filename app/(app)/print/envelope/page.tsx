@@ -14,29 +14,30 @@ function EnvelopeContent() {
   const patientId = searchParams.get('patientId');
   
   const [analysis, setAnalysis] = useState<Analysis | undefined>();
+  const [reportSettings, setReportSettings] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await fetch('/api/settings');
+        if (res.ok) {
+          const data = await res.json();
+          setReportSettings(data);
+        }
+      } catch (e) {
+        console.error('Error fetching settings for envelope:', e);
+      }
+    };
+    fetchSettings();
+
     if (patientId) {
       async function fetchAnalysis() {
         setLoading(true);
         try {
-          const res = await fetch(`/api/analyses/${patientId}/results`); // Using existing endpoint logic or adjust if needed to just get patient info
-          // Actually we need patient info. The previous implementation used an analysis endpoint?
-          // Let's check if we have a patient endpoint.
-          // Since the user just wants the envelope, maybe just fetching patient details is enough.
-          // But the previous code used `anaysis` prop.
-          // Let's assume we fetch the latest analysis for the patient to get the ID and Date.
-          
+          const res = await fetch(`/api/analyses/${patientId}/results`); 
           if (res.ok) {
             const data = await res.json();
-             // The API might return a list or a single object. 
-             // If it returns a list of analyses, we take the latest.
-             // If the endpoint is specific to results, it might be different.
-             // Let's stick to what was working or robustify.
-             
-             // If we just want patient details, we might need a different fetch if there are no analyses.
-             // But for now, let's keep it simple. If patientId is present, try to fetch data.
              setAnalysis(data);
           }
         } catch (e) {
@@ -100,7 +101,7 @@ function EnvelopeContent() {
 
            {/* The actual component to print (Visible on screen as preview) */}
            <div className={`shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-sm overflow-hidden scale-[0.6] origin-top md:scale-[0.85] lg:scale-100 transition-transform ${loading ? 'opacity-50 grayscale' : ''}`}>
-             <EnvelopeImpression ref={componentRef} analysis={analysis} />
+             <EnvelopeImpression ref={componentRef} analysis={analysis} settings={reportSettings} />
            </div>
         </div>
 

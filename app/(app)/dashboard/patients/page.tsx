@@ -7,6 +7,7 @@ import {
   Search, 
   Plus, 
   Phone, 
+  Mail,
   Calendar, 
   ChevronRight,
   Edit2
@@ -30,8 +31,12 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { X, Save, Trash2 } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 
 export default function PatientsPage() {
+  const { data: session } = useSession();
+  const role = (session?.user as any)?.role || 'TECHNICIEN';
+
   const router = useRouter();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
@@ -149,102 +154,134 @@ export default function PatientsPage() {
 
   return (
     <div className="p-8 space-y-8 animate-fade-in pb-24 max-w-7xl mx-auto">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-lg shadow-slate-200">
-             <Users size={24} />
-          </div>
-          <div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight">Patients</h1>
-            <p className="text-slate-500 font-medium">Répertoire et dossier médical</p>
-          </div>
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Patients</h1>
+          <p className="text-slate-500 font-medium mt-1">Répertoire central et dossiers médicaux dématérialisés.</p>
         </div>
-
-        <button 
-          onClick={() => router.push('/analyses/nouvelle')} // Or a dedicated create patient modal
-          className="px-6 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all flex items-center gap-2"
-        >
-          <Plus size={20} /> Nouveau Patient
-        </button>
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="hidden md:flex flex-col items-end">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total</span>
+            <span className="text-2xl font-black text-slate-900">{patients.length}{hasMore ? '+' : ''}</span>
+          </div>
+          {role !== 'MEDECIN' && (
+            <button 
+              onClick={() => router.push('/analyses/nouvelle')}
+              className="px-5 py-2.5 rounded-2xl bg-blue-600 text-white font-black hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all flex items-center gap-2 active:scale-95"
+            >
+              <Plus size={18} /> Nouveau Patient
+            </button>
+          )}
+        </div>
       </div>
 
+      {/* Search Bar */}
       <div className="relative">
-         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-          <input 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Rechercher par nom, prénom ou téléphone..."
-            className="input-premium pl-12 h-16 w-full text-lg"
-          />
+        <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+        <input 
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Rechercher par nom, prénom, téléphone..."
+          className="w-full bg-white border border-slate-200 rounded-2xl pl-14 pr-6 h-14 text-base font-bold text-slate-800 placeholder:text-slate-400 focus:ring-4 focus:ring-blue-100 focus:border-blue-300 outline-none transition-all shadow-sm"
+        />
       </div>
 
-      {loading ? (
-        <div className="space-y-4">
-          {[1,2,3].map(i => <div key={i} className="h-24 bg-slate-50 rounded-3xl animate-pulse" />)}
+
+      {loading && !loadingMore ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1,2,3,4,5,6].map(i => (
+            <div key={i} className="h-64 bg-slate-50 rounded-[2.5rem] border border-slate-100 animate-pulse" />
+          ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {patients.map(patient => (
-            <div key={patient.id} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-xl hover:border-blue-100 transition-all group relative overflow-hidden flex flex-col h-full">
-               <div className="flex justify-between items-start mb-3 relative z-10">
-                  <div className="flex items-center gap-3">
-                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shrink-0 ${
+            <div key={patient.id} className="bento-panel !p-6 hover:shadow-2xl hover:border-blue-100 transition-all group flex flex-col h-full bg-white">
+               <div className="flex flex-col gap-3 mb-6">
+                  <div className="flex items-center gap-4">
+                     <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl shrink-0 shadow-inner ${
                        patient.gender === 'F' ? 'bg-rose-50 text-rose-500' : 'bg-blue-50 text-blue-500'
                      }`}>
                         {patient.firstName[0]}{patient.lastName[0]}
                      </div>
                      <div className="min-w-0">
-                        <h3 className="font-black text-slate-900 leading-tight text-sm truncate uppercase">{patient.lastName} {patient.firstName}</h3>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
-                          {calculateAge(patient.birthDate)} ans  •  {patient.gender === 'M' ? 'Homme' : 'Femme'}
-                        </p>
+                        <h3 className="font-black text-slate-900 leading-tight text-lg truncate uppercase group-hover:text-blue-600 transition-colors">{patient.lastName} {patient.firstName}</h3>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest ${patient.gender === 'M' ? 'bg-blue-100 text-blue-700' : 'bg-rose-100 text-rose-700'}`}>
+                            {patient.gender === 'M' ? 'Homme' : 'Femme'}
+                          </span>
+                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-100 px-2 py-0.5 rounded-md">
+                            {calculateAge(patient.birthDate)} ans
+                          </span>
+                        </div>
                      </div>
                   </div>
-                  <div className="flex items-center gap-0.5">
-                      <button 
-                        onClick={() => router.push(`/analyses/nouvelle?patientId=${patient.id}`)}
-                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors group/btn relative"
-                        title="Nouvelle Analyse"
-                      >
-                         <Plus size={16} />
-                         <span className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover/btn:opacity-100 whitespace-nowrap pointer-events-none transition-opacity">Nouvelle Analyse</span>
-                      </button>
+                  <div className="flex items-center gap-1 ">
+                      {role !== 'MEDECIN' && (
+                        <button 
+                          onClick={() => router.push(`/analyses/nouvelle?patientId=${patient.id}`)}
+                          className="w-10 h-10 flex items-center justify-center text-blue-600 hover:bg-blue-50 rounded-xl transition-all shadow-sm border border-slate-100 bg-white"
+                          title="Nouvelle Analyse"
+                        >
+                           <Plus size={18} />
+                        </button>
+                      )}
+
                       <button 
                           onClick={() => setEditingPatient(patient)}
-                          className="p-1.5 text-slate-300 hover:text-blue-600 transition-colors"
+                          className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all shadow-sm border border-slate-100 bg-white"
                       >
-                         <Edit2 size={14} />
+                         <Edit2 size={16} />
                       </button>
                   </div>
                </div>
 
-               <div className="space-y-2 relative z-10 flex-1">
-                  <div className="flex items-center gap-2 text-[11px] font-bold text-slate-500">
-                     <Phone size={12} className="text-slate-300" />
-                     {patient.phoneNumber || 'Non renseigné'}
+               <div className="space-y-4 flex-1">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-slate-50/50 p-3 rounded-2xl border border-slate-100/50">
+                      <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1">
+                        <Phone size={10} /> Téléphone
+                      </div>
+                      <div className="text-xs font-black text-slate-700 truncate">{patient.phoneNumber || '—'}</div>
+                    </div>
+                    <div className="bg-slate-50/50 p-3 rounded-2xl border border-slate-100/50">
+                      <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1">
+                        <Calendar size={10} /> Naissance
+                      </div>
+                      <div className="text-xs font-black text-slate-700">{patient.birthDate ? new Date(patient.birthDate).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}</div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 text-[11px] font-bold text-slate-500">
-                     <Calendar size={12} className="text-slate-300" />
-                     {patient.birthDate ? new Date(patient.birthDate).toLocaleDateString() : 'Date inconnue'}
-                  </div>
+                  
+                  {patient.email && (
+                    <div className="bg-slate-50/50 p-3 rounded-2xl border border-slate-100/50">
+                       <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1">
+                        <Mail size={10} /> Email
+                      </div>
+                      <div className="text-xs font-bold text-slate-600 truncate">{patient.email}</div>
+                    </div>
+                  )}
                </div>
 
-               {/* View File Link - Subtle Footer */}
-               <div className="mt-4 pt-3 border-t border-slate-50 flex justify-end relative z-10">
+               <div className="mt-6">
                   <Link 
                     href={`/dashboard/patients/${patient.id}`}
-                    className="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-blue-600 transition-colors flex items-center gap-1"
+                    className="w-full flex items-center justify-between px-5 py-3.5 bg-slate-50 hover:bg-blue-600 rounded-2xl text-[11px] font-black text-slate-500 hover:text-white uppercase tracking-widest transition-all group/link"
                   >
-                    Dossier Complet <ChevronRight size={12} />
+                    Voir le dossier complet
+                    <ChevronRight size={14} className="group-hover/link:translate-x-1 transition-transform" />
                   </Link>
                </div>
             </div>
           ))}
           
           {patients.length === 0 && !loading && (
-             <div className="col-span-full text-center py-20 text-slate-400">
-                <Users size={48} className="mx-auto mb-4 opacity-50" />
-                <p className="font-medium">Aucun patient trouvé</p>
+             <div className="col-span-full bento-panel py-32 text-center bg-slate-50/50 border-dashed">
+                <div className="w-20 h-20 rounded-full bg-slate-200/50 flex items-center justify-center mx-auto mb-6 text-slate-400">
+                  <Users size={40} />
+                </div>
+                <h3 className="text-2xl font-black text-slate-900 mb-2">Aucun patient trouvé</h3>
+                <p className="text-slate-500 font-medium max-w-sm mx-auto">Ajustez votre recherche ou créez une fiche pour un nouveau patient.</p>
              </div>
           )}
         </div>

@@ -119,6 +119,9 @@ export async function POST(request: NextRequest) {
       patientAddress,
       provenance,
       medecinPrescripteur,
+      isUrgent,
+      globalNote,
+      globalNotePlacement,
       receiptNumber: receiptNumberFromBody,
       testsIds 
     } = body;
@@ -166,6 +169,9 @@ export async function POST(request: NextRequest) {
         receiptNumber: receiptNumberFromBody || receiptNumber,
         provenance: provenance || null,
         medecinPrescripteur: medecinPrescripteur || null,
+        isUrgent: Boolean(isUrgent),
+        globalNote: globalNote?.trim() || null,
+        globalNotePlacement: ['all', 'first', 'last'].includes(globalNotePlacement) ? globalNotePlacement : 'all',
         status: 'pending',
         results: {
           create: resolvedTestsIds.map((testId: string) => ({

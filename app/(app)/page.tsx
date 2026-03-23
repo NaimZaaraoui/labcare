@@ -23,6 +23,14 @@ const fmtD = (d: string | Date) => {
   return m < 60 ? `${m}m` : `${Math.floor(m/60)}h ${m%60}min`;
 };
 
+const STATUS_MAP: Record<string, { label: string; classes: string }> = {
+  pending: { label: 'En attente', classes: 'bg-amber-50 text-amber-600' },
+  in_progress: { label: 'En cours', classes: 'bg-blue-50 text-blue-600' },
+  validated_tech: { label: 'Valid. Tech.', classes: 'bg-indigo-50 text-indigo-600' },
+  validated_bio: { label: 'Validé ✓', classes: 'bg-emerald-50 text-emerald-600' },
+  completed: { label: 'Validé ✓', classes: 'bg-emerald-50 text-emerald-600' },
+};
+
 export default function Dashboard() {
   const { data: session } = useSession();
   const [state, setState] = useState<{ analyses: Analysis[], stats: Stats }>({ 
@@ -44,15 +52,19 @@ export default function Dashboard() {
 
   useEffect(() => { sync(); }, [sync]);
 
-  const active = state.analyses.filter(a => a.status !== 'completed').slice(0, 8);
+  const active = state.analyses
+    .filter(a => a.status !== 'completed' && a.status !== 'validated_bio')
+    .slice(0, 8);
+
+  const role = (session?.user as any)?.role || 'TECHNICIEN';
 
   return (
     <div className="flex flex-col gap-8 pb-10">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Bonjour, Dr. Zaaraoui</h1>
-          <p className="text-sm text-slate-500 mt-1">Voici l'état de la paillasse aujourd'hui.</p>
+          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Bonjour, {session?.user?.name || 'Utilisateur'}</h1>
+          <p className="text-sm text-slate-500 mt-1 font-medium">Voici l'état de la paillasse aujourd'hui.</p>
         </div>
         <button onClick={sync} className="btn-secondary group">
           <RefreshCw size={16} className={loading ? 'animate-spin text-blue-500' : 'text-slate-400 group-hover:text-blue-500'} /> 
@@ -63,17 +75,20 @@ export default function Dashboard() {
       {/* Bento KPI Row - Hybrid Density */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
         <KpiCard title="Total du jour" count={state.stats.totalToday ?? state.stats.total} icon={Hash} iconColor="bg-blue-100 text-blue-600" />
-        <KpiCard title="En attente" count={state.stats.pending} icon={Clock} iconColor="bg-amber-100 text-amber-600" active />
-        <KpiCard title="Anormales (À vérifier)" count={state.stats.urgent} icon={AlertCircle} iconColor="bg-red-100 text-red-600" />
+        <KpiCard title="En attente" count={state.stats.pending} icon={Clock} iconColor="bg-orange-100 text-orange-600" active />
+        <KpiCard title="Anormales (À vérifier)" count={state.stats.urgent} icon={AlertCircle} iconColor="bg-rose-100 text-rose-600" />
         <KpiCard title="Validées" count={state.stats.completed} icon={CheckCircle2} iconColor="bg-emerald-100 text-emerald-600" />
       </div>
 
       {/* Action Cards Row directly under KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
-        <ActionCard label="Nouvelle Analyse" icon={Plus} href="/analyses/nouvelle" primary />
+        {role !== 'MEDECIN' && (
+          <ActionCard label="Nouvelle Analyse" icon={Plus} href="/analyses/nouvelle" primary />
+        )}
         <ActionCard label="Ajouter Patient" icon={Users} href="/dashboard/patients" />
         <ActionCard label="Feuille de paillasse" icon={Layers} href="/analyses" />
       </div>
+
 
       {/* Main Content Areas */}
       <div className="grid grid-cols-1 gap-8 mt-2">
@@ -117,11 +132,10 @@ export default function Dashboard() {
                     {a.orderNumber}
                   </div>
                   <div className="col-span-3 flex justify-end">
-                    <span className={`status-pill ${a.status === 'completed' 
-                      ? 'bg-emerald-50 text-emerald-600' 
-                      : a.status === 'in_progress' ? 'bg-blue-50 text-blue-600' : 'bg-amber-50 text-amber-600'}`}>
-                      {a.status === 'pending' ? 'En attente' : a.status === 'in_progress' ? 'En analyse' : 'Validé'}
-                    </span>
+                    {(() => {
+                      const s = STATUS_MAP[a.status || ''] ?? { label: a.status || '—', classes: 'bg-slate-50 text-slate-500' };
+                      return <span className={`status-pill ${s.classes}`}>{s.label}</span>;
+                    })()}
                   </div>
                 </Link>
               )) : (

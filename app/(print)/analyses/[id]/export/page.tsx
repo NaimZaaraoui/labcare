@@ -15,6 +15,7 @@ const geist = Geist({
 export default function ExportPage() {
   const { id } = useParams<{ id: string }>();
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
+  const [reportSettings, setReportSettings] = useState<Record<string, string>>({});
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -41,7 +42,22 @@ export default function ExportPage() {
       }
     };
 
-    if (id) fetchAnalysis();
+    const fetchSettings = async () => {
+      try {
+        const res = await fetch('/api/settings');
+        if (res.ok) {
+          const data = await res.json();
+          setReportSettings(data);
+        }
+      } catch (e) {
+        console.error('Error fetching settings for export:', e);
+      }
+    };
+
+    if (id) {
+      fetchAnalysis();
+      fetchSettings();
+    }
   }, [id]);
 
   if (!analysis) return null;
@@ -65,6 +81,7 @@ export default function ExportPage() {
         analysis={analysis}
         results={resultsRecord}
         selectedResultIds={[]}
+        settings={reportSettings}
       />
 
       {ready && <div id="render-complete" style={{ display: 'none' }} />}

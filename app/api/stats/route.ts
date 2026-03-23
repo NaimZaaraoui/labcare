@@ -21,11 +21,11 @@ export async function GET() {
       } 
     });
     
-    const completed = await prisma.analysis.count({ 
-      where: { 
-        status: 'completed',
+    const completed = await prisma.analysis.count({
+      where: {
+        status: { in: ['completed', 'validated_bio'] },
         updatedAt: { gte: startOfDay }
-      } 
+      }
     });
     
     const urgent = await prisma.analysis.count({
@@ -45,9 +45,8 @@ export async function GET() {
     });
 
     const inProgress = await prisma.analysis.count({
-      where: { 
-        status: 'pending',
-        results: { some: {} },
+      where: {
+        status: { in: ['in_progress', 'validated_tech'] },
         createdAt: { gte: startOfDay }
       }
     });
@@ -55,7 +54,7 @@ export async function GET() {
     // --- TAT (Turnaround Time) du jour ---
     const completedToday = await prisma.analysis.findMany({
       where: {
-        status: 'completed',
+        status: { in: ['completed', 'validated_bio'] },
         updatedAt: { gte: startOfDay }
       },
       select: {
@@ -83,7 +82,7 @@ export async function GET() {
         strftime('%Y-%m', createdAt) as month,
         COUNT(*) as count
       FROM analyses
-      WHERE status = 'completed'
+      WHERE status IN ('completed', 'validated_bio')
         AND createdAt >= ${twelveMonthsAgo.toISOString()}
       GROUP BY month
       ORDER BY month ASC

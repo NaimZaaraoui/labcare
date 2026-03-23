@@ -8,6 +8,7 @@ import { Analysis } from '@/lib/types';
 
 interface EnvelopeImpressionProps {
   analysis?: Analysis;
+  settings?: Record<string, string>;
 }
 
 /*
@@ -28,7 +29,11 @@ interface EnvelopeImpressionProps {
 */
 
 export const EnvelopeImpression = forwardRef<HTMLDivElement, EnvelopeImpressionProps>(
-  ({ analysis }, ref) => {
+  ({ analysis, settings }, ref) => {
+    const LAB_NAME     = settings?.lab_name     || 'Laboratoire';
+    const LAB_SUBTITLE = settings?.lab_subtitle || 'Service de Laboratoire';
+    const LAB_ADDRESS  = [settings?.lab_address_1, settings?.lab_address_2].filter(Boolean).join(', ');
+    const LAB_PHONE    = settings?.lab_phone    || '';
     const patientName = analysis
       ? `${analysis.patientFirstName || ''} ${analysis.patientLastName || ''}`.trim()
       : '................................................';
@@ -113,28 +118,28 @@ export const EnvelopeImpression = forwardRef<HTMLDivElement, EnvelopeImpressionP
                   <div className="flex flex-col gap-1 w-full flex-1">
                     <div>
                       <h1 className="text-xl flex gap-7 items-center font-black text-slate-900 tracking-tight leading-none print:text-black">
-                        CSSB GALLEL
+                        {LAB_NAME}
                         <span className='flex-1 h-1 bg-slate-900'/>
                       </h1>
                       <div className="text-[9px] font-extrabold text-blue-600 uppercase tracking-widest mt-0.5 print:text-black">
-                        SERVICE DE LABORATOIRE
+                        {LAB_SUBTITLE.toUpperCase()}
                       </div>
                     </div>
                     
                     {/* Adresse avec icônes fines */}
                     <div className="flex flex-col gap-0.5 mt-1">
                       <div className="flex items-center gap-1.5 text-slate-500 print:text-black">
-                        <MapPin size={10} className="text-slate-400 print:text-black" />
-                        <span className="text-[8px] font-bold uppercase tracking-wide">
-                          El Gallel, Manzel Bouzaienne, Sidi Bouzid
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1.5 text-slate-500 print:text-black">
-                        <Phone size={10} className="text-slate-400 print:text-black" />
-                        <span className="text-[8px] font-bold tracking-wide">
-                          +216 XX XXX XXX
-                        </span>
-                      </div>
+                         <MapPin size={10} className="text-slate-400 print:text-black" />
+                         <span className="text-[8px] font-bold uppercase tracking-wide">
+                           {LAB_ADDRESS || 'El Gallel, Menzel Bouzaïene, Sidi Bouzid'}
+                         </span>
+                       </div>
+                       <div className="flex items-center gap-1.5 text-slate-500 print:text-black">
+                         <Phone size={10} className="text-slate-400 print:text-black" />
+                         <span className="text-[8px] font-bold tracking-wide">
+                           {LAB_PHONE || ''}
+                         </span>
+                       </div>
                     </div>
                   </div>
                 </div>

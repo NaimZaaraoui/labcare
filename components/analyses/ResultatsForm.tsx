@@ -2,11 +2,14 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { 
   Save, Printer, CheckCircle, 
   Activity, ArrowLeft, Beaker, 
   Droplets, Microscope, Sparkles, AlertCircle,
-  ChevronRight, History, Calculator, MessageSquare, Mail
+  ChevronRight, History, Calculator, MessageSquare, Mail,
+  PencilLine, MessageCircle,
+  NotepadTextIcon
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
@@ -16,7 +19,6 @@ import { RapportImpression } from '@/components/print/RapportImpression';
 import { Analysis, Result } from '@/lib/types';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { NotificationToast } from '@/components/ui/notification-toast';
 import {
   Dialog,
@@ -50,12 +52,14 @@ const HGPO75_SORT_ORDER = ['T0', 'T1H', 'T2H'];
 
 export function ResultatsForm({ analysisId }: ResultatsFormProps) {
   const router = useRouter();
+  const session = useSession();
   const printRef = useRef<HTMLDivElement>(null);
   const inputsRef = useRef<Record<string, HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null>>({});
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [validating, setValidating] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
   const [results, setResults] = useState<Record<string, string>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [draftNotes, setDraftNotes] = useState<Record<string, string>>({});
@@ -67,6 +71,26 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
   const [diatronPreview, setDiatronPreview] = useState<{ index: number; sampleId: string; date: string; time: string }[] | null>(null);
   const [lastFileContent, setLastFileContent] = useState<string | null>(null);
   const [sendingEmail, setSendingEmail] = useState(false);
+  const [availableTests, setAvailableTests] = useState<any[]>([]);
+  const [testSearch, setTestSearch] = useState('');
+  const [selectedTestIds, setSelectedTestIds] = useState<string[]>([]);
+  const [savingMeta, setSavingMeta] = useState(false);
+  const [saveGlobalNoteBusy, setSaveGlobalNoteBusy] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [globalNote, setGlobalNote] = useState('');
+  const [globalNotePlacement, setGlobalNotePlacement] = useState<'all' | 'first' | 'last'>('all');
+  const [editForm, setEditForm] = useState({
+    dailyId: '',
+    receiptNumber: '',
+    patientFirstName: '',
+    patientLastName: '',
+    patientAge: '',
+    patientGender: 'M',
+    provenance: '',
+    medecinPrescripteur: '',
+    isUrgent: false
+  });
+  const [reportSettings, setReportSettings] = useState<Record<string, string>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const toggleSelection = (id: string) => {
@@ -118,16 +142,23 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
     }
   };
 
-  const [confirmDialog, setConfirmDialog] = useState<{
-    open: boolean;
-    title: string;
-    description: string;
-    action: () => Promise<void>;
-  }>({ open: false, title: '', description: '', action: async () => {} });
-
   useEffect(() => {
     loadAnalysis();
+    loadTests();
+    loadSettings();
   }, [analysisId]);
+
+  const loadSettings = async () => {
+    try {
+      const res = await fetch('/api/settings');
+      if (res.ok) {
+        const data = await res.json();
+        setReportSettings(data);
+      }
+    } catch (e) {
+      console.error('Erreur chargement paramètres impression', e);
+    }
+  };
 
   const loadAnalysis = async () => {
     try {
@@ -144,10 +175,35 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
       });
       setResults(initialResults);
       setNotes(initialNotes);
+      setGlobalNote(data.globalNote || '');
+      setGlobalNotePlacement(data.globalNotePlacement || 'all');
+      setEditForm({
+        dailyId: data.dailyId || '',
+        receiptNumber: data.receiptNumber || '',
+        patientFirstName: data.patientFirstName || '',
+        patientLastName: data.patientLastName || '',
+        patientAge: data.patientAge !== null && data.patientAge !== undefined ? String(data.patientAge) : '',
+        patientGender: data.patientGender || 'M',
+        provenance: data.provenance || '',
+        medecinPrescripteur: data.medecinPrescripteur || '',
+        isUrgent: Boolean(data.isUrgent)
+      });
+      setSelectedTestIds(Array.from(new Set(data.results.map((r: Result) => r.testId))));
     } catch (error) {
       console.error('Erreur:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadTests = async () => {
+    try {
+      const response = await fetch('/api/tests');
+      if (!response.ok) return;
+      const data = await response.json();
+      setAvailableTests(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Erreur chargement tests', error);
     }
   };
 
@@ -312,49 +368,105 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
     }
   };
 
-  const executeValidation = async () => {
-    if (!analysis) return;
-    setValidating(true);
-    
+  const saveGlobalNote = async () => {
+    setSaveGlobalNoteBusy(true);
     try {
-      const response = await fetch(`/api/analyses/${analysisId}/validate`, { method: 'POST' });
-      if (!response.ok) {
-        let errorMessage = 'Erreur serveur';
-        const bodyText = await response.text();
-        try {
-          const error = JSON.parse(bodyText);
-          errorMessage = error.error || error.details || errorMessage;
-        } catch {
-          errorMessage = bodyText || errorMessage;
-        }
-        console.error('Validation error:', errorMessage);
-        throw new Error(errorMessage);
-      }
-      await loadAnalysis();
-      showNotification('success', 'Analyse validée et verrouillée');
+      const response = await fetch(`/api/analyses/${analysisId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ globalNote, globalNotePlacement }),
+      });
+      if (!response.ok) throw new Error('Impossible d’enregistrer la note globale');
+      const updated = await response.json();
+      setAnalysis(updated);
+      showNotification('success', 'Note globale enregistrée');
     } catch (error) {
-      console.error('Validation exception:', error);
-      const errorMsg = error instanceof Error ? error.message : 'Erreur lors de la validation';
-      showNotification('error', `Erreur lors de la validation: ${errorMsg}`);
+      console.error(error);
+      showNotification('error', 'Erreur lors de la sauvegarde de la note globale');
     } finally {
-      setValidating(false);
+      setSaveGlobalNoteBusy(false);
     }
   };
 
-  const handleValidate = () => {
-    if (!analysis) return;
-    
-    if (completedCount < totalCount) {
-       showNotification('error', 'Veuillez saisir tous les résultats avant de valider.');
-       return;
-    }
+  const saveAnalysisMeta = async () => {
+    setSavingMeta(true);
+    try {
+      const testsResponse = await fetch(`/api/analyses/${analysisId}/results`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          testsIds: selectedTestIds
+        }),
+      });
+      if (!testsResponse.ok) throw new Error('Impossible de mettre à jour les tests sélectionnés');
 
-    setConfirmDialog({
-      open: true,
-      title: 'Validation définitive',
-      description: 'Êtes-vous sûr de vouloir valider ces résultats ? Cette action est irréversible.',
-      action: executeValidation
-    });
+      const response = await fetch(`/api/analyses/${analysisId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          dailyId: editForm.dailyId,
+          receiptNumber: editForm.receiptNumber,
+          patientFirstName: editForm.patientFirstName,
+          patientLastName: editForm.patientLastName,
+          patientAge: editForm.patientAge,
+          patientGender: editForm.patientGender,
+          provenance: editForm.provenance,
+          medecinPrescripteur: editForm.medecinPrescripteur,
+          isUrgent: editForm.isUrgent
+        }),
+      });
+      if (!response.ok) throw new Error('Impossible de mettre à jour le dossier');
+      await response.json();
+      await loadAnalysis();
+      setEditDialogOpen(false);
+      showNotification('success', 'Dossier mis à jour');
+    } catch (error) {
+      console.error(error);
+      showNotification('error', 'Erreur lors de la mise à jour du dossier');
+    } finally {
+      setSavingMeta(false);
+    }
+  };
+
+  const toggleSelectedTest = (testId: string) => {
+    setSelectedTestIds(prev => (
+      prev.includes(testId) ? prev.filter(id => id !== testId) : [...prev, testId]
+    ));
+  };
+
+  const handleValidation = async (type: 'tech' | 'bio') => {
+    if (!analysis) return;
+    if (type === 'tech') {
+      const tc = analysis.results.filter(r => !r.test?.isGroup).length;
+      const cc = analysis.results.filter(r => !r.test?.isGroup && results[r.id] && results[r.id] !== '').length;
+      if (tc === 0 || cc < tc) {
+        setValidationError('Saisissez tous les résultats et sauvegardez avant la validation technique.');
+        showNotification('error', 'Saisissez tous les résultats et sauvegardez avant la validation technique.');
+        return;
+      }
+    }
+    setValidating(true);
+    setValidationError(null);
+    try {
+      const res = await fetch(`/api/analyses/${analysisId}/validate`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setValidationError(data.error || 'Erreur de validation');
+        return;
+      }
+      await loadAnalysis();
+      showNotification('success', type === 'tech'
+        ? 'Validation technique enregistrée'
+        : 'Résultats libérés — validation biologique enregistrée');
+    } catch {
+      setValidationError('Erreur réseau');
+    } finally {
+      setValidating(false);
+    }
   };
 
   const handlePrint = useReactToPrint({
@@ -402,6 +514,10 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
     } finally {
       setSendingEmail(false);
     }
+  };
+
+  const handleWhatsApp = () => {
+    showNotification('success', 'Fonction WhatsApp à venir.');
   };
 
   const handleDiatronFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -488,7 +604,10 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
     const refVals = getTestReferenceValues(test, analysis.patientGender);
     return (refVals.min !== null || refVals.max !== null) && isAbnormal(val, test);
   }).length;
-  const isValidated = analysis.status === 'completed';
+  const isFinalValidated = analysis.status === 'validated_bio' || analysis.status === 'completed';
+  const role = (session?.data?.user as any)?.role || '';
+  const canTech = ['TECHNICIEN', 'ADMIN'].includes(role);
+  const canBio = ['MEDECIN', 'ADMIN'].includes(role);
   const hasNFS = analysis.results.some(r => r.test && NFS_SORT_ORDER.includes(r.test.code));
 
     const sortResults = (results: Result[]) => {
@@ -562,7 +681,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
 
       {/* ─── Header Panel ─── */}
       <div className="bento-panel p-8">
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+        <div className="flex flex-col items-start gap-6">
           <div className="flex items-center gap-4">
             <button 
               onClick={() => router.push('/analyses')}
@@ -581,37 +700,132 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                    <>{analysis.patientFirstName} <span className="text-blue-600">{analysis.patientLastName}</span></>
                 ) : 'Patient Sans Nom'}
               </h1>
+              {analysis.validatedTechAt && (
+                <div className="mt-1 flex items-center gap-1.5 text-xs text-indigo-600">
+                  <CheckCircle size={12} />
+                  <span>Validation technique: {analysis.validatedTechName || 'Utilisateur'} — {format(new Date(analysis.validatedTechAt), 'dd/MM/yyyy HH:mm', { locale: fr })}</span>
+                </div>
+              )}
+              {analysis.validatedBioAt && (
+                <div className="mt-1 flex items-center gap-1.5 text-xs text-emerald-600">
+                  <CheckCircle size={12} />
+                  <span>Validation biologique: {analysis.validatedBioName || 'Utilisateur'} — {format(new Date(analysis.validatedBioAt), 'dd/MM/yyyy HH:mm', { locale: fr })}</span>
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="flex gap-3">
-            {!isValidated ? (
+          {validationError && (
+            <div className="w-full px-3 py-2 rounded-xl bg-red-50 text-red-600 text-sm font-medium">
+              {validationError}
+            </div>
+          )}
+
+          <div className="flex gap-3 flex-wrap items-center">
+            {!isFinalValidated ? (
                <>
-                <button onClick={handleSave} disabled={saving} className="btn-secondary h-10">
-                   <Save size={16} /> {saving ? '...' : 'Sauvegarder'}
+                <button onClick={() => setEditDialogOpen(true)} className="btn-secondary h-10">
+                  <PencilLine size={16} /> Modifier dossier
                 </button>
-                <button onClick={handlePrint} className="btn-secondary h-10">
-                   <Printer size={16} /> {selectedIds.length > 0 ? `Brouillon (${selectedIds.length})` : 'Brouillon'}
-                </button>
-                <button onClick={handleValidate} disabled={validating} className="btn-primary h-10">
-                   <CheckCircle size={16} /> Valider
-                </button>
+
+                <div className="flex flex-wrap items-center gap-4 bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
+                  {/* Workflow Step 1: Technical */}
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${analysis.status !== 'pending' ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-200 text-slate-500'}`}>1</div>
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Validation Technique</span>
+                      {analysis.status === 'validated_tech' || analysis.status === 'validated_bio' || analysis.status === 'completed' ? (
+                        <div className="flex flex-col">
+                           <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
+                             <CheckCircle size={12} /> Validée le {analysis.validatedTechAt ? format(new Date(analysis.validatedTechAt), 'dd/MM HH:mm') : ''}
+                           </span>
+                           <span className="text-[10px] text-slate-500 font-medium leading-none mt-0.5">Par {analysis.validatedTechName || 'Technicien'}</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          {canTech && analysis.status === 'in_progress' ? (
+                            <button onClick={() => handleValidation('tech')} disabled={validating} className="btn-primary !h-7 !px-3 !text-[10px] shadow-blue-500/20">
+                              Valider
+                            </button>
+                          ) : (
+                            <span className="text-xs font-semibold text-slate-400 italic">
+                               {analysis.status === 'pending' ? 'Saisie...' : 'Attente'}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="h-8 w-px bg-slate-200 hidden md:block mx-1" />
+
+                  {/* Workflow Step 2: Biological */}
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${analysis.status === 'validated_tech' ? 'bg-blue-600 text-white shadow-sm' : isFinalValidated ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-500'}`}>2</div>
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Validation Biologique</span>
+                      {isFinalValidated ? (
+                         <div className="flex flex-col">
+                            <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
+                              <CheckCircle size={12} /> Signée le {analysis.validatedBioAt ? format(new Date(analysis.validatedBioAt), 'dd/MM HH:mm') : ''}
+                            </span>
+                            <span className="text-[10px] text-slate-500 font-medium leading-none mt-0.5">Par {analysis.validatedBioName || 'Biologiste'}</span>
+                         </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          {canBio && analysis.status === 'validated_tech' ? (
+                            <button onClick={() => handleValidation('bio')} disabled={validating} className="h-7 px-3 rounded-lg bg-emerald-500 text-white font-bold text-[10px] hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-500/20">
+                              Signer
+                            </button>
+                          ) : (
+                            <span className="text-xs font-semibold text-slate-400 italic">
+                               {analysis.status === 'validated_tech' ? 'Attente' : 'Verrouillée'}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 ml-auto">
+                  <button onClick={handleSave} disabled={saving} className="btn-secondary h-10 px-4">
+                    <Save size={16} /> {saving ? '...' : 'Sauvegarder'}
+                  </button>
+                  <button onClick={handlePrint} className="btn-secondary h-10 px-4">
+                    <Printer size={16} /> {selectedIds.length > 0 ? `Brouillon (${selectedIds.length})` : 'Brouillon'}
+                  </button>
+                </div>
                </>
                ) : (
                  <>
-                   <button 
-                     onClick={handleSendEmail} 
-                     disabled={sendingEmail} 
-                     className="btn-secondary h-10"
-                   >
-                     <Mail size={16} className={sendingEmail ? 'animate-pulse' : ''} /> 
-                     {sendingEmail ? 'Envoi...' : 'Email'}
-                   </button>
-                   <button onClick={handlePrint} className="btn-primary h-10 !bg-emerald-500 hover:!bg-emerald-600">
-                       <Printer size={16} /> {selectedIds.length > 0 ? `Imprimer (${selectedIds.length})` : 'Imprimer'}
-                   </button>
+                  <div className="flex items-center gap-3 bg-emerald-50 p-2.5 rounded-2xl border border-emerald-100">
+                    <div className="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-lg shadow-emerald-500/20">
+                       <CheckCircle size={20} />
+                    </div>
+                    <div className="flex flex-col mr-4">
+                       <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest leading-none mb-1">Dossier Validé & Signé</span>
+                       <div className="flex items-center gap-2 text-xs font-bold text-slate-700">
+                          <span>{analysis.validatedBioName}</span>
+                          <span className="text-emerald-300">•</span>
+                          <span className="text-slate-500">{analysis.validatedBioAt ? format(new Date(analysis.validatedBioAt), 'dd MMM yyyy HH:mm', { locale: fr }) : ''}</span>
+                       </div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 ml-auto">
+                    <button onClick={handleWhatsApp} className="btn-secondary h-10">
+                      <MessageCircle size={16} /> WhatsApp
+                    </button>
+                    <button onClick={handleSendEmail} disabled={sendingEmail} className="btn-secondary h-10">
+                      <Mail size={16} className={sendingEmail ? 'animate-pulse' : ''} /> Email
+                    </button>
+                    <button onClick={handlePrint} className="btn-primary h-10 !bg-emerald-500 hover:!bg-emerald-600 shadow-emerald-500/20 shadow-lg">
+                        <Printer size={16} /> Impression Finale
+                    </button>
+                  </div>
                  </>
-              )}
+               )}
           </div>
         </div>
 
@@ -641,6 +855,45 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
               </div>
            </div>
         </div>
+        <div className="mt-6 border-t border-slate-100 pt-6 space-y-2">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Note globale du rapport</span>
+          {isFinalValidated ? (
+            <div className="bg-slate-50 rounded-2xl px-4 py-3 min-h-[56px]">
+              {globalNote ? (
+                <p className="text-sm text-slate-700 whitespace-pre-wrap">
+                  {globalNote}
+                </p>
+              ) : (
+                <p className="text-sm text-slate-400 italic">Aucune note globale.</p>
+              )}
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between gap-3">
+                <select
+                  value={globalNotePlacement}
+                  onChange={(e) => setGlobalNotePlacement(e.target.value as 'all' | 'first' | 'last')}
+                  className="input-premium h-9 text-xs w-[220px]"
+                >
+                  <option value="all">Afficher sur toutes les pages</option>
+                  <option value="first">Afficher sur la 1ère page</option>
+                  <option value="last">Afficher sur la dernière page</option>
+                </select>
+              </div>
+              <textarea
+                value={globalNote}
+                onChange={(e) => setGlobalNote(e.target.value)}
+                placeholder="Ajouter une note globale (conclusion, recommandation, commentaire général)..."
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none resize-none min-h-[84px]"
+              />
+              <div className="flex justify-end">
+                <button onClick={saveGlobalNote} disabled={saveGlobalNoteBusy} className="btn-secondary h-9 disabled:opacity-60 disabled:cursor-not-allowed">
+                  <Save size={14} /> {saveGlobalNoteBusy ? 'Enregistrement...' : 'Enregistrer la note'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       {/* ─── Results Panel ─── */}
@@ -664,7 +917,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                   )}
                </div>
                
-               {!isValidated && hasNFS && (
+               {!isFinalValidated && hasNFS && (
                  <div className="flex items-center gap-2">
                    <input 
                      type="file" 
@@ -684,7 +937,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                  </div>
                )}
 
-               {isValidated && (
+               {isFinalValidated && (
                  <button className="btn-secondary h-9 text-xs" onClick={toggleSelectAll}>
                    <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all ${selectedIds.length === totalCount ? 'bg-blue-600 border-blue-600' : 'border-slate-300'}`}>
                      {selectedIds.length === totalCount && <CheckCircle size={10} className="text-white" />}
@@ -798,10 +1051,10 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                         ) : (
                             <>
                             {/* Result Row */}
-                            <div className={`group flex flex-col lg:flex-row items-stretch lg:items-center gap-3 lg:gap-4 px-4 py-3 rounded-2xl transition-colors ${test.parentId ? 'ml-6 border-l-2 border-l-blue-200' : ''} ${abnormal ? 'bg-red-50/60' : 'hover:bg-slate-50/50'}`}>
+                            <div className={`group flex flex-col lg:flex-row items-stretch lg:items-center gap-3 lg:gap-4 px-4 py-3 rounded-2xl transition-colors ${test.parentId ? 'pl-6' : ''} ${abnormal ? 'bg-red-50/60' : 'hover:bg-slate-50/50'}`}>
                                
                                {/* Selection Checkbox */}
-                               {isValidated && (
+                               {isFinalValidated && (
                                   <div 
                                      onClick={() => toggleSelection(result.id)}
                                      className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-all shrink-0 ${selectedIds.includes(result.id) ? 'bg-blue-600 border-blue-600' : 'border-slate-300 hover:border-blue-400'}`}
@@ -833,7 +1086,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                                              value={results[result.id]}
                                              onChange={(e) => handleResultChange(result.id, e.target.value)}
                                              onKeyDown={(e) => handleKeyDown(e, index, sortedResults.length)}
-                                               disabled={isValidated || isFormula}
+                                              disabled={isFinalValidated || isFormula}
                                                rows={3}
                                                className="input-premium py-3 px-4 text-sm w-full max-w-md min-h-[80px] rounded-xl resize-none"
                                                placeholder="Saisissez les résultats détaillés ici..."
@@ -844,7 +1097,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                                              value={results[result.id]}
                                              onChange={(e) => handleResultChange(result.id, e.target.value)}
                                              onKeyDown={(e) => handleKeyDown(e, index, sortedResults.length)}
-                                             disabled={isValidated || isFormula}
+                                            disabled={isFinalValidated || isFormula}
                                              className={`h-10 w-full max-w-[200px] px-4 rounded-xl border text-sm font-bold transition-all outline-none focus:ring-4 focus:ring-blue-500/10 ${results[result.id] ? 'text-blue-700 border-blue-200 bg-blue-50/50' : 'text-slate-600 border-slate-200 bg-slate-50 hover:bg-white'}`}
                                            >
                                               <option value="">-- Sélectionner --</option>
@@ -866,7 +1119,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                                                   }
                                                 }}
                                                 onKeyDown={(e) => handleKeyDown(e, index, sortedResults.length)}
-                                                disabled={isValidated || isFormula}
+                                                disabled={isFinalValidated || isFormula}
                                               placeholder="--"
                                               className={`h-10 rounded-xl border transition-all outline-none focus:ring-4 font-bold ${isNumeric ? 'w-28 text-lg text-center tracking-tight' : 'w-48 text-sm px-4'} ${abnormal ? 'text-red-600 border-red-300 bg-red-50 focus:border-red-400 focus:ring-red-500/10' : 'text-slate-800 border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-blue-500/10 hover:border-slate-300'} ${isFormula ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-transparent' : ''}`}
                                             />
@@ -902,20 +1155,22 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                                           })()}
                                        </span>
                                     </div>
-                                    <button 
-                                       onClick={() => toggleNote(result.id)}
-                                       className={`p-1.5 rounded-lg transition-colors ${notes[result.id] ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:text-blue-500 hover:bg-slate-50'}`}
-                                       tabIndex={-1}
-                                       title={notes[result.id] ? 'Modifier Note' : 'Ajouter Note'}
-                                    >
-                                       <MessageSquare size={14} />
-                                    </button>
+                                    {!isFinalValidated && (
+                                      <button 
+                                         onClick={() => toggleNote(result.id)}
+                                         className={`p-1.5 rounded-lg transition-colors ${notes[result.id] ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:text-blue-500 hover:bg-slate-50'}`}
+                                         tabIndex={-1}
+                                         title={notes[result.id] ? 'Modifier Note' : 'Ajouter Note'}
+                                      >
+                                         <NotepadTextIcon size={14} />
+                                      </button>
+                                    )}
                                  </div>
                             </div>
                             
                             {/* Notes Expanded */}
                             {expandedNotes.includes(result.id) && (
-                               <div className={`ml-10 mr-4 mb-2 ${isValidated ? 'opacity-70' : ''}`}>
+                               <div className={`ml-10 mr-4 mb-2 ${isFinalValidated ? 'opacity-70' : ''}`}>
                                   <div className="bg-slate-50 border border-slate-100 rounded-xl p-4">
                                      <div className="flex items-center justify-between mb-3">
                                         <div className="flex items-center gap-2 text-slate-500">
@@ -927,7 +1182,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                                                 <button 
                                                     onClick={() => deleteNote(result.id)}
                                                     className="px-2.5 py-1 rounded-lg bg-red-50 text-red-600 text-[10px] font-bold hover:bg-red-100 transition-colors"
-                                                    disabled={isValidated}
+                                                    disabled={isFinalValidated}
                                                 >
                                                     Supprimer
                                                 </button>
@@ -941,7 +1196,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                                             <button 
                                                 onClick={() => applyNote(result.id)}
                                                 className="btn-primary !rounded-lg !px-3 !py-1 text-[10px]"
-                                                disabled={isValidated}
+                                                disabled={isFinalValidated}
                                             >
                                                 Appliquer
                                             </button>
@@ -951,7 +1206,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                                         value={draftNotes[result.id] || ''}
                                         onChange={(e) => handleNoteChange(result.id, e.target.value)}
                                         placeholder="Saisissez une observation (ex: prélèvement hémolysé, contrôle refait...)"
-                                        disabled={isValidated}
+                                        disabled={isFinalValidated}
                                         className="w-full bg-white border border-slate-100 rounded-lg p-3 text-xs focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none resize-none transition-all min-h-[72px]"
                                         rows={2}
                                      />
@@ -961,7 +1216,14 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                             
                             {/* Static Note Indicator */}
                             {!expandedNotes.includes(result.id) && notes[result.id] && (
-                                <div className="ml-10 mr-4 mb-1 flex items-center gap-1.5 text-[10px] text-blue-600 font-medium px-3 py-1.5 rounded-lg bg-blue-50/50 w-fit cursor-pointer hover:bg-blue-50 transition-colors" onClick={() => toggleNote(result.id)}>
+                                <div
+                                  className={`ml-10 mr-4 mb-1 flex items-center gap-1.5 text-[10px] text-blue-600 font-medium px-3 py-1.5 rounded-lg bg-blue-50/50 w-fit transition-colors ${
+                                    isFinalValidated ? 'cursor-default' : 'cursor-pointer hover:bg-blue-50'
+                                  }`}
+                                  onClick={() => {
+                                    if (!isFinalValidated) toggleNote(result.id);
+                                  }}
+                                >
                                     <MessageSquare size={10} />
                                     <span className="truncate max-w-md">Note: {notes[result.id]}</span>
                                 </div>
@@ -989,22 +1251,15 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
       {/* Hidden Print Area */}
       <div style={{ position: 'absolute', left: '-9999px', width: '210mm', height: 'auto' }}>
         <div ref={printRef}>
-          <RapportImpression 
-            analysis={analysis} 
-            results={results} 
-            selectedResultIds={selectedIds} 
+          <RapportImpression
+            ref={printRef}
+            analysis={analysis}
+            results={results}
+            selectedResultIds={selectedIds}
+            settings={reportSettings}
           />
         </div>
       </div>
-
-      <ConfirmDialog
-        open={confirmDialog.open}
-        onOpenChange={(open) => setConfirmDialog(prev => ({ ...prev, open }))}
-        title={confirmDialog.title}
-        description={confirmDialog.description}
-        onConfirm={confirmDialog.action}
-        confirmLabel="Confirmer"
-      />
 
       </div>
 
@@ -1073,6 +1328,88 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
               className="btn-secondary"
             >
               Annuler l'importation
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-2xl w-[95vw] max-h-[90vh] bg-white border-slate-200 shadow-2xl flex flex-col overflow-hidden">
+          <DialogHeader>
+            <DialogTitle>Modifier le dossier d'analyse</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-y-auto pr-1 min-h-0">
+            <div className="grid grid-cols-2 gap-4 py-2">
+              <input className="input-premium h-10 text-sm" placeholder="N° Paillasse" value={editForm.dailyId} onChange={(e) => setEditForm(prev => ({ ...prev, dailyId: e.target.value }))} />
+              <input className="input-premium h-10 text-sm" placeholder="Quittance" value={editForm.receiptNumber} onChange={(e) => setEditForm(prev => ({ ...prev, receiptNumber: e.target.value }))} />
+              <input className="input-premium h-10 text-sm" placeholder="Nom" value={editForm.patientLastName} onChange={(e) => setEditForm(prev => ({ ...prev, patientLastName: e.target.value }))} />
+              <input className="input-premium h-10 text-sm" placeholder="Prénom" value={editForm.patientFirstName} onChange={(e) => setEditForm(prev => ({ ...prev, patientFirstName: e.target.value }))} />
+              <input className="input-premium h-10 text-sm" placeholder="Âge" value={editForm.patientAge} onChange={(e) => setEditForm(prev => ({ ...prev, patientAge: e.target.value }))} />
+              <select className="input-premium h-10 text-sm" value={editForm.patientGender} onChange={(e) => setEditForm(prev => ({ ...prev, patientGender: e.target.value }))}>
+                <option value="M">M</option>
+                <option value="F">F</option>
+              </select>
+              <input className="input-premium h-10 text-sm col-span-2" placeholder="Provenance" value={editForm.provenance} onChange={(e) => setEditForm(prev => ({ ...prev, provenance: e.target.value }))} />
+              <input className="input-premium h-10 text-sm col-span-2" placeholder="Médecin prescripteur" value={editForm.medecinPrescripteur} onChange={(e) => setEditForm(prev => ({ ...prev, medecinPrescripteur: e.target.value }))} />
+              <div className="col-span-2 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEditForm(prev => ({ ...prev, isUrgent: false }))}
+                  className={`h-10 px-4 rounded-xl text-xs font-bold border ${!editForm.isUrgent ? 'bg-slate-100 border-slate-300 text-slate-700' : 'bg-white border-slate-200 text-slate-500'}`}
+                >
+                  Non urgent
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditForm(prev => ({ ...prev, isUrgent: true }))}
+                  className={`h-10 px-4 rounded-xl text-xs font-bold border ${editForm.isUrgent ? 'bg-red-50 border-red-200 text-red-700' : 'bg-white border-slate-200 text-slate-500'}`}
+                >
+                  Urgent
+                </button>
+              </div>
+              <div className="col-span-2 pt-3 border-t border-slate-100">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tests sélectionnés</span>
+                  <span className="text-xs font-semibold text-blue-600">{selectedTestIds.length} test(s)</span>
+                </div>
+                <input
+                  value={testSearch}
+                  onChange={(e) => setTestSearch(e.target.value)}
+                  placeholder="Rechercher un test (code ou nom)..."
+                  className="input-premium h-10 text-sm w-full mb-3"
+                />
+                <div className="max-h-56 overflow-y-auto border border-slate-100 rounded-xl p-2 space-y-1">
+                  {availableTests
+                    .filter((test) => {
+                      const q = testSearch.toLowerCase().trim();
+                      if (!q) return true;
+                      return test.code?.toLowerCase().includes(q) || test.name?.toLowerCase().includes(q);
+                    })
+                    .map((test) => (
+                      <button
+                        key={test.id}
+                        type="button"
+                        onClick={() => toggleSelectedTest(test.id)}
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg border text-left transition-all ${
+                          selectedTestIds.includes(test.id)
+                            ? 'bg-blue-50 border-blue-200 text-blue-700'
+                            : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                        }`}
+                      >
+                        <span className="text-xs font-bold">{test.code} - {test.name}</span>
+                        <span className={`w-4 h-4 rounded border-2 flex items-center justify-center ${selectedTestIds.includes(test.id) ? 'bg-blue-600 border-blue-600' : 'border-slate-300'}`}>
+                          {selectedTestIds.includes(test.id) && <CheckCircle size={10} className="text-white" />}
+                        </span>
+                      </button>
+                    ))}
+                </div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="border-t border-slate-100 pt-3 bg-white sticky bottom-0">
+            <button onClick={() => setEditDialogOpen(false)} className="btn-secondary">Annuler</button>
+            <button onClick={saveAnalysisMeta} disabled={savingMeta} className="btn-primary">
+              {savingMeta ? 'Enregistrement...' : 'Enregistrer'}
             </button>
           </DialogFooter>
         </DialogContent>

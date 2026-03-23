@@ -40,7 +40,7 @@ export async function GET(
     const previousAnalysis = await prisma.analysis.findFirst({
       where: {
         patientId: analysis.patientId,
-        status: 'completed',
+        status: { in: ['completed', 'validated_bio'] },
         creationDate: {
           lt: analysis.creationDate
         }
@@ -85,6 +85,25 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
+
+    const existing = await prisma.analysis.findUnique({
+      where: { id },
+      select: { status: true }
+    });
+
+    if (!existing) {
+      return NextResponse.json(
+        { error: 'Analyse non trouvée' },
+        { status: 404 }
+      );
+    }
+
+    if (existing.status === 'completed' || existing.status === 'validated_bio') {
+      return NextResponse.json(
+        { error: 'Analyse validée: modification interdite' },
+        { status: 409 }
+      );
+    }
     
     const analysis = await prisma.analysis.update({
       where: { id },
@@ -118,11 +137,70 @@ export async function PATCH(
     const { id } = await params;
     const body = await request.json();
     
+    const parseGender = (value: unknown) => {
+      if (value !== 'M' && value !== 'F') return undefined;
+      return value;
+    };
+
+    const parseNumber = (value: unknown) => {
+      if (value === null) return null;
+      if (value === undefined || value === '') return undefined;
+      const n = Number(value);
+      return Number.isNaN(n) ? undefined : n;
+    };
+
+    const existing = await prisma.analysis.findUnique({
+      where: { id },
+      select: { status: true }
+    });
+
+    if (!existing) {
+      return NextResponse.json(
+        { error: 'Analyse non trouvée' },
+        { status: 404 }
+      );
+    }
+
+    const isPrintOnlyUpdate =
+      body.printedAt !== undefined &&
+      body.status === undefined &&
+      body.dailyId === undefined &&
+      body.receiptNumber === undefined &&
+      body.patientFirstName === undefined &&
+      body.patientLastName === undefined &&
+      body.patientAge === undefined &&
+      body.patientGender === undefined &&
+      body.provenance === undefined &&
+      body.medecinPrescripteur === undefined &&
+      body.isUrgent === undefined &&
+      body.globalNote === undefined &&
+      body.globalNotePlacement === undefined;
+
+    if ((existing.status === 'completed' || existing.status === 'validated_bio') && !isPrintOnlyUpdate) {
+      return NextResponse.json(
+        { error: 'Analyse validée: modification interdite' },
+        { status: 409 }
+      );
+    }
+
     const analysis = await prisma.analysis.update({
       where: { id },
       data: {
         status: body.status || undefined,
-        printedAt: body.printedAt !== undefined ? (body.printedAt ? new Date(body.printedAt) : null) : undefined
+        printedAt: body.printedAt !== undefined ? (body.printedAt ? new Date(body.printedAt) : null) : undefined,
+        dailyId: body.dailyId !== undefined ? (body.dailyId || null) : undefined,
+        receiptNumber: body.receiptNumber !== undefined ? (body.receiptNumber || null) : undefined,
+        patientFirstName: body.patientFirstName !== undefined ? (body.patientFirstName || null) : undefined,
+        patientLastName: body.patientLastName !== undefined ? (body.patientLastName || null) : undefined,
+        patientAge: parseNumber(body.patientAge),
+        patientGender: parseGender(body.patientGender),
+        provenance: body.provenance !== undefined ? (body.provenance || null) : undefined,
+        medecinPrescripteur: body.medecinPrescripteur !== undefined ? (body.medecinPrescripteur || null) : undefined,
+        isUrgent: body.isUrgent !== undefined ? Boolean(body.isUrgent) : undefined,
+        globalNote: body.globalNote !== undefined ? (body.globalNote?.trim() || null) : undefined,
+        globalNotePlacement: body.globalNotePlacement !== undefined && ['all', 'first', 'last'].includes(body.globalNotePlacement)
+          ? body.globalNotePlacement
+          : undefined
       },
       include: {
         results: {
@@ -159,6 +237,13 @@ export async function DELETE(
       return NextResponse.json(
         { error: 'Analyse non trouvée' },
         { status: 404 }
+      );
+    }
+
+    if (analysis.status === 'completed' || analysis.status === 'validated_bio') {
+      return NextResponse.json(
+        { error: 'Analyse validée: suppression interdite' },
+        { status: 409 }
       );
     }
     

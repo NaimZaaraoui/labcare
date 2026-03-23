@@ -42,7 +42,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   session: { strategy: 'jwt' },
   pages: {
     signIn: '/login',
-    error: '/login',
   },
   providers: [
     Credentials({
@@ -57,7 +56,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           where: { email: credentials.email as string },
         });
 
-        if (!user || !user.active) return null;
+        if (!user) return null;
+        if (!user.isActive) throw new Error("Compte désactivé");
 
         const valid = await bcrypt.compare(
           credentials.password as string,
@@ -71,17 +71,32 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           name: user.name,
           email: user.email,
           role: user.role,
+          mustChangePassword: user.mustChangePassword,
         };
       },
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
-      if (user) token.role = user.role;
+    async jwt({ token, user, trigger, session }) {
+      if (user) {
+        token.id = user.id;
+        token.role = user.role;
+        token.mustChangePassword = user.mustChangePassword;
+      }
+
+      if (trigger === 'update' && session) {
+        token.mustChangePassword = session.mustChangePassword;
+      }
+
       return token;
     },
+
     async session({ session, token }) {
-      if (session.user) session.user.role = token.role;
+      if (session.user) {
+        session.user.id = token.id;
+        session.user.role = token.role;
+        session.user.mustChangePassword = token.mustChangePassword;
+      }
       return session;
     },
   },

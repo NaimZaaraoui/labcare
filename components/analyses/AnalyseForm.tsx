@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Save, User, Plus, Beaker, Check, Search, Activity, X, CalendarIcon, FileDigit } from 'lucide-react';
+import { Save, User, Plus, Beaker, Check, Search, Activity, X, CalendarIcon, FileDigit, TestTube } from 'lucide-react';
 import { Test } from '@/lib/types';
 import { NotificationToast } from '@/components/ui/notification-toast';
 
@@ -21,6 +21,7 @@ export function AnalyseForm() {
   const [receiptNumber, setReceiptNumber] = useState('');
   const [provenance, setProvenance] = useState('');
   const [medecinPrescripteur, setMedecinPrescripteur] = useState('');
+  const [isUrgent, setIsUrgent] = useState(false);
   
   const [patient, setPatient] = useState({
     patientFirstName: '',
@@ -212,6 +213,7 @@ export function AnalyseForm() {
           receiptNumber,
           provenance,
           medecinPrescripteur,
+          isUrgent,
           testsIds: selectedTests
         })
       });
@@ -297,6 +299,34 @@ export function AnalyseForm() {
                   />
                </div>
             </div>
+
+            <div className="space-y-1.5 pt-4 border-t border-slate-50">
+               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Urgence</label>
+               <div className="grid grid-cols-2 gap-2">
+                  <button
+                     type="button"
+                     onClick={() => setIsUrgent(false)}
+                     className={`h-10 rounded-xl text-xs font-bold transition-all border ${
+                       !isUrgent
+                         ? 'bg-slate-100 border-slate-300 text-slate-700'
+                         : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
+                     }`}
+                  >
+                     Non urgent
+                  </button>
+                  <button
+                     type="button"
+                     onClick={() => setIsUrgent(true)}
+                     className={`h-10 rounded-xl text-xs font-bold transition-all border ${
+                       isUrgent
+                         ? 'bg-red-50 border-red-200 text-red-700'
+                         : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
+                     }`}
+                  >
+                     Urgent
+                  </button>
+               </div>
+            </div>
          </div>
 
          <div className="bento-panel flex flex-col gap-5 flex-1 p-8 lg:p-10">
@@ -309,7 +339,7 @@ export function AnalyseForm() {
 
             {/* Smart Search */}
             <div className="relative z-50">
-              <div className="realtive flex items-center gap-2 w-full sm:max-w-xs group bg-slate-50 border border-slate-200 focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 transition-all input-premium">
+              <div className="relative flex items-center gap-2 w-full sm:max-w-xs group bg-slate-50 border border-slate-200 focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 transition-all input-premium">
             
                   <Search className="w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                   <input
@@ -447,7 +477,7 @@ export function AnalyseForm() {
          <div className="bento-panel flex flex-col h-full p-8 lg:p-10">
             
             <div className="flex flex-col gap-4 justify-between items-start mb-6 mr-4">
-               <div className="flex items-center gap-2 w-full sm:max-w-xs group bg-slate-50 border border-slate-200 focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 transition-all rounded-xl">
+               <div className="flex items-center gap-2 w-full sm:max-w-xs group bg-slate-50 border border-slate-200 focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 transition-all input-premium">
                   <Search className="w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                   <input
                      placeholder="Chercher analyse..."
@@ -472,7 +502,7 @@ export function AnalyseForm() {
                                  : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                            }`}
                         >
-                           {isSelected ? <Check size={14} /> : <Activity size={14} />}
+
                            {bilan.name}
                         </button>
                      );
@@ -529,12 +559,17 @@ export function AnalyseForm() {
       </div>
 
       {/* STICKY BOTTOM ACTION BAR */}
-      <div className="fixed bottom-0 lg:bottom-6 left-0 right-0 lg:left-[280px] z-50 px-4 lg:px-8 pointer-events-none">
+      <div className="fixed bottom-0 lg:bottom-6 left-0 right-0 lg:left-[280px] z-50 px-4 lg:px-8 pointer-events-none shadow-lg">
          <div className="max-w-4xl mx-auto flex justify-end">
             <div className="bento-panel py-3 px-4 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] flex items-center gap-6 pointer-events-auto w-full sm:w-auto border border-slate-200/50 bg-white/90 backdrop-blur-xl">
                <div className="hidden sm:flex flex-col">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tests Sélectionnés</span>
                   <span className="text-lg font-black text-blue-600">{selectedTests.length}</span>
+               </div>
+               <div>
+                  <span className={`status-pill ${isUrgent ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-500'}`}>
+                     {isUrgent ? 'Urgent' : 'Routine'}
+                  </span>
                </div>
                
                <button 

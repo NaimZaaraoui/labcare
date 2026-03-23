@@ -1,12 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const jakarta = Plus_Jakarta_Sans({
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-jakarta",
+  variable: "--font-inter",
   display: "swap",
-  weight: ['400', '500', '600', '700'],
 });
 
 const mono   = JetBrains_Mono({
@@ -27,15 +26,22 @@ export const viewport: Viewport = {
   maximumScale: 5,
 }
 
-export default function RootLayout({
+import { Providers } from "@/components/Providers";
+import { auth } from "@/lib/auth";
+
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await auth();
+  
   return (
-    <html lang="fr" className={`${jakarta.variable} ${mono.variable}`}>
+    <html lang="fr" className={`${inter.variable} ${mono.variable}`}>
       <body className="bg-[var(--color-page)] font-sans antialiased text-[var(--color-text-secondary)]">
-        {children}
+        <Providers session={session}>
+          {children}
+        </Providers>
       </body>
     </html>
   );

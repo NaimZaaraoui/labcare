@@ -4,6 +4,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search, Bell, Menu, Check, X, Clock, Loader2, Users, FileText, Beaker } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useMobileMenu } from '@/contexts/MobileMenuContext';
+import { useSession } from 'next-auth/react';
+import { ROLE_LABELS } from '@/lib/constants';
 
 interface SearchResult {
   id: string;
@@ -26,8 +28,14 @@ interface HeaderProps {
 }
 
 export function Header({ onMobileMenuToggle }: HeaderProps) {
+  const { data: session } = useSession();
   const router = useRouter();
   const { toggle } = useMobileMenu();
+
+  const user = session?.user;
+  const role = (user as any)?.role || 'TECHNICIEN';
+  const roleLabel = ROLE_LABELS[role] || role;
+  const initials = user?.name ? user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) : '??';
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -268,15 +276,13 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
             )}
           </div>
 
-          {/* Removed dividing line */}
-
-          <div className="flex items-center gap-3 pl-2">
+          <div className="flex items-center gap-3 pl-2 group">
             <div className="text-right hidden sm:flex flex-col">
-              <div className="text-xs font-semibold text-slate-900">Dr. Zaaraoui</div>
-              <div className="text-[10px] text-slate-500">Biologiste</div>
+              <div className="text-xs font-bold text-slate-900">{user?.name || 'Utilisateur'}</div>
+              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{roleLabel}</div>
             </div>
-            <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-bold cursor-pointer shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5">
-              ZA
+            <div className="w-10 h-10 rounded-2xl bg-blue-500 flex items-center justify-center text-white text-sm font-black cursor-pointer shadow-lg shadow-blue-500/20 hover:shadow-xl transition-all hover:-translate-y-0.5" title={user?.email || ''}>
+              {initials}
             </div>
           </div>
         </div>

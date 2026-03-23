@@ -39,6 +39,17 @@ export interface Analysis {
   orderNumber: string;
   receiptNumber: string | null;
   dailyId: string | null;
+  isUrgent: boolean;
+  provenance: string | null;
+  medecinPrescripteur: string | null;
+  globalNote: string | null;
+  globalNotePlacement: 'all' | 'first' | 'last' | null;
+  validatedTechAt?: string | Date;
+  validatedTechBy?: string;
+  validatedTechName?: string;
+  validatedBioAt?: string | Date;
+  validatedBioBy?: string;
+  validatedBioName?: string;
   patientId: string | null;
   patientFirstName: string | null;
   patientLastName: string | null;
@@ -117,6 +128,9 @@ export type CreateTestInput = {
 
 export type CreateAnalysisInput = {
   patientId: string;
+  isUrgent?: boolean;
+  globalNote?: string;
+  globalNotePlacement?: 'all' | 'first' | 'last';
   patientFirstName?: string;
   patientLastName?: string;
   patientAge?: number;

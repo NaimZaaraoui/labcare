@@ -1,13 +1,28 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Pencil, Beaker, AlertCircle, Check, X, Search, Microscope, Droplets, FlaskConical, Hash, ChevronRight, Layers } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { 
+  Plus, 
+  Trash2, 
+  Pencil, 
+  Beaker, 
+  Check, 
+  X, 
+  Search, 
+  Microscope, 
+  Droplets, 
+  FlaskConical, 
+  Hash, 
+  ChevronRight, 
+  Layers,
+  Filter,
+  RefreshCw,
+  Settings2,
+  Info,
+  Save
+} from 'lucide-react';
 import { Test } from '@/lib/types';
-
-import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { NotificationToast } from '@/components/ui/notification-toast';
 
 export function TestsList() {
@@ -18,11 +33,23 @@ export function TestsList() {
   const [showForm, setShowForm] = useState(false);
   const [editingTestId, setEditingTestId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isSexBased, setIsSexBased] = useState(false);
   
-  const [confirmDialog, setConfirmDialog] = useState<{
-    open: boolean;
-    id: string | null;
-  }>({ open: false, id: null });
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    type: 'danger' | 'warning' | 'info';
+    icon: 'logout' | 'reset' | 'deactivate' | 'activate' | 'warning';
+    title: string;
+    message: string;
+    action: () => void;
+  }>({
+    isOpen: false,
+    type: 'info',
+    icon: 'warning',
+    title: '',
+    message: '',
+    action: () => {},
+  });
 
   const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null);
 
@@ -70,12 +97,10 @@ export function TestsList() {
     { value: 'numeric', label: 'Numérique' },
     { value: 'text', label: 'Texte court' },
     { value: 'long_text', label: 'Texte long' },
-    { value: 'dropdown', label: 'Liste de choix' },
+    { value: 'dropdown', label: 'Liste' },
   ];
 
-  useEffect(() => {
-    loadTests();
-  }, []);
+  useEffect(() => { loadTests(); }, []);
 
   const loadTests = async () => {
     try {
@@ -84,39 +109,39 @@ export function TestsList() {
       const data = await response.json();
       setTests(data);
     } catch (error) {
-      console.error('Erreur:', error);
       showNotification('error', 'Erreur lors du chargement des tests');
     } finally {
       setLoading(false);
     }
   };
 
-    const handleEdit = (test: Test) => {
-      setEditingTestId(test.id);
-      setNewTest({
-        code: test.code,
-        name: test.name,
-        unit: test.unit || '',
-        minValue: test.minValue?.toString() || '',
-        maxValue: test.maxValue?.toString() || '',
-        minValueM: test.minValueM?.toString() || '',
-        maxValueM: test.maxValueM?.toString() || '',
-        minValueF: test.minValueF?.toString() || '',
-        maxValueF: test.maxValueF?.toString() || '',
-        decimals: test.decimals?.toString() || '1',
-        resultType: test.resultType || 'numeric',
-        category: test.category || '',
-        parentId: test.parentId || '',
-        options: test.options || '',
-        isGroup: test.isGroup
-      });
-      setShowForm(true);
-    };
-
+  const handleEdit = (test: Test) => {
+    setEditingTestId(test.id);
+    setNewTest({
+      code: test.code,
+      name: test.name,
+      unit: test.unit || '',
+      minValue: test.minValue?.toString() || '',
+      maxValue: test.maxValue?.toString() || '',
+      minValueM: test.minValueM?.toString() || '',
+      maxValueM: test.maxValueM?.toString() || '',
+      minValueF: test.minValueF?.toString() || '',
+      maxValueF: test.maxValueF?.toString() || '',
+      decimals: test.decimals?.toString() || '1',
+      resultType: test.resultType || 'numeric',
+      category: test.category || '',
+      parentId: test.parentId || '',
+      options: test.options || '',
+      isGroup: test.isGroup
+    });
+    setIsSexBased(!!(test.minValueM || test.maxValueM || test.minValueF || test.maxValueF));
+    setShowForm(true);
+  };
 
   const handleCloseForm = () => {
     setShowForm(false);
     setEditingTestId(null);
+    setIsSexBased(false);
     setNewTest({ code: '', name: '', unit: '', minValue: '', maxValue: '', minValueM: '', maxValueM: '', minValueF: '', maxValueF: '', decimals: '1', resultType: 'numeric', category: '', parentId: '', options: '', isGroup: false });
   };
 
@@ -131,68 +156,65 @@ export function TestsList() {
       ...newTest,
       minValue: newTest.resultType === 'numeric' && newTest.minValue ? parseFloat(newTest.minValue) : null,
       maxValue: newTest.resultType === 'numeric' && newTest.maxValue ? parseFloat(newTest.maxValue) : null,
-      minValueM: newTest.resultType === 'numeric' && newTest.minValueM ? parseFloat(newTest.minValueM) : null,
-      maxValueM: newTest.resultType === 'numeric' && newTest.maxValueM ? parseFloat(newTest.maxValueM) : null,
-      minValueF: newTest.resultType === 'numeric' && newTest.minValueF ? parseFloat(newTest.minValueF) : null,
-      maxValueF: newTest.resultType === 'numeric' && newTest.maxValueF ? parseFloat(newTest.maxValueF) : null,
+      minValueM: newTest.resultType === 'numeric' && isSexBased && newTest.minValueM ? parseFloat(newTest.minValueM) : null,
+      maxValueM: newTest.resultType === 'numeric' && isSexBased && newTest.maxValueM ? parseFloat(newTest.maxValueM) : null,
+      minValueF: newTest.resultType === 'numeric' && isSexBased && newTest.minValueF ? parseFloat(newTest.minValueF) : null,
+      maxValueF: newTest.resultType === 'numeric' && isSexBased && newTest.maxValueF ? parseFloat(newTest.maxValueF) : null,
       decimals: newTest.resultType === 'numeric' ? parseInt(newTest.decimals) : 1
     };
 
     try {
-      let response;
-      if (editingTestId) {
-        response = await fetch('/api/tests', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: editingTestId, ...payload })
-        });
-      } else {
-        response = await fetch('/api/tests', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-      }
+      const url = '/api/tests';
+      const method = editingTestId ? 'PUT' : 'POST';
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editingTestId ? { id: editingTestId, ...payload } : payload)
+      });
 
       if (!response.ok) {
-        const error = await response.json();
-        showNotification('error', error.error || 'Erreur lors de l\'enregistrement');
+        showNotification('error', 'Erreur lors de l\'enregistrement');
         return;
       }
 
       const savedTest = await response.json();
-      
       if (editingTestId) {
         setTests(tests.map(t => t.id === editingTestId ? savedTest : t));
-        showNotification('success', 'Test modifié avec succès');
+        showNotification('success', 'Test modifié');
       } else {
         setTests([savedTest, ...tests]);
-        showNotification('success', 'Test ajouté avec succès');
+        showNotification('success', 'Test ajouté');
       }
-      
       handleCloseForm();
     } catch (error) {
        showNotification('error', 'Erreur serveur');
     }
   };
 
-  const handleDeleteClick = (id: string) => {
-    setConfirmDialog({ open: true, id });
-  };
-
-  const handleConfirmDelete = async () => {
-    if (!confirmDialog.id) return;
-    const id = confirmDialog.id;
-    setDeletingId(id);
-    try {
-      await fetch(`/api/tests?id=${id}`, { method: 'DELETE' });
-      setTests(tests.filter(t => t.id !== id));
-      showNotification('success', 'Test supprimé');
-    } catch (error) {
-       showNotification('error', 'Erreur lors de la suppression');
-    } finally {
-      setDeletingId(null);
-    }
+  const handleDelete = (test: Test) => {
+    setConfirmModal({
+      isOpen: true,
+      type: 'danger',
+      icon: 'warning',
+      title: 'Supprimer le test ?',
+      message: `Êtes-vous sûr de vouloir supprimer "${test.name}" ? Cette action est irréversible.`,
+      action: async () => {
+        setDeletingId(test.id);
+        try {
+          const res = await fetch(`/api/tests?id=${test.id}`, { method: 'DELETE' });
+          if (res.ok) {
+            setTests(tests.filter(t => t.id !== test.id));
+            showNotification('success', 'Test supprimé');
+          } else {
+            showNotification('error', 'Erreur lors de la suppression');
+          }
+        } catch (error) {
+          showNotification('error', 'Erreur lors de la suppression');
+        } finally {
+          setDeletingId(null);
+        }
+      }
+    });
   };
 
   const filteredTests = tests.filter(test =>
@@ -201,366 +223,313 @@ export function TestsList() {
     (selectedCategory === 'all' || test.category === selectedCategory)
   );
 
+  const categoriesPresent = Array.from(new Set(filteredTests.map(t => t.category || 'Divers'))).sort();
+  
   if (loading) {
     return (
-      <div className="space-y-8 animate-pulse">
-        <div className="h-16 bg-slate-100 rounded-2xl" />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-48 bg-slate-50 rounded-3xl" />)}
-        </div>
+      <div className="flex flex-col items-center justify-center p-20 text-slate-400 gap-4">
+        <RefreshCw size={48} className="animate-spin text-blue-500" />
+        <p className="font-black uppercase tracking-widest text-xs">Chargement du catalogue...</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 animate-fade-in max-w-7xl mx-auto pb-20">
-      {/* Header View */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-        <div>
-           <h1 className="text-4xl font-black text-slate-900 tracking-tight">Configuration <span className="text-blue-600">Tests</span></h1>
-           <p className="text-slate-500 font-medium mt-1">Gérez le catalogue des examens biologiques</p>
+    <div className="space-y-12 animate-fade-in pb-20">
+      {/* Search and Filters */}
+      <div className="bento-panel p-6 flex flex-col xl:flex-row items-center gap-6 shadow-sm border-slate-100">
+        <div className="relative flex-1 group w-full">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-blue-500 transition-colors" />
+          <input 
+            placeholder="Rechercher par code ou nom d'analyse..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-50 border-none text-sm font-bold focus:ring-4 focus:ring-blue-100 outline-none transition-all placeholder:text-slate-300 shadow-inner-sm"
+          />
         </div>
 
-        <div className="flex flex-col xl:flex-row flex-wrap items-start lg:items-center gap-4 w-full lg:w-auto">
-           <div className="relative flex-1 xl:w-72 group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
-              <input 
-                placeholder="Rechercher un test..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="input-premium pl-12 h-14"
-              />
-           </div>
+        <div className="flex items-center gap-4 w-full xl:w-auto">
+          <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-xl border border-slate-100 shadow-sm shrink-0">
+             <Filter size={16} className="text-slate-400" />
+             <select 
+               value={selectedCategory}
+               onChange={(e) => setSelectedCategory(e.target.value)}
+               className="bg-transparent border-none text-xs font-black uppercase tracking-widest text-slate-600 outline-none cursor-pointer"
+             >
+               <option value="all">Toutes les catégories</option>
+               {CATEGORIES.map(cat => (
+                 <option key={cat} value={cat}>{cat}</option>
+               ))}
+             </select>
+          </div>
 
-           <div className="flex gap-2 flex-wrap lg:flex-nowrap">
-              <select 
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="px-4 py-3 h-14 bg-white border border-slate-200 rounded-2xl font-semibold text-slate-700 hover:bg-slate-50 transition-colors focus:ring-4 focus:ring-blue-100 outline-none"
-              >
-                <option value="all">Toutes les catégories</option>
-                {CATEGORIES.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-
-              {!showForm && (
-                <button 
-                  onClick={() => setShowForm(true)}
-                  className="btn-primary-premium h-14 whitespace-nowrap"
-                >
-                  <Plus size={20} className="mr-2" /> Nouveau Test
-                </button>
-              )}
-           </div>
+          <button 
+            onClick={() => setShowForm(true)}
+            className="btn-primary flex items-center gap-2 px-8 py-4 h-14 whitespace-nowrap shadow-xl shadow-blue-100"
+          >
+            <Plus size={20} />
+            <span>Nouveau Test</span>
+          </button>
         </div>
       </div>
 
-      {/* Modern Add/Edit Form Overlay/Panel */}
-      {showForm && (
-        <div className="bento-card-glass p-10 border-blue-100 animate-slide-in shadow-premium relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl -mr-20 -mt-20" />
-          
-          <div className="flex items-center justify-between mb-8 relative z-10">
-            <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-               <div className="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center">
-                  {editingTestId ? <Pencil size={20} /> : <Plus size={20} />}
-               </div>
-               {editingTestId ? 'Modifier Paramètre' : 'Nouveau Paramètre'}
-            </h2>
-            <button onClick={handleCloseForm} className="w-10 h-10 bg-slate-100 text-slate-500 rounded-full flex items-center justify-center hover:bg-rose-50 hover:text-rose-600 transition-all">
-               <X size={20} />
-            </button>
+      {/* Categorized Test List */}
+      <div className="space-y-16">
+        {categoriesPresent.length === 0 ? (
+          <div className="bento-panel py-32 text-center flex flex-col items-center opacity-60">
+             <div className="w-20 h-20 bg-slate-50 text-slate-200 rounded-full flex items-center justify-center mb-6">
+                <Beaker size={40} />
+             </div>
+             <h3 className="text-xl font-bold text-slate-900 uppercase tracking-tight">Aucun test trouvé</h3>
           </div>
+        ) : (
+          categoriesPresent.map(categoryName => {
+            const categoryTests = filteredTests.filter(t => (t.category || 'Divers') === categoryName);
+            if (categoryTests.length === 0) return null;
 
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
-             <div className="md:col-span-3">
-                <div className="flex bg-slate-100 p-1.5 rounded-2xl gap-1.5 w-fit">
-                   <button
-                     type="button"
-                     onClick={() => setNewTest({...newTest, isGroup: false})}
-                     className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${!newTest.isGroup ? 'bg-white shadow-md text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
-                   >
-                      Test Individuel
-                   </button>
-                   <button
-                     type="button"
-                     onClick={() => setNewTest({...newTest, isGroup: true, resultType: 'text', unit: '', minValue: '', maxValue: ''})}
-                     className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${newTest.isGroup ? 'bg-white shadow-md text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
-                   >
-                      Groupe / Bilan (Panel)
-                   </button>
-                </div>
-                <p className="text-[10px] text-slate-400 mt-2 font-bold uppercase tracking-wider">
-                   {newTest.isGroup ? "Un groupe sert de titre et peut contenir plusieurs tests enfants (ex: NFS)" : "Un test standard avec ses propres unités et bornes de référence"}
-                </p>
-             </div>
-
-             <div className="space-y-2">
-                <Label className="text-xs font-black uppercase tracking-widest text-slate-400">Code Identifiant *</Label>
-                <input
-                  value={newTest.code}
-                  onChange={(e) => setNewTest({...newTest, code: e.target.value.toUpperCase()})}
-                  placeholder="EX: NFS, GLY..."
-                  className="input-premium h-14 font-mono font-bold"
-                  required
-                />
-             </div>
-             <div className="md:col-span-2 space-y-2">
-                <Label className="text-xs font-black uppercase tracking-widest text-slate-400">Nom complet de l&apos;examen *</Label>
-                <input
-                  value={newTest.name}
-                  onChange={(e) => setNewTest({...newTest, name: e.target.value})}
-                  placeholder="Hémogramme complet (NFS)..."
-                  className="input-premium h-14 font-bold"
-                  required
-                />
-             </div>
-
-             <div className="space-y-2">
-                <Label className="text-xs font-black uppercase tracking-widest text-slate-400">Catégorie / Discipline</Label>
-                <select
-                  value={newTest.category}
-                  onChange={(e) => setNewTest({...newTest, category: e.target.value})}
-                  className="input-premium h-14 font-bold"
-                >
-                  <option value="">Sélectionner...</option>
-                  {CATEGORIES.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
-             </div>
-
-             {!newTest.isGroup && (
-               <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-widest text-slate-400">Type de donnée</Label>
-                  <div className="flex bg-slate-100 p-1 rounded-2xl gap-1 h-14">
-                     {RESULT_TYPES.map(type => (
-                        <button 
-                          key={type.value}
-                          type="button"
-                          onClick={() => setNewTest({...newTest, resultType: type.value})}
-                          className={`flex-1 rounded-xl text-[10px] font-black uppercase tracking-tighter transition-all ${newTest.resultType === type.value ? 'bg-white shadow-sm text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
-                        >
-                           {type.label}
-                        </button>
-                     ))}
-                  </div>
-               </div>
-             )}
-
-             {/* Sélection du Test Parent - Disponible pour tous les types */}
-             <div className="space-y-2">
-                <Label className="text-xs font-black uppercase tracking-widest text-slate-400">
-                  Test Parent {newTest.isGroup ? '(Pour créer une hiérarchie de bilans)' : '(Ex: NFS, Cytochimie Urinaire)'}
-                </Label>
-                <select
-                  value={newTest.parentId}
-                  onChange={(e) => setNewTest({...newTest, parentId: e.target.value})}
-                  className="input-premium h-14"
-                >
-                  <option value="">Aucun (Test Principal)</option>
-                  {tests.filter(t => t.id !== editingTestId).map(t => (
-                    <option key={t.id} value={t.id}>
-                      {t.isGroup ? '📋 ' : '  '}{t.name} {t.isGroup ? '(Bilan)' : ''}
-                    </option>
-                  ))}
-                </select>
-                {newTest.parentId && (
-                  <p className="text-xs text-slate-500 italic">
-                    Ce {newTest.isGroup ? 'bilan' : 'test'} sera affiché sous {tests.find(t => t.id === newTest.parentId)?.name}
-                  </p>
-                )}
-             </div>
-
-             {!newTest.isGroup && newTest.resultType === 'dropdown' && (
-               <div className="md:col-span-3 space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-widest text-slate-400">Options possibles (séparées par des virgules)</Label>
-                  <input
-                    value={newTest.options}
-                    onChange={(e) => setNewTest({...newTest, options: e.target.value})}
-                    placeholder="Positif, Négatif, Traces..."
-                    className="input-premium h-14 font-bold"
-                    required
-                  />
-                  <p className="text-[10px] text-slate-400">Exemple: Positif, Négatif, Indéterminé</p>
-               </div>
-             )}
-
-             {!newTest.isGroup && newTest.resultType === 'numeric' && (
-                <div className="md:col-span-3 space-y-2">
-                   <Label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">Paramètres de Référence</Label>
-                   <div className="grid grid-cols-4 gap-4">
-                      <div className="space-y-2">
-                         <Label className="text-xs font-bold text-slate-500">Unité</Label>
-                         <input value={newTest.unit} onChange={(e) => setNewTest({...newTest, unit: e.target.value})} placeholder="Exemple: g/L" className="input-premium h-12 text-center font-bold" />
-                      </div>
-                      <div className="space-y-2">
-                         <Label className="text-xs font-bold text-slate-500">Valeur Min</Label>
-                         <input step="0.01" type="number" value={newTest.minValue} onChange={(e) => setNewTest({...newTest, minValue: e.target.value})} placeholder="Min" className="input-premium h-12 text-center font-bold ring-1 ring-emerald-50 focus:ring-emerald-200" />
-                      </div>
-                      <div className="space-y-2">
-                         <Label className="text-xs font-bold text-slate-500">Valeur Max</Label>
-                         <input step="0.01" type="number" value={newTest.maxValue} onChange={(e) => setNewTest({...newTest, maxValue: e.target.value})} placeholder="Max" className="input-premium h-12 text-center font-bold ring-1 ring-rose-50 focus:ring-rose-200" />
-                      </div>
-                      <div className="space-y-2">
-                         <Label className="text-xs font-bold text-slate-500">Décimales</Label>
-                         <select value={newTest.decimals} onChange={(e) => setNewTest({...newTest, decimals: e.target.value})} className="input-premium h-12 text-center font-bold ring-1 ring-blue-50 focus:ring-blue-200">
-                           <option value="0">0</option>
-                           <option value="1">1</option>
-                           <option value="2">2</option>
-                           <option value="3">3</option>
-                         </select>
-                      </div>
-                   </div>
-
-                   <div className="mt-6 pt-6 border-t border-slate-200 space-y-4">
-                      <p className="text-xs font-black uppercase tracking-widest text-slate-400">Valeurs de Référence par Genre (optionnel)</p>
-                      <div className="grid grid-cols-2 gap-4">
-                         <div className="space-y-3 p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                            <p className="text-xs font-bold text-blue-700 uppercase tracking-tight">Homme</p>
-                            <div className="space-y-2">
-                               <Label className="text-xs font-bold text-slate-500">Min</Label>
-                               <input step="0.01" type="number" value={newTest.minValueM} onChange={(e) => setNewTest({...newTest, minValueM: e.target.value})} placeholder="Min" className="input-premium h-10 text-center font-bold text-sm" />
-                            </div>
-                            <div className="space-y-2">
-                               <Label className="text-xs font-bold text-slate-500">Max</Label>
-                               <input step="0.01" type="number" value={newTest.maxValueM} onChange={(e) => setNewTest({...newTest, maxValueM: e.target.value})} placeholder="Max" className="input-premium h-10 text-center font-bold text-sm" />
-                            </div>
-                         </div>
-                         <div className="space-y-3 p-4 bg-pink-50 rounded-2xl border border-pink-100">
-                            <p className="text-xs font-bold text-pink-700 uppercase tracking-tight">Femme</p>
-                            <div className="space-y-2">
-                               <Label className="text-xs font-bold text-slate-500">Min</Label>
-                               <input step="0.01" type="number" value={newTest.minValueF} onChange={(e) => setNewTest({...newTest, minValueF: e.target.value})} placeholder="Min" className="input-premium h-10 text-center font-bold text-sm" />
-                            </div>
-                            <div className="space-y-2">
-                               <Label className="text-xs font-bold text-slate-500">Max</Label>
-                               <input step="0.01" type="number" value={newTest.maxValueF} onChange={(e) => setNewTest({...newTest, maxValueF: e.target.value})} placeholder="Max" className="input-premium h-10 text-center font-bold text-sm" />
-                            </div>
-                         </div>
-                      </div>
-                      <p className="text-[10px] text-slate-400 italic">Si définis, ces valeurs seront utilisées à la place des valeurs générales pour le genre correspondant.</p>
-                   </div>
-                </div>
-             )}
-
-             <div className="md:col-span-3 flex justify-end gap-4 mt-2">
-                <button type="button" onClick={handleCloseForm} className="px-8 font-bold text-slate-500 hover:bg-slate-100 rounded-2xl">Annuler</button>
-                <button type="submit" className="btn-primary-premium h-14 px-12">{editingTestId ? 'Modifier' : 'Confirmer l\'ajout'}</button>
-             </div>
-          </form>
-        </div>
-      )}
-
-      {/* Grid of Tests Cards */}
-      {filteredTests.length === 0 ? (
-        <div className="bento-card py-32 text-center flex flex-col items-center">
-           <div className="w-20 h-20 bg-slate-50 text-slate-300 rounded-3xl flex items-center justify-center mb-6">
-              <Beaker size={40} />
-           </div>
-           <h3 className="text-xl font-bold text-slate-900">Aucun test dans le catalogue</h3>
-           <button onClick={() => setShowForm(true)} className="text-blue-600 font-bold mt-4 hover:underline">Ajouter le premier test</button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredTests.map((test) => {
-            const isNum = test.resultType === 'numeric' || !test.resultType;
             return (
-              <div key={test.id} className="group bento-card hover:border-blue-200 hover:shadow-premium transition-all relative overflow-hidden bg-white">
-                <div className="flex justify-between items-start mb-6">
-                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${test.parentId ? 'ring-2 ring-slate-100' : ''} ${isNum ? 'bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white' : 'bg-amber-50 text-amber-600'}`}>
-                      {test.category === 'Hématologie' ? <Droplets size={24}/> : test.category === 'Biochimie' ? <Microscope size={24}/> : <FlaskConical size={24}/>}
+              <div key={categoryName} className="space-y-6">
+                <div className="flex items-center gap-4 px-2">
+                   <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-lg">
+                      {categoryName === 'Hématologie' ? <Droplets size={20}/> : categoryName === 'Biochimie' ? <Microscope size={20}/> : <FlaskConical size={20}/>}
                    </div>
-                   <div className="flex gap-2">
-                     <button
-                       onClick={() => handleEdit(test)}
-                       className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-300 hover:bg-blue-50 hover:text-blue-600 transition-all"
-                     >
-                       <Pencil size={18} />
-                     </button>
-                     <button
-                       onClick={() => handleDeleteClick(test.id)}
-                       className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${deletingId === test.id ? 'animate-spin text-slate-300' : 'text-slate-300 hover:bg-rose-50 hover:text-rose-600'}`}
-                     >
-                       <Trash2 size={18} />
-                     </button>
+                   <div>
+                      <h2 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-3 uppercase">
+                         {categoryName}
+                         <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg tracking-normal">{categoryTests.length}</span>
+                      </h2>
                    </div>
+                   <div className="flex-1 h-[1px] bg-slate-100" />
                 </div>
 
-                <div className="space-y-4">
-                   <div>
-                      <div className="flex items-center gap-2 mb-2">
-                         <span className="font-mono text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg inline-block tracking-widest">{test.code}</span>
-                          {test.isGroup && (
-                             <span className="glass-badge badge-blue bg-blue-600 text-white text-[9px] px-2 py-0.5 rounded-full font-black">GROUPE / BILAN</span>
-                          )}
-
-                         {test.parentId && (
-                            <span className="text-[9px] font-black text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">SOUS-TEST</span>
-                         )}
-                      </div>
-                      <h3 className="text-xl font-black text-slate-900 tracking-tight leading-tight">{test.name}</h3>
-                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">{test.category || 'Catégorie non spécifiée'}</p>
-                   </div>
-
-                   <div className="pt-4 border-t border-slate-50 flex items-center justify-between">
-                      {test.isGroup ? (
-                         <div className="flex flex-col">
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Type</span>
-                            <span className="text-sm font-bold text-blue-600 flex items-center gap-2">
-                               <Layers size={14} /> {tests.filter(t => t.parentId === test.id).length} paramètres inclus
-                            </span>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {categoryTests.map(test => (
+                    <div key={test.id} className="bento-panel p-8 group relative overflow-hidden flex flex-col gap-6 bg-white border-slate-100 hover:shadow-2xl hover:border-blue-100 transition-all">
+                      <div className="flex justify-between items-center flex-wrap">
+                         <div className="space-y-1">
+                            <span className="text-[10px] font-black text-blue-600 tracking-[0.2em] uppercase">{test.code}</span>
+                            <h3 className="text-xl font-black text-slate-900 group-hover:text-blue-600 transition-colors uppercase leading-tight">{test.name}</h3>
                          </div>
-                      ) : isNum ? (
-                         <div className="flex flex-col">
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Valeurs de Référence</span>
-                            <span className="text-sm font-bold text-slate-700">
-                               {test.minValue !== null && test.maxValue !== null ? (
-                                 <>{test.minValue} - {test.maxValue} <span className="text-blue-500 ml-1">{test.unit}</span></>
-                               ) : test.minValue !== null ? (
-                                 <>&gt; {test.minValue} <span className="text-blue-500 ml-1">{test.unit}</span></>
-                               ) : test.maxValue !== null ? (
-                                 <>&lt; {test.maxValue} <span className="text-blue-500 ml-1">{test.unit}</span></>
+                         <div className="flex gap-1">
+                           <button onClick={() => handleEdit(test)} className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl"><Pencil size={18} /></button>
+                           <button onClick={() => handleDelete(test)} className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl"><Trash2 size={18} /></button>
+                         </div>
+                      </div>
+                      <div className="pt-6 border-t border-slate-50 flex items-end justify-between">
+                         <div className="space-y-2">
+                            <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest block">Référence</span>
+                            <div className="flex items-baseline gap-1">
+                               {test.isGroup ? (
+                                  <span className="text-sm font-black text-blue-500 uppercase flex items-center gap-2">Panel ({tests.filter(t => t.parentId === test.id).length})</span>
+                               ) : test.resultType === 'numeric' ? (
+                                  <>
+                                      { (test.minValueM !== null || test.maxValueM !== null || test.minValueF !== null || test.maxValueF !== null) ? (
+                                        <div className="space-y-0.5">
+                                          <div className="flex items-center gap-2">
+                                            <span className="text-[10px] font-black text-blue-400 uppercase w-4 text-center">H</span>
+                                            <span className="text-sm font-black text-slate-900 tracking-tighter">{test.minValueM ?? '0'} — {test.maxValueM ?? '∞'}</span>
+                                          </div>
+                                          <div className="flex items-center gap-2">
+                                            <span className="text-[10px] font-black text-rose-400 uppercase w-4 text-center">F</span>
+                                            <span className="text-sm font-black text-slate-900 tracking-tighter">{test.minValueF ?? '0'} — {test.maxValueF ?? '∞'}</span>
+                                          </div>
+                                        </div>
+                                      ) : (
+                                        <span className="text-lg font-black text-slate-900 tracking-tighter">{test.minValue ?? '0'} — {test.maxValue ?? '∞'}</span>
+                                      )}
+                                    <span className="text-xs font-bold text-blue-500 truncate" dangerouslySetInnerHTML={{ __html: test.unit || '—' }} />
+                                  </>
                                ) : (
-                                 <>? - ? <span className="text-blue-500 ml-1">{test.unit}</span></>
+                                  <span className="text-sm font-black text-amber-500 uppercase flex items-center gap-2"> {test.resultType === 'dropdown' ? 'Liste' : 'Texte'}</span>
                                )}
-                            </span>
+                            </div>
                          </div>
-                      ) : (
-                         <div className="flex flex-col">
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Type de Saisie</span>
-                            <span className="text-sm font-bold text-amber-600 flex items-center gap-2">
-                               <Hash size={14} /> {test.resultType === 'long_text' ? 'Texte libre' : test.resultType === 'dropdown' ? 'Liste de choix' : 'Texte court'}
-                            </span>
-                         </div>
-                      )}
-                      
-                      <div className="flex items-center text-slate-200 group-hover:text-blue-600 transition-colors">
-                         <ChevronRight size={20} />
+                         <button onClick={() => handleEdit(test)} className="w-10 h-10 rounded-full bg-slate-50 text-slate-200 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all transform group-hover:scale-110">
+                            <ChevronRight size={20} />
+                         </button>
                       </div>
-                   </div>
+                      <div className="absolute -bottom-10 -right-10 w-32 h-32 rounded-full bg-slate-100 opacity-0 group-hover:opacity-30 transition-opacity blur-3xl pointer-events-none" />
+                    </div>
+                  ))}
                 </div>
               </div>
             );
-          })}
+          })
+        )}
+      </div>
+
+      {/* Optimized Form Modal */}
+      {showForm && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[60] flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div 
+            className="bg-white rounded-[2.5rem] w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 overflow-hidden border border-slate-100"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header consistent with ConfirmationModal */}
+            <div className="p-10 pb-6 flex items-start justify-between">
+              <div className="flex items-start gap-6">
+                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg shrink-0 ${editingTestId ? 'bg-blue-600' : 'bg-slate-900'} text-white shadow-blue-200`}>
+                  {editingTestId ? <Settings2 size={32} /> : <Plus size={32} />}
+                </div>
+                <div>
+                  <h3 className="text-3xl font-black text-slate-900 tracking-tight">
+                    {editingTestId ? 'Modifier' : 'Ajouter'} <span className="text-blue-600">Test</span>
+                  </h3>
+                  <p className="text-slate-500 font-medium mt-1">Configurez les paramètres de l'analyse biologique.</p>
+                </div>
+              </div>
+              <button 
+                onClick={handleCloseForm} 
+                className="p-3 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-2xl transition-all"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="px-10 py-6 space-y-8 overflow-y-auto custom-scrollbar flex-1 bg-white">
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  type="button"
+                  onClick={() => setNewTest({...newTest, isGroup: false})}
+                  className={`p-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all border ${!newTest.isGroup ? 'bg-blue-50 border-blue-200 text-blue-600 shadow-sm' : 'border-slate-50 text-slate-400 hover:bg-slate-50'}`}
+                >
+                  Individuel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setNewTest({...newTest, isGroup: true, resultType: 'text', unit: '', minValue: '', maxValue: ''})}
+                  className={`p-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all border ${newTest.isGroup ? 'bg-blue-50 border-blue-200 text-blue-600 shadow-sm' : 'border-slate-50 text-slate-400 hover:bg-slate-50'}`}
+                >
+                  Panel / Bilan
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-slate-50 rounded-2xl border border-slate-100 shadow-inner-sm">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Code</label>
+                  <input
+                    value={newTest.code}
+                    onChange={(e) => setNewTest({...newTest, code: e.target.value.toUpperCase()})}
+                    placeholder="Ex: HEMO"
+                    className="input-premium h-14 bg-white shadow-sm font-black uppercase"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Catégorie</label>
+                  <select
+                    value={newTest.category}
+                    onChange={(e) => setNewTest({...newTest, category: e.target.value})}
+                    className="input-premium h-14 bg-white shadow-sm font-black"
+                  >
+                    <option value="">Sélectionner...</option>
+                    {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                  </select>
+                </div>
+                <div className="md:col-span-2 space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nom Complet</label>
+                  <input
+                    value={newTest.name}
+                    onChange={(e) => setNewTest({...newTest, name: e.target.value})}
+                    placeholder="Ex: Hémoglobine Glyquée"
+                    className="input-premium h-14 bg-white shadow-sm font-black"
+                    required
+                  />
+                </div>
+              </div>
+
+              {!newTest.isGroup && (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between px-4">
+                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Paramètres Physico-chimiques</h4>
+                    <button 
+                      type="button"
+                      onClick={() => setIsSexBased(!isSexBased)}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[10px] font-black uppercase tracking-wider transition-all ${isSexBased ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-100' : 'bg-white border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-200'}`}
+                    >
+                      <Layers size={12} />
+                      Plages par sexe
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-blue-50/50 rounded-2xl border border-blue-100 items-end">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-blue-600 uppercase tracking-widest ml-1 text-center block">Unité</label>
+                      <input value={newTest.unit} onChange={(e) => setNewTest({...newTest, unit: e.target.value})} placeholder="g/L" className="input-premium h-12 bg-white text-center font-black" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-emerald-600 uppercase tracking-widest ml-1 text-center block">Min Std</label>
+                      <input step="0.01" type="number" value={newTest.minValue} onChange={(e) => setNewTest({...newTest, minValue: e.target.value})} placeholder="0.00" className="input-premium h-12 bg-white text-center font-black" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-rose-600 uppercase tracking-widest ml-1 text-center block">Max Std</label>
+                      <input step="0.01" type="number" value={newTest.maxValue} onChange={(e) => setNewTest({...newTest, maxValue: e.target.value})} placeholder="∞" className="input-premium h-12 bg-white text-center font-black" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 text-center block">Déc</label>
+                      <select value={newTest.decimals} onChange={(e) => setNewTest({...newTest, decimals: e.target.value})} className="input-premium h-12 bg-white text-center font-black">
+                        <option value="0">0</option><option value="1">1</option><option value="2">2</option>
+                      </select>
+                    </div>
+
+                    {isSexBased && (
+                      <div className="col-span-2 md:col-span-4 grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-blue-100/50">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest ml-1 text-center block">H Min</label>
+                          <input step="0.01" type="number" value={newTest.minValueM} onChange={(e) => setNewTest({...newTest, minValueM: e.target.value})} placeholder="Min H" className="input-premium h-12 bg-white text-center font-black" />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest ml-1 text-center block">H Max</label>
+                          <input step="0.01" type="number" value={newTest.maxValueM} onChange={(e) => setNewTest({...newTest, maxValueM: e.target.value})} placeholder="Max H" className="input-premium h-12 bg-white text-center font-black" />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-rose-400 uppercase tracking-widest ml-1 text-center block">F Min</label>
+                          <input step="0.01" type="number" value={newTest.minValueF} onChange={(e) => setNewTest({...newTest, minValueF: e.target.value})} placeholder="Min F" className="input-premium h-12 bg-white text-center font-black" />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-rose-400 uppercase tracking-widest ml-1 text-center block">F Max</label>
+                          <input step="0.01" type="number" value={newTest.maxValueF} onChange={(e) => setNewTest({...newTest, maxValueF: e.target.value})} placeholder="Max F" className="input-premium h-12 bg-white text-center font-black" />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {newTest.parentId === '' && (
+                 <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-100 opacity-60">
+                    <Info size={16} className="text-slate-400" />
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-tight italic">Test de niveau racine (Catalogue principal)</p>
+                 </div>
+              )}
+            </form>
+
+            <div className="p-10 flex justify-end gap-3 bg-white border-t border-slate-50 mt-auto shadow-inner-white">
+              <button 
+                onClick={handleCloseForm}
+                className="px-8 py-4 rounded-2xl font-black text-slate-500 hover:text-slate-700 hover:bg-slate-50 transition-all uppercase text-[10px] tracking-widest"
+              >
+                Annuler
+              </button>
+              <button 
+                onClick={handleSubmit}
+                className="px-10 py-4 rounded-2xl bg-blue-600 text-white font-black hover:bg-blue-700 shadow-xl shadow-blue-100 transition-all flex items-center gap-2 uppercase text-[10px] tracking-widest active:scale-95 min-w-[160px] justify-center"
+              >
+                <Save size={18} /> <span>Enregistrer</span>
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Modern Dialogs */}
-      <ConfirmDialog
-        open={confirmDialog.open}
-        onOpenChange={(open) => setConfirmDialog(prev => ({ ...prev, open }))}
-        title="Supprimer le test"
-        description="Attention : Cette action est irréversible et pourrait affecter les analyses existantes utilisant ce test."
-        onConfirm={handleConfirmDelete}
-        confirmLabel="Supprimer"
-        variant="destructive"
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={confirmModal.action}
+        title={confirmModal.title} message={confirmModal.message} type={confirmModal.type} icon={confirmModal.icon}
       />
 
-      {notification && (
-        <NotificationToast type={notification.type} message={notification.message} />
-      )}
+      {notification && <NotificationToast type={notification.type} message={notification.message} />}
     </div>
   );
 }

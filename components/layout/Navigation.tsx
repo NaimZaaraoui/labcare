@@ -11,9 +11,32 @@ import {
 } from 'lucide-react';
 import { useMobileMenu } from '@/contexts/MobileMenuContext';
 
+import { useSession, signOut } from 'next-auth/react';
+import { useState } from 'react';
+import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
+
+
+
+const ADMIN_ONLY = ['/dashboard/settings', '/dashboard/users', '/tests'];
+const BLOCKED_MEDECIN = ['/analyses/nouvelle', '/dashboard/settings', '/dashboard/users', '/tests'];
+const BLOCKED_RECEPTIONNISTE = ['/dashboard/settings', '/dashboard/users', '/tests'];
+
 export function Navigation() {
+  const { data: session } = useSession();
   const pathname = usePathname();
   const { isCollapsed, toggleCollapse, isOpen: mobileOpen, close: closeMobile } = useMobileMenu();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  const role = (session?.user as any)?.role || 'TECHNICIEN';
+
+
+  const isLinkVisible = (href: string) => {
+    if (role === 'ADMIN') return true;
+    if (role === 'MEDECIN' && BLOCKED_MEDECIN.some(p => href.startsWith(p))) return false;
+    if (role === 'RECEPTIONNISTE' && BLOCKED_RECEPTIONNISTE.some(p => href.startsWith(p))) return false;
+    if (role !== 'ADMIN' && ADMIN_ONLY.some(p => href.startsWith(p))) return false;
+    return true;
+  };
 
   const isActive = (href: string) => {
     if (href === '/' || href === '/dashboard') return pathname === '/' || pathname === '/dashboard';
@@ -23,6 +46,12 @@ export function Navigation() {
   const handleNavClick = () => closeMobile();
   // We consider it open if not explicitly collapsed
   const sidebarOpen = isCollapsed === false ? true : !isCollapsed;
+
+  // Filter navigation groups based on visibility
+  const filteredGroups = NAVIGATION_GROUPS.map(group => ({
+    ...group,
+    links: group.links.filter(link => isLinkVisible(link.href))
+  })).filter(group => group.links.length > 0);
 
   return (
     <>
@@ -49,7 +78,7 @@ export function Navigation() {
 
         {/* Navigation */}
         <nav className="p-4 space-y-6 flex-1 overflow-y-auto">
-          {NAVIGATION_GROUPS.map((group, gIdx) => (
+          {filteredGroups.map((group, gIdx) => (
             <div key={gIdx} className="space-y-2">
               {sidebarOpen && (
                 <div className="px-4 text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-2">
@@ -83,12 +112,17 @@ export function Navigation() {
 
         {/* Bottom Actions */}
         <div className="p-4 space-y-2 mt-auto">
-          <button className={`w-full flex items-center gap-3 py-3 rounded-2xl font-semibold text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors ${
-            !sidebarOpen ? 'justify-center px-0' : 'px-4'
-          }`}>
+          <button 
+            onClick={() => setShowLogoutConfirm(true)}
+            className={`w-full flex items-center gap-3 py-3 rounded-2xl font-semibold text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors ${
+              !sidebarOpen ? 'justify-center px-0' : 'px-4'
+            }`}
+          >
             <LogOut className="w-5 h-5 flex-shrink-0 text-slate-400 group-hover:text-red-500" />
             {sidebarOpen && <span className="text-sm">Déconnexion</span>}
           </button>
+
+
         </div>
 
         {/* Toggle Button */}
@@ -127,7 +161,7 @@ export function Navigation() {
         </div>
 
         <nav className="p-4 space-y-6 flex-1 overflow-y-auto">
-          {NAVIGATION_GROUPS.map((group, gIdx) => (
+          {filteredGroups.map((group, gIdx) => (
             <div key={gIdx} className="space-y-2">
               <div className="px-4 text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-2">
                 {group.title}
@@ -157,12 +191,29 @@ export function Navigation() {
         </nav>
         
          <div className="p-4 space-y-2 mt-auto border-t border-slate-100">
-          <button className="w-full flex items-center gap-3 py-3 px-4 rounded-2xl font-semibold text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors">
+          <button 
+            onClick={() => setShowLogoutConfirm(true)}
+            className="w-full flex items-center gap-3 py-3 px-4 rounded-2xl font-semibold text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+          >
             <LogOut className="w-5 h-5 flex-shrink-0 text-slate-400 group-hover:text-red-500" />
             <span className="text-sm">Déconnexion</span>
           </button>
+
+
         </div>
       </aside>
+      
+      <ConfirmationModal
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={() => signOut()}
+        title="Se déconnecter ?"
+        message="Êtes-vous sûr de vouloir quitter votre session ? Vous devrez vous reconnecter pour accéder au laboratoire."
+        confirmText="Déconnexion"
+        type="danger"
+        icon="logout"
+      />
     </>
+
   );
 }

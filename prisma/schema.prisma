@@ -1,183 +1,155 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider        = "prisma-client-js"
-  output          = "../app/generated/prisma"
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
 }
 
 datasource db {
   provider = "sqlite"
 }
 
-// Category Model for custom ordering
 model Category {
-  id        String   @id @default(uuid())
-  name      String   @unique
-  rank      Int      @default(0)
-  icon      String?  // Icône personnalisée (nom d'icône Lucide)
-  
-  // Hiérarchie
+  id        String     @id @default(uuid())
+  name      String     @unique
+  rank      Int        @default(0)
+  icon      String?
   parentId  String?
-  parent    Category? @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  parent    Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
   children  Category[] @relation("CategoryHierarchy")
-  
   tests     Test[]
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
+
   @@map("categories")
 }
 
-// Test model
 model Test {
-  id          String      @id @default(uuid())
+  id          String    @id @default(uuid())
   name        String
-  code        String      @unique
+  code        String    @unique
   unit        String?
   minValue    Float?
   maxValue    Float?
-  minValueM   Float?      // Min value for men
-  maxValueM   Float?      // Max value for men
-  minValueF   Float?      // Min value for women
-  maxValueF   Float?      // Max value for women
+  minValueM   Float?
+  maxValueM   Float?
+  minValueF   Float?
+  maxValueF   Float?
   decimals    Int?      @default(1)
-  resultType  String   @default("numeric") // numeric, text, long_text, dropdown
-  
-  // Migration: category string kept temporarily, categoryId added
-  category    String?  // DEPRECATED: Use relation below. Kept for migration.
+  resultType  String    @default("numeric")
+  category    String?
   categoryId  String?
-  categoryRel Category? @relation(fields: [categoryId], references: [id])
-  
-  rank        Int      @default(0) // Order within the category
-  
-  options     String?  // Liste d'options séparées par des virgules pour le type dropdown
-  isGroup     Boolean  @default(false)
-
-  // Hiérarchie
+  rank        Int       @default(0)
+  options     String?
+  isGroup     Boolean   @default(false)
   parentId    String?
-  parent      Test?      @relation("TestHierarchy", fields: [parentId], references: [id])
-  children    Test[]     @relation("TestHierarchy")
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   results     Result[]
-  bilans      Bilan[]
-
+  parent      Test?     @relation("TestHierarchy", fields: [parentId], references: [id])
+  children    Test[]    @relation("TestHierarchy")
+  categoryRel Category? @relation(fields: [categoryId], references: [id])
+  bilans      Bilan[]   @relation("BilanToTest")
 
   @@map("tests")
 }
 
-// Analysis Model
 model Analysis {
-  id          String      @id @default(uuid())
-  orderNumber String      @unique
-
-  // Patient Details
-  patientId   String?  // Optional for migration
-  patient     Patient? @relation(fields: [patientId], references: [id])
-  
-  // Legacy fields (kept for history/migration)
-  patientFirstName String?
-  patientLastName  String?
-  patientAge  Int?
-  patientGender String?
-  receiptNumber String?
-  
-  // Daily Identifier (Resetting daily 1, 2, 3...)
-  dailyId     String?
-
-  // Clinical Context
-  provenance            String?  // consultation, externe, urgence, interne, etc.
-  medecinPrescripteur   String?  // Nom du médecin prescripteur
-
-  // Analysis Details
-  creationDate DateTime @default(now())
-  drawingDate  DateTime?
-
-  status      String?  @default("pending") // pending, completed, cancelled
-  
-  // Print tracking
-  printedAt   DateTime?
-
-  // Diatron Histogram Data (JSON string)
-  histogramData String?
-
-  results     Result[]
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                  String    @id @default(uuid())
+  orderNumber         String    @unique
+  patientId           String?
+  patientFirstName    String?
+  patientLastName     String?
+  patientAge          Int?
+  patientGender       String?
+  receiptNumber       String?
+  dailyId             String?
+  provenance          String?
+  medecinPrescripteur String?
+  isUrgent            Boolean   @default(false)
+  creationDate        DateTime  @default(now())
+  drawingDate         DateTime?
+  status              String?   @default("pending")
+  printedAt           DateTime?
+  histogramData       String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  globalNote          String?
+  globalNotePlacement String    @default("all")
+  validatedBioAt      DateTime?
+  validatedBioBy      String?
+  validatedBioName    String?
+  validatedTechAt     DateTime?
+  validatedTechBy     String?
+  validatedTechName   String?
+  patient             Patient?  @relation(fields: [patientId], references: [id])
+  results             Result[]
 
   @@map("analyses")
 }
 
-// Result Model
 model Result {
-  id          String      @id @default(uuid())
-  analysis    Analysis   @relation(fields: [analysisId], references: [id], onDelete: Cascade)
-  analysisId  String
-  test        Test       @relation(fields: [testId], references: [id], onDelete: Cascade)
-  testId      String
-  value       String?
-  unit        String?
-  notes       String?
-  abnormal    Boolean   @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(uuid())
+  analysisId String
+  testId     String
+  value      String?
+  unit       String?
+  notes      String?
+  abnormal   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  test       Test     @relation(fields: [testId], references: [id], onDelete: Cascade)
+  analysis   Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
 
   @@unique([analysisId, testId])
   @@map("results")
 }
 
-// Bilan Model (Shortcuts)
 model Bilan {
   id        String   @id @default(uuid())
   name      String
   code      String?
-  tests     Test[]
-  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+  tests     Test[]   @relation("BilanToTest")
+
   @@map("bilans")
 }
 
-// Client / Patient Model
 model Patient {
-  id          String   @id @default(uuid())
-  
+  id          String     @id @default(uuid())
   firstName   String
   lastName    String
   birthDate   DateTime?
-  gender      String   @default("M") // M, F
-  
+  gender      String     @default("M")
   phoneNumber String?
   email       String?
   address     String?
-  
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
   analyses    Analysis[]
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+
   @@map("patients")
 }
 
-// User Model
 model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  password  String
-  role      String   @default("TECHNICIEN")
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                 String   @id @default(cuid())
+  name               String
+  email              String   @unique
+  password           String
+  role               String   @default("TECHNICIEN")
+  isActive           Boolean  @default(true)
+  mustChangePassword Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   @@map("users")
+}
+
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String   @default("")
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+
+  @@map("settings")
 }

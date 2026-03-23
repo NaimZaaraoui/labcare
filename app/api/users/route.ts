@@ -1,45 +1,101 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import { NextResponse } from 'next/server';
 
 export async function GET() {
-  const session = await auth();
-  if (!session || (session.user as any).role !== 'BIOLOGISTE') {
-    return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
+  try {
+    const session = await auth();
+
+    if (session?.user?.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
+    }
+
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isActive: true,
+        mustChangePassword: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return NextResponse.json(users);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    return NextResponse.json(
+      { error: 'Une erreur interne est survenue.' },
+      { status: 500 }
+    );
   }
-
-  const users = await prisma.user.findMany({
-    select: { id: true, name: true, email: true, role: true, active: true, createdAt: true },
-    orderBy: { createdAt: 'asc' },
-  });
-
-  return NextResponse.json(users);
 }
 
-export async function POST(request: NextRequest) {
-  const session = await auth();
-  if (!session || (session.user as any).role !== 'ADMIN') {
-    return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
+export async function POST(request: Request) {
+  try {
+    const session = await auth();
+
+    if (session?.user?.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
+    }
+
+    const { name, email, password, role } = await request.json();
+
+    if (!name || !email || !password || !role) {
+      return NextResponse.json(
+        { error: 'Tous les champs sont obligatoires.' },
+        { status: 400 }
+      );
+    }
+
+    const validRoles = ['ADMIN', 'MEDECIN', 'TECHNICIEN', 'RECEPTIONNISTE'];
+    if (!validRoles.includes(role)) {
+      return NextResponse.json({ error: 'Rôle invalide.' }, { status: 400 });
+    }
+
+    // Check if email already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
+      return NextResponse.json(
+        { error: 'Cet email est déjà utilisé.' },
+        { status: 400 }
+      );
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        role,
+        isActive: true,
+        mustChangePassword: true,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isActive: true,
+        mustChangePassword: true,
+        createdAt: true,
+      },
+    });
+
+    return NextResponse.json(user, { status: 201 });
+  } catch (error) {
+    console.error('Error creating user:', error);
+    return NextResponse.json(
+      { error: 'Une erreur interne est survenue.' },
+      { status: 500 }
+    );
   }
-
-  const { name, email, password, role } = await request.json();
-
-  if (!name || !email || !password || !role) {
-    return NextResponse.json({ error: 'Champs manquants' }, { status: 400 });
-  }
-
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) {
-    return NextResponse.json({ error: 'Email déjà utilisé' }, { status: 400 });
-  }
-
-  const hashed = await bcrypt.hash(password, 12);
-
-  const user = await prisma.user.create({
-    data: { name, email, password: hashed, role },
-    select: { id: true, name: true, email: true, role: true, active: true },
-  });
-
-  return NextResponse.json(user);
 }

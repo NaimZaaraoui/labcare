@@ -2,7 +2,7 @@
 import React, { forwardRef } from 'react';
 import { Analysis } from '@/lib/types';
 import { format } from 'date-fns';
-import { fr, is } from 'date-fns/locale';
+import { fr } from 'date-fns/locale';
 import { LucideMicroscope } from 'lucide-react';
 import { getTestReferenceValues, formatReferenceRange } from '@/lib/utils';
 import { HistogramView } from '../analyses/HistogramView';
@@ -12,10 +12,21 @@ interface RapportImpressionProps {
   analysis: Analysis;
   results: Record<string, string>;
   selectedResultIds?: string[];
+  settings?: Record<string, string>;
 }
 
 export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionProps>(
-  ({ analysis, results, selectedResultIds = [] }, ref) => {
+  ({ analysis, results, selectedResultIds = [], settings }, ref) => {
+
+    const LAB_NAME     = settings?.lab_name     || 'Laboratoire';
+    const LAB_SUBTITLE = settings?.lab_subtitle || 'Service de Laboratoire';
+    const LAB_PARENT   = settings?.lab_parent   || '';
+    const LAB_ADDRESS  = [settings?.lab_address_1, settings?.lab_address_2].filter(Boolean).join(', ');
+    const LAB_PHONE    = settings?.lab_phone    || '';
+    const BIO_TITLE    = settings?.lab_bio_title || 'Docteur';
+    const BIO_NAME     = settings?.lab_bio_name  || '';
+    const BIO_ONMPT    = settings?.lab_bio_onmpt || '';
+    const FOOTER_TEXT  = settings?.lab_footer_text || '';
     const isAbnormal = (value: string, test: any): 'H' | 'L' | null => {
       const val = parseFloat(value.replace(',', '.'));
       if (isNaN(val)) return null;
@@ -27,24 +38,13 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
       return null;
     };
 
-    const ElectronicStamp = () => (
-      <div className="relative w-48 h-28 border-[1px] border-dashed border-blue-800/80 rounded-2xl flex flex-col items-center justify-center p-2 bg-white/50 backdrop-blur-[1px] shadow-sm print:border-blue-900 print:bg-transparent overflow-hidden">
-        {/* Decorative "ink" texture/noise using multiple borders or shadows if needed, but keeping it crisp */}
-        <div className="flex flex-col items-center text-center gap-0.5">
-          <span className="text-[11px] font-black text-blue-900 uppercase tracking-tight leading-none print:text-blue-900">Hôpital Menzel Bouzaïene</span>
-          <span className="text-[16px] font-black text-blue-900 uppercase tracking-tighter leading-none my-0.5 print:text-blue-900">C.S.S.B Gallel</span>
-          <span className="text-[12px] font-bold text-blue-800/90 leading-none print:text-blue-900">Service du Laboratoire</span>
-        </div>
-        
-        {/* Subtle stamp "imperfections" to look authentic but clear */}
-        <div className="absolute inset-0 bg-blue-800/5 pointer-events-none rounded-xl" />
-      </div>
-    );
 
     const patientName = `${analysis.patientFirstName || ''} ${analysis.patientLastName || ''}`.trim() || 'PATIENT SANS NOM';
     const dateEdition = format(new Date(), 'dd MMMM yyyy', { locale: fr });
     const datePrelevement = format(new Date(analysis.creationDate), 'dd MMMM yyyy', { locale: fr });
-    const isValidated = analysis.status === 'completed';
+    const isValidated = analysis.status === 'completed' || analysis.status === 'validated_bio';
+    const globalNote = analysis.globalNote?.trim();
+    const globalNotePlacement = analysis.globalNotePlacement || 'all';
 
     const sortResults = (results: any[]) => {
       const sorted: any[] = [];
@@ -156,11 +156,11 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
                       </div>
                         <div className="flex flex-col ml-2">
                           <h1 className="text-4xl font-black text-slate-900 tracking-[-0.05em] uppercase print:text-black leading-none">
-                            CSSB <span className="text-blue-600 print:text-black">GALLEL</span>
+                            {LAB_NAME}
                           </h1>
                           <div className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] mt-1.5 flex items-center gap-2">
                             <span className="w-8 h-[1px] bg-blue-600 print:bg-black"></span>
-                            SERVICE DE LABORATOIRE
+                            {LAB_SUBTITLE.toUpperCase()}
                           </div>
                         </div>
                     </div>
@@ -177,7 +177,7 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
               </div>
 
             <div className="grid grid-cols-12 gap-8 mb-8 relative z-10">
-              <div className="col-span-7">
+              <div className="col-span-5">
                 <div className="mb-4">
                   <span className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] print:text-black">Patient</span>
                   <div className="h-px bg-slate-100 mt-1 print:bg-black/10"></div>
@@ -194,7 +194,7 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
                 </div>
               </div>
 
-              <div className="col-span-5 grid grid-cols-2 gap-4">
+              <div className="col-span-7 grid grid-cols-2 gap-4">
                 <div>
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] print:text-black/60">Prélèvement</span>
                   <p className="text-sm font-bold text-slate-900 mt-1 print:text-black">{datePrelevement}</p>
@@ -205,7 +205,7 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
                 </div>
                 <div className="col-span-2">
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] print:text-black/60">Établissement</span>
-                    <p className="text-sm font-bold text-slate-900 mt-1 print:text-black">CSSB GALLEL - Manzel Bouzaienne</p>
+                    <p className="text-sm font-bold text-slate-900 mt-1 print:text-black">{LAB_NAME}{LAB_ADDRESS ? ` — ${LAB_ADDRESS}` : ''}</p>
                 </div>
               </div>
             </div>
@@ -239,27 +239,197 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
                             {isValidated ? 'Validé' : 'En attente'}
                           </span>
                         </div>
-                    </div>
+    </div>
                   </div>
-
-                  <div className="flex flex-col items-center">
+                                   <div className="flex flex-col items-center">
                     <div className="w-full border-b border-slate-900 pb-2 mb-4 text-center print:border-black">
                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] print:text-black">Signature & Cachet</span>
                     </div>
-                    <div className="text-center relative min-h-[100px] flex flex-col justify-end items-center">
-                      
-                        <div className="absolute top-0 w-32 h-20 border-2 border-dashed border-slate-100 rounded-xl flex items-center justify-center opacity-50 print:border-black/10">
-                          <span className="text-[8px] font-black text-slate-200 uppercase tracking-[0.2em] rotate-[-15deg] print:text-black/10">Zone de cachet</span>
+                    <div className="flex flex-col items-center gap-3 w-full">
+                      {/* Validation metadata */}
+                      {analysis.validatedBioAt && (
+                        <div className="text-[9px] text-slate-600 font-medium text-center print:text-black">
+                           Validé le {format(new Date(analysis.validatedBioAt), "dd/MM/yyyy 'à' HH:mm", { locale: fr })}
                         </div>
-                      <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest print:text-black relative z-10 font-black">Biologiste Responsable</p>
+                      )}
+
+                      {/* Signature & Stamp Area (Overlaid) */}
+  <div style={{
+    position: 'relative',
+    width: '120px',
+    height: '60px',
+    margin: '0 auto',
+  }}>
+
+    {/* ── CASE 1: Both stamp and signature ── */}
+    {settings?.lab_stamp_image && settings?.lab_bio_signature && (
+      <>
+        {/* Stamp fills the full zone, slightly faded */}
+        <img
+          src={settings.lab_stamp_image}
+          alt="Cachet"
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: '60px',
+            height: '60px',
+            objectFit: 'contain',
+            opacity: 0.9,
+          }}
+        />
+
+        {/* Signature sits in the upper half with a white backing 
+            so it's always readable regardless of what's behind it.
+            The white rectangle mimics the paper under the signature. */}
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '130px',
+          height: '30px',
+          backgroundColor: 'hsla(0, 0%, 100%, 0.5)',
+          /* Small bottom padding so white doesn't cut into stamp ring */
+          paddingBottom: '4px',
+          display: 'flex',
+          alignItems: 'flex-end',
+          justifyContent: 'center',
+          zIndex: 2,
+        }}>
+          <img
+            src={settings.lab_bio_signature}
+            alt="Signature"
+            style={{
+              width: '120px',
+              height: '30px',
+              objectFit: 'contain',
+              objectPosition: 'center bottom',
+              /* Slight contrast boost makes signature ink crisp on print */
+              filter: 'contrast(1.15)',
+            }}
+          />
+        </div>
+      </>
+    )}
+
+    {/* ── CASE 2: Stamp only, no signature ── */}
+    {settings?.lab_stamp_image && !settings?.lab_bio_signature && (
+      <img
+        src={settings.lab_stamp_image}
+        alt="Cachet"
+        style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '60px',
+          height: '60px',
+          objectFit: 'contain',
+        }}
+      />
+    )}
+
+    {/* ── CASE 3: Signature only, no stamp ── */}
+    {!settings?.lab_stamp_image && settings?.lab_bio_signature && (
+      <div style={{
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '6px',
+      }}>
+        <img
+          src={settings.lab_bio_signature}
+          alt="Signature"
+          style={{
+            width: '130px',
+            height: '30px',
+            objectFit: 'contain',
+            objectPosition: 'center bottom',
+            filter: 'contrast(1.15)',
+          }}
+        />
+        {/* Manual stamp zone below signature */}
+        <div style={{
+          width: '100px',
+          height: '60px',
+          border: '1px dashed #cbd5e1',
+          borderRadius: '4px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          <span style={{
+            fontSize: '7px',
+            color: '#cbd5e1',
+            textAlign: 'center',
+            lineHeight: 1.5,
+            textTransform: 'uppercase',
+            letterSpacing: '0.1em',
+          }}>
+            Cachet
+          </span>
+        </div>
+      </div>
+    )}
+
+    {/* ── CASE 4: Neither — empty zone for manual stamp + signature ── */}
+    {!settings?.lab_stamp_image && !settings?.lab_bio_signature && (
+      <div style={{
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: '130px',
+        height: '130px',
+        border: '2px dashed #e2e8f0',
+        borderRadius: '8px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        <span style={{
+          fontSize: '8px',
+          color: '#e2e8f0',
+          textAlign: 'center',
+          lineHeight: 1.6,
+          textTransform: 'uppercase',
+          letterSpacing: '0.15em',
+          transform: 'rotate(-15deg)',
+        }}>
+          Cachet &<br/>Signature
+        </span>
+      </div>
+    )}
+
+  </div>
+
+
+                      <div className="text-center">
+                        <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest print:text-black">
+                          {BIO_TITLE && BIO_NAME ? `${BIO_TITLE} ${BIO_NAME}` : 'Biologiste Responsable'}
+                        </p>
+                        {BIO_ONMPT && <p className="text-[8px] font-bold text-slate-400 print:text-black/60 mt-0.5">ONMPT: {BIO_ONMPT}</p>}
+                      </div>
                     </div>
+                    
                   </div>
                 </div>
 
+                {FOOTER_TEXT && (
+                  <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '8px', marginTop: '8px', fontSize: '9px', color: '#94a3b8', textAlign: 'center' }}>
+                    {FOOTER_TEXT}
+                  </div>
+                )}
                 <div className="mt-6 flex justify-between items-center text-[9px] font-bold text-slate-300 uppercase tracking-[0.3em] border-t border-slate-100 pt-8 print:border-black print:text-black">
-                  <span>CSSB GALLEL</span>
+                   <span>{LAB_NAME}</span>
                   <div className="flex gap-4">
-                    <span>Tél: +216 XX XXX XXX</span>
+                    {LAB_PHONE && <span>Tél: {LAB_PHONE}</span>}
                   </div>
                   <span className="text-slate-900 print:text-black page-number-container">
                     Page <span className="page-number"></span>
@@ -270,7 +440,7 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
               /* Minimal footer for NFS to save space */
               <div className="mt-4 pt-4 border-t border-slate-100 print:border-black/10 footer-content">
                 <div className="flex justify-between items-center text-[9px] font-bold text-slate-300 uppercase tracking-[0.3em] print:text-black">
-                  <span>CSSB GALLEL - Rapport NFS</span>
+                  <span>{LAB_NAME} - Rapport NFS</span>
                   <div className="flex gap-8 items-center">
                     <span className="text-blue-600 font-black">Validé par le Biologiste Responsable</span>
                     <span className="text-slate-900 print:text-black page-number-container">
@@ -397,6 +567,26 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
       </tbody>
     );
 
+    const totalPages = allOrderedCategories.length + (analysis.histogramData ? 1 : 0);
+    const shouldRenderGlobalNote = (pageIndex: number) => {
+      if (!globalNote) return false;
+      if (globalNotePlacement === 'first') return pageIndex === 0;
+      if (globalNotePlacement === 'last') return pageIndex === totalPages - 1;
+      return true;
+    };
+
+    const renderGlobalNote = (pageIndex: number) => {
+      if (!shouldRenderGlobalNote(pageIndex)) return null;
+      return (
+        <div className="px-4 py-2 mb-4 bg-slate-50/40 print:bg-transparent">
+          <p className="text-[11px] text-slate-600 italic leading-relaxed whitespace-pre-wrap print:text-black">
+            <span className="font-bold not-italic">(*) </span>
+            {globalNote}
+          </p>
+        </div>
+      );
+    };
+
     return (
       <div ref={ref} className="bg-white p-10 text-slate-900 font-sans w-[210mm] mx-auto relative print:p-0 print:text-black leading-relaxed">
         <div className="absolute top-0 right-0 w-1/3 h-1 bg-slate-900 print:bg-black"></div>
@@ -417,6 +607,7 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
           <table className="w-full border-collapse border-none mb-4 relative z-10">
             {renderHeader()}
             {renderTableContent([cat], cat === 'NFS')}
+            <tbody><tr><td>{renderGlobalNote(index)}</td></tr></tbody>
             {isNFS ? renderFooter(false) : renderFooter(true)}
           </table>
           </div>
@@ -500,6 +691,9 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
                             })()}
                         </td>
                     </tr>
+                    <tr>
+                      <td>{renderGlobalNote(allOrderedCategories.length)}</td>
+                    </tr>
                 </tbody>
                 {renderFooter(true)}
             </table>
@@ -539,9 +733,7 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
                 break-inside: avoid;
               }
 
-              .break-inside-avoid {
-                break-inside: avoid;
-              }
+
           }
 
           }

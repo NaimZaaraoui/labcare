@@ -19,6 +19,7 @@ services:
       - AUTH_TRUST_HOST=${AUTH_TRUST_HOST}
     volumes:
       - labcare-db:/app/data
+      - ./public/uploads:/app/public/uploads
     networks:
       - app-net
     healthcheck:

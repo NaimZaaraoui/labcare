@@ -439,7 +439,7 @@ export default function OrderingPage() {
             className={`
               p-4 rounded-xl flex items-center justify-between cursor-pointer transition-all border
               ${selectedCategory?.id === cat.id 
-                ? 'bg-blue-50 border-blue-200 shadow-md translate-x-2' 
+                ? 'bg-blue-50 border-blue-200 shadow-md' 
                 : 'bg-white border-transparent hover:bg-slate-50 hover:border-slate-200'}
             `}
             style={{ marginLeft: `${depth * 24}px` }}
@@ -522,21 +522,25 @@ export default function OrderingPage() {
   if (loading) return <div className="flex justify-center p-20"><Loader2 className="animate-spin text-blue-600" /></div>;
 
   return (
-    <div className="p-8 space-y-8 opacity-0 animate-[fadeInPlain_0.4s_ease-out_forwards] pb-24">
-      <div className="flex items-center justify-between">
+    <div className="p-8 space-y-8 animate-fade-in pb-24">
+
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <button 
             onClick={() => router.back()}
-            className="w-10 h-10 rounded-xl bg-white text-slate-600 hover:bg-slate-50 flex items-center justify-center transition-all shadow-sm border border-slate-200"
+            className="group flex items-center gap-2 text-slate-400 font-bold hover:text-blue-600 transition-all"
           >
-            <ArrowLeft size={20} />
+            <div className="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center group-hover:bg-blue-50 shadow-sm transition-all group-hover:border-blue-100">
+              <ArrowLeft size={16} />
+            </div>
           </button>
           <div>
             <h1 className="text-3xl font-black text-slate-900 tracking-tight">Organisation du Laboratoire</h1>
-            <p className="text-slate-500 font-medium">Réorganisez l'ordre d'affichage par glisser-déposer</p>
+            <p className="text-slate-500 font-medium mt-1">Réorganisez l&apos;ordre d&apos;affichage par glisser-déposer.</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 shrink-0">
           {saving && <span className="text-sm font-bold text-blue-600 animate-pulse flex items-center gap-2"><Save size={14} /> Sauvegarde...</span>}
           <button
             onClick={() => setConfirmDialog({
@@ -545,14 +549,14 @@ export default function OrderingPage() {
               description: 'Êtes-vous sûr de vouloir réinitialiser l\'ordre par défaut ? Cette action est irréversible.',
               action: handleReset
             })}
-            className="px-4 py-2 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 font-bold text-sm flex items-center gap-2 transition-all"
+            className="px-4 py-2.5 rounded-2xl bg-rose-50 text-rose-600 hover:bg-rose-100 font-bold text-sm flex items-center gap-2 transition-all border border-rose-100"
           >
             <RotateCcw size={16} />
             Réinitialiser
           </button>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 font-bold text-sm flex items-center gap-2 transition-all shadow-lg shadow-blue-200"
+            className="px-4 py-2.5 rounded-2xl bg-blue-600 text-white hover:bg-blue-700 font-black text-sm flex items-center gap-2 transition-all shadow-lg shadow-blue-100"
           >
             <PlusCircle size={16} />
             Nouvelle Catégorie
@@ -633,7 +637,7 @@ export default function OrderingPage() {
         <div className="lg:col-span-1 space-y-4">
            <div className="bg-slate-900 text-white p-4 rounded-t-2xl flex items-center gap-3 shadow-lg">
             <Beaker size={20} className="text-emerald-400" />
-            <h2 className="font-bold">Tests de : <span className="text-emerald-300">{selectedCategory?.name}</span></h2>
+            <h2 className="font-bold">Tests de : <span className="text-white">{selectedCategory?.name}</span></h2>
           </div>
           <div className="bg-white rounded-b-2xl shadow-xl shadow-slate-200/50 p-2 min-h-[400px]">
              {selectedCategory ? (
@@ -707,7 +711,7 @@ export default function OrderingPage() {
       {mounted && (showCreateModal || showEditModal) && createPortal(
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
           <div 
-            className="bg-white rounded-3xl p-8 max-w-md w-full space-y-6 shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-200"
+            className="bg-white rounded-3xl p-8 max-w-md w-full space-y-6 shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-200 overflow-y-auto h-[90vh]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
