@@ -1,6 +1,6 @@
 import puppeteer from 'puppeteer-core';
 
-export async function generateAnalysisPDF(analysisId: string) {
+export async function generateAnalysisPDF(analysisId: string, origin?: string) {
   let browser;
   try {
     const executablePath = process.env.CHROMIUM_PATH || '/usr/bin/chromium';
@@ -24,10 +24,15 @@ export async function generateAnalysisPDF(analysisId: string) {
     const page = await browser.newPage();
     
     const port = process.env.PORT || 3000;
-    const url = `http://localhost:${port}/analyses/${analysisId}/export`;
+    const url = origin ? `${origin}/analyses/${analysisId}/export` : `http://127.0.0.1:${port}/analyses/${analysisId}/export`;
     
     console.log(`Puppeteer visiting: ${url}`);
     
+    page.on('console', (msg) => console.log('PAGE LOG:', msg.text()));
+    page.on('pageerror', (err: any) => console.log('PAGE ERROR:', err.message));
+    page.on('response', (response) => console.log('PAGE RESPONSE:', response.url(), response.status()));
+    page.on('requestfailed', request => console.log('PAGE REQUEST FAILED:', request.url(), request.failure()?.errorText));
+
     await page.goto(url, {
   waitUntil: 'networkidle0',  // ← change from networkidle2 to networkidle0
   timeout: 30000,

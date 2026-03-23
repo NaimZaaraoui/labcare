@@ -356,9 +356,9 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
         />
         {/* Manual stamp zone below signature */}
         <div style={{
-          width: '100px',
+          width: '120px',
           height: '60px',
-          border: '1px dashed #cbd5e1',
+          border: '1px dashed #cfd2d7ff',
           borderRadius: '4px',
           display: 'flex',
           alignItems: 'center',
@@ -366,13 +366,14 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
         }}>
           <span style={{
             fontSize: '7px',
-            color: '#cbd5e1',
+            color: '#cfd2d7ff',
             textAlign: 'center',
             lineHeight: 1.5,
             textTransform: 'uppercase',
             letterSpacing: '0.1em',
+            transform: 'rotate(-15deg)',
           }}>
-            Cachet
+            Zone de cachet
           </span>
         </div>
       </div>
@@ -385,9 +386,9 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
         top: '50%',
         left: '50%',
         transform: 'translate(-50%, -50%)',
-        width: '130px',
-        height: '130px',
-        border: '2px dashed #e2e8f0',
+        width: '120px',
+        height: '60px',
+        border: '2px dashed #cfd2d7ff',
         borderRadius: '8px',
         display: 'flex',
         alignItems: 'center',
@@ -395,14 +396,14 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
       }}>
         <span style={{
           fontSize: '8px',
-          color: '#e2e8f0',
+          color: '#cfd2d7ff',
           textAlign: 'center',
           lineHeight: 1.6,
           textTransform: 'uppercase',
           letterSpacing: '0.15em',
           transform: 'rotate(-15deg)',
         }}>
-          Cachet &<br/>Signature
+          Zone de cachet
         </span>
       </div>
     )}
@@ -733,8 +734,6 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
                 break-inside: avoid;
               }
 
-
-          }
 
           }
         `}</style>

@@ -39,7 +39,8 @@ export async function POST(
     }
 
     console.log(`Generating PDF for analysis ${id}...`);
-    const pdfBuffer = await generateAnalysisPDF(id);
+    const origin = request.nextUrl.origin;
+    const pdfBuffer = await generateAnalysisPDF(id, origin);
 
     const patientName = `${analysis.patientLastName} ${analysis.patientFirstName}`.trim();
     const formattedDate = new Date(analysis.creationDate).toLocaleDateString('fr-FR', {

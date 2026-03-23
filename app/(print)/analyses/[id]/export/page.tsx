@@ -36,9 +36,13 @@ export default function ExportPage() {
           }
 
           setTimeout(() => setReady(true), 2000);
+        } else {
+          console.error('API Error: analyses fetch returned', res.status);
+          setTimeout(() => setReady(true), 1000);
         }
       } catch (error) {
         console.error('Error fetching analysis for export:', error);
+        setTimeout(() => setReady(true), 1000);
       }
     };
 
