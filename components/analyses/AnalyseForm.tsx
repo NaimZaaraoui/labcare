@@ -402,7 +402,7 @@ export function AnalyseForm() {
                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Prénom *</label>
                      <input
                         value={patient.patientFirstName}
-                        onChange={(e) => setPatient({...patient, patientFirstName: e.target.value})}
+                        onChange={(e) => setPatient({...patient, patientFirstName: e.target.value.toUpperCase()})}
                         className={`input-premium h-10 font-bold ${selectedPatientId ? 'bg-slate-100/50' : ''}`}
                         readOnly={!!selectedPatientId}
                      />

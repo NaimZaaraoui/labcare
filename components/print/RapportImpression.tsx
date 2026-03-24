@@ -245,7 +245,7 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
                     <div className="w-full border-b border-slate-900 pb-2 mb-4 text-center print:border-black">
                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] print:text-black">Signature & Cachet</span>
                     </div>
-                    <div className="flex flex-col items-center gap-3 w-full">
+                    <div className="flex flex-col items-center gap-2 w-full">
                       {/* Validation metadata */}
                       {analysis.validatedBioAt && (
                         <div className="text-[9px] text-slate-600 font-medium text-center print:text-black">
@@ -257,7 +257,7 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
   <div style={{
     position: 'relative',
     width: '120px',
-    height: '60px',
+    height: '90px',
     margin: '0 auto',
   }}>
 
@@ -273,8 +273,8 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
             bottom: 0,
             left: '50%',
             transform: 'translateX(-50%)',
-            width: '60px',
-            height: '60px',
+            width: '90px',
+            height: '90px',
             objectFit: 'contain',
             opacity: 0.9,
           }}
@@ -324,8 +324,8 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          width: '60px',
-          height: '60px',
+          width: '90px',
+          height: '90px',
           objectFit: 'contain',
         }}
       />
@@ -357,12 +357,13 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
         {/* Manual stamp zone below signature */}
         <div style={{
           width: '120px',
-          height: '60px',
+          height: '90px',
           border: '1px dashed #cfd2d7ff',
           borderRadius: '4px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          opacity: 0.5,
         }}>
           <span style={{
             fontSize: '7px',
@@ -387,12 +388,13 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
         left: '50%',
         transform: 'translate(-50%, -50%)',
         width: '120px',
-        height: '60px',
+        height: '90px',
         border: '2px dashed #cfd2d7ff',
         borderRadius: '8px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
+        opacity: 0.5,
       }}>
         <span style={{
           fontSize: '8px',
