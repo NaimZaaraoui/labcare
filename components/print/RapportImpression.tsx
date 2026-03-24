@@ -159,18 +159,18 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
                             {LAB_NAME}
                           </h1>
                           <div className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] mt-1.5 flex items-center gap-2">
-                            <span className="w-8 h-[1px] bg-blue-600 print:bg-black"></span>
+                            <span className="w-8 h-[1px] bg-indigo-600 print:bg-black"></span>
                             {LAB_SUBTITLE.toUpperCase()}
                           </div>
                         </div>
                     </div>
                 
-                  <div className="text-right border-r-4 border-blue-600 pr-6 print:border-black">
+                  <div className="text-right border-r-4 border-indigo-600 pr-6 print:border-black">
                     <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight mb-1 print:text-black">RAPPORT D'ANALYSE</h2>
                     <div className="flex flex-col items-end">
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest print:text-black/60">Référence: {analysis.orderNumber}</p>
                       {analysis.receiptNumber && (
-                        <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest print:text-black">Quittance: {analysis.receiptNumber}</p>
+                        <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest print:text-black">Quittance: {analysis.receiptNumber}</p>
                       )}
                     </div>
                   </div>
@@ -179,7 +179,7 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
             <div className="grid grid-cols-12 gap-8 mb-8 relative z-10">
               <div className="col-span-5">
                 <div className="mb-4">
-                  <span className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] print:text-black">Patient</span>
+                  <span className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em] print:text-black">Patient</span>
                   <div className="h-px bg-slate-100 mt-1 print:bg-black/10"></div>
                 </div>
                 <div className="flex flex-col">
@@ -189,7 +189,7 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
                     <span className="text-slate-200 print:text-black/30">|</span>
                     <span className="uppercase">{analysis.patientGender === 'M' ? 'Homme' : 'Femme'}</span>
                     <span className="text-slate-200 print:text-black/30">|</span>
-                    <span>ID: <span className="font-bold text-slate-900 print:text-black">{analysis.dailyId}</span></span>
+                    <span>ID: <span className="font-bold font-mono text-slate-900 print:text-black">{analysis.dailyId}</span></span>
                   </div>
                 </div>
               </div>
@@ -235,7 +235,7 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
                       </div>
                         <div className="flex flex-col">
                           <span className="text-[9px] font-black text-slate-300 uppercase print:text-black/40">Statut</span>
-                          <span className={`text-[11px] font-black uppercase ${isValidated ? 'text-blue-600' : 'text-amber-600'} print:text-black`}>
+                          <span className={`text-[11px] font-black uppercase ${isValidated ? 'text-indigo-600' : 'text-amber-600'} print:text-black`}>
                             {isValidated ? 'Validé' : 'En attente'}
                           </span>
                         </div>
@@ -414,7 +414,7 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
 
 
                       <div className="text-center">
-                        <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest print:text-black">
+                        <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest print:text-black">
                           {BIO_TITLE && BIO_NAME ? `${BIO_TITLE} ${BIO_NAME}` : 'Biologiste Responsable'}
                         </p>
                         {BIO_ONMPT && <p className="text-[8px] font-bold text-slate-400 print:text-black/60 mt-0.5">ONMPT: {BIO_ONMPT}</p>}
@@ -445,7 +445,7 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
                 <div className="flex justify-between items-center text-[9px] font-bold text-slate-300 uppercase tracking-[0.3em] print:text-black">
                   <span>{LAB_NAME} - Rapport NFS</span>
                   <div className="flex gap-8 items-center">
-                    <span className="text-blue-600 font-black">Validé par le Biologiste Responsable</span>
+                    <span className="text-indigo-600 font-black">Validé par le Biologiste Responsable</span>
                     <span className="text-slate-900 print:text-black page-number-container">
                       Page <span className="page-number"></span>
                     </span>
@@ -501,7 +501,7 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
                                   <tr key={res.id} className="break-inside-avoid">
                                   <td colSpan={5} className="py-1.75 bg-slate-50/30 print:bg-black/5">
                                       <div className="flex items-center gap-3 px-4">
-                                        <span className="text-[12px] font-black text-blue-600 uppercase tracking-tight print:text-black">{test?.name}</span>
+                                        <span className="text-[12px] font-black text-indigo-600 uppercase tracking-tight print:text-black">{test?.name}</span>
                                         <div className="h-px flex-1 bg-slate-200/50 print:bg-black/10"></div>
                                       </div>
                                     </td>
@@ -521,7 +521,7 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
                                     <td className={`${(isNFS || test?.parentId) ? "py-1" : "py-1.25"} text-start`}>
                                       <div className="flex flex-col items-start gap-0.5">
                                         <div className="flex items-center justify-start gap-2">
-                                          <span className={`text-[14px] text-slate-900 ${flag ? 'font-bold' : 'font-semibold'} print:text-black`}>
+                                          <span className={`text-[14px] font-mono tracking-tight text-slate-900 ${flag ? 'font-black' : 'font-semibold'} print:text-black`}>
                                             {val || '—'}
                                           </span>
                                           {flag && (
@@ -539,7 +539,7 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
                                       </div>
                                     </td>
                                     <td className={`${(isNFS || test?.parentId) ? "py-1" : "py-1.25"} text-center`}>
-                                        <span className="text-xs font-bold text-slate-400 print:text-black/40">
+                                        <span className="text-xs font-mono tracking-tight font-bold text-slate-400 print:text-black/40">
                                             {analysis.previousResults?.[res.testId] || '—'}
                                         </span>
                                     </td>
@@ -551,7 +551,7 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
                                       return displayText === 'QUALIT.' ? (
                                         <span className="opacity-10 text-[8px] font-black tracking-widest">SANS RÉF.</span>
                                       ) : (
-                                        <span className="text-slate-900 print:text-black">{displayText}</span>
+                                        <span className="text-slate-900 font-mono tracking-tight print:text-black">{displayText}</span>
                                       );
                                     })()}
                                   </td>
@@ -593,7 +593,7 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
     return (
       <div ref={ref} className="bg-white p-10 text-slate-900 font-sans w-[210mm] mx-auto relative print:p-0 print:text-black leading-relaxed">
         <div className="absolute top-0 right-0 w-1/3 h-1 bg-slate-900 print:bg-black"></div>
-        <div className="absolute top-0 left-0 w-12 h-1 bg-blue-600 print:bg-black"></div>
+        <div className="absolute top-0 left-0 w-12 h-1 bg-indigo-600 print:bg-black"></div>
 
         {/* Watermark moved inside loop for multi-page support */}
 
@@ -633,7 +633,7 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
                                 
                                   <div className="py-1.75 bg-slate-50/30 print:bg-black/5">
                                       <div className="flex items-center gap-3 px-4">
-                                        <span className="text-[12px] font-black text-blue-600 uppercase tracking-tight print:text-black">MORPHOLOGIE & HISTOGRAMMES</span>
+                                        <span className="text-[12px] font-black text-indigo-600 uppercase tracking-tight print:text-black">MORPHOLOGIE & HISTOGRAMMES</span>
                                         <div className="h-px flex-1 bg-slate-200/50 print:bg-black/10"></div>
                                       </div>
                                     </div>
@@ -680,10 +680,10 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
                                     
                                     return (
                                         <div className='p-6'>
-                                            <h4 className="text-[11px] font-black text-blue-600 uppercase tracking-[0.2em] mb-4 print:text-black">Interprétations Diagnostiques</h4>
+                                            <h4 className="text-[11px] font-black text-indigo-600 uppercase tracking-[0.2em] mb-4 print:text-black">Interprétations Diagnostiques</h4>
                                             <div className="flex flex-wrap gap-2">
                                                 {interpretations.map(flag => (
-                                                    <span key={flag} className="px-3 py-1.5 bg-white border border-blue-100 rounded-lg text-[10px] font-medium text-blue-700 print:border-black/80 print:text-black">
+                                                    <span key={flag} className="px-3 py-1.5 bg-white border border-indigo-100 rounded-lg text-[10px] font-medium text-indigo-700 print:border-black/80 print:text-black">
                                                         {flag}
                                                     </span>
                                                 ))}

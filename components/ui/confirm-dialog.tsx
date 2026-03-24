@@ -45,12 +45,12 @@ export function ConfirmDialog({
             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${
               isDestructive 
                 ? 'bg-rose-50' 
-                : 'bg-blue-50'
+                : 'bg-indigo-50'
             }`}>
               {isDestructive ? (
-                <Trash2 className={`w-6 h-6 ${isDestructive ? 'text-rose-600' : 'text-blue-600'}`} />
+                <Trash2 className={`w-6 h-6 ${isDestructive ? 'text-rose-600' : 'text-indigo-600'}`} />
               ) : (
-                <AlertCircle className={`w-6 h-6 ${isDestructive ? 'text-rose-600' : 'text-blue-600'}`} />
+                <AlertCircle className={`w-6 h-6 ${isDestructive ? 'text-rose-600' : 'text-indigo-600'}`} />
               )}
             </div>
             <div className="flex-1">
@@ -80,7 +80,7 @@ export function ConfirmDialog({
             className={`rounded-xl font-bold px-6 py-2.5 h-auto transition-all active:scale-95 ${
               isDestructive 
                 ? 'bg-rose-600 hover:bg-rose-700 text-white shadow-lg shadow-rose-200' 
-                : 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200'
+                : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200'
             }`}
           >
             {confirmLabel}

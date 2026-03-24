@@ -242,7 +242,7 @@ export function AnalyseForm() {
       <div className="w-full flex flex-col gap-6">
          <div className="bento-panel flex flex-col gap-5 p-8 lg:p-10">
             <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
-               <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+               <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
                   <FileDigit size={16} />
                </div>
                <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest">Dossier / Paillasse</h2>
@@ -255,7 +255,7 @@ export function AnalyseForm() {
                      value={dailyId}
                      onChange={(e) => setDailyId(e.target.value)}
                      placeholder="Ex: 54"
-                     className="w-full bg-slate-50 border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 px-4 h-12 rounded-xl text-lg font-black text-blue-600 transition-all text-center placeholder:text-slate-300 outline-none"
+                     className="w-full bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 px-4 h-12 rounded-xl text-lg font-black text-indigo-600 transition-all text-center placeholder:text-slate-300 outline-none"
                      required
                      autoFocus
                   />
@@ -319,7 +319,7 @@ export function AnalyseForm() {
                      onClick={() => setIsUrgent(true)}
                      className={`h-10 rounded-xl text-xs font-bold transition-all border ${
                        isUrgent
-                         ? 'bg-red-50 border-red-200 text-red-700'
+                         ? 'bg-rose-50 border-rose-200 text-rose-700'
                          : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
                      }`}
                   >
@@ -339,9 +339,9 @@ export function AnalyseForm() {
 
             {/* Smart Search */}
             <div className="relative z-50">
-              <div className="relative flex items-center gap-2 w-full sm:max-w-xs group bg-slate-50 border border-slate-200 focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 transition-all input-premium">
+              <div className="relative flex items-center gap-2 w-full sm:max-w-xs group bg-slate-50 border border-slate-200 focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all input-premium">
             
-                  <Search className="w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                  <Search className="w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
                   <input
                      placeholder="Chercher un patient existant ..."
                      value={searchTerm}
@@ -377,7 +377,7 @@ export function AnalyseForm() {
                                    {p.phoneNumber && <span>• {p.phoneNumber}</span>}
                                  </div>
                              </div>
-                             <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-500">
+                             <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-500">
                                 <Plus size={14} />
                              </div>
                          </button>
@@ -419,7 +419,7 @@ export function AnalyseForm() {
                            onClick={() => setPatient({...patient, patientGender: 'M'})}
                            className={`flex-1 h-10 rounded-xl text-xs font-bold transition-all border ${
                               patient.patientGender === 'M'
-                                 ? 'bg-blue-50 border-blue-200 text-blue-700'
+                                 ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
                                  : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
                            } ${selectedPatientId ? 'opacity-70 cursor-not-allowed' : ''}`}
                         >M</button>
@@ -477,8 +477,8 @@ export function AnalyseForm() {
          <div className="bento-panel flex flex-col h-full p-8 lg:p-10">
             
             <div className="flex flex-col gap-4 justify-between items-start mb-6 mr-4">
-               <div className="flex items-center gap-2 w-full sm:max-w-xs group bg-slate-50 border border-slate-200 focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 transition-all input-premium">
-                  <Search className="w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+               <div className="flex items-center gap-2 w-full sm:max-w-xs group bg-slate-50 border border-slate-200 focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all input-premium">
+                  <Search className="w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
                   <input
                      placeholder="Chercher analyse..."
                      value={searchTest}
@@ -498,7 +498,7 @@ export function AnalyseForm() {
                            onClick={() => toggleBilan(bilan)}
                            className={`whitespace-nowrap px-4 py-2 text-[11px] font-bold uppercase tracking-widest transition-all rounded-xl border flex items-center gap-1.5 ${
                               isSelected
-                                 ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/20'
+                                 ? 'bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-500/20'
                                  : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                            }`}
                         >
@@ -529,21 +529,21 @@ export function AnalyseForm() {
                                  onClick={() => toggleTest(test.id)}
                                  className={`group text-left px-3 py-2.5 rounded-xl border transition-all relative overflow-hidden flex flex-col justify-center ${
                                     isSelected
-                                       ? 'bg-blue-50 border-blue-200 shadow-sm'
-                                       : 'bg-white border-slate-100 hover:border-blue-200 hover:bg-slate-50'
+                                       ? 'bg-indigo-50 border-indigo-200 shadow-sm'
+                                       : 'bg-white border-slate-100 hover:border-indigo-200 hover:bg-slate-50'
                                  } ${isChild ? 'ml-4 opacity-80 border-dashed' : ''}`}
                               >
                                  <div className="flex items-start justify-between gap-2">
                                     <div className="flex flex-col">
-                                       <span className={`text-[10px] font-black uppercase tracking-wider ${isSelected ? 'text-blue-600' : 'text-slate-400'}`}>
+                                       <span className={`text-[10px] font-black uppercase tracking-wider ${isSelected ? 'text-indigo-600' : 'text-slate-400'}`}>
                                           {test.code}
                                        </span>
-                                       <span className={`text-xs font-bold leading-tight mt-0.5 ${isSelected ? 'text-blue-900' : 'text-slate-700'}`}>
+                                       <span className={`text-xs font-bold leading-tight mt-0.5 ${isSelected ? 'text-indigo-900' : 'text-slate-700'}`}>
                                           {test.name}
                                        </span>
                                     </div>
                                     <div className={`w-4 h-4 shrink-0 rounded border flex items-center justify-center transition-colors ${
-                                       isSelected ? 'bg-blue-600 border-blue-600 text-white' : 'border-slate-300 bg-slate-50 group-hover:border-blue-300'
+                                       isSelected ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 bg-slate-50 group-hover:border-indigo-300'
                                     }`}>
                                        {isSelected && <Check size={10} strokeWidth={4} />}
                                     </div>
@@ -564,10 +564,10 @@ export function AnalyseForm() {
             <div className="bento-panel py-3 px-4 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] flex items-center gap-6 pointer-events-auto w-full sm:w-auto border border-slate-200/50 bg-white/90 backdrop-blur-xl">
                <div className="hidden sm:flex flex-col">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tests Sélectionnés</span>
-                  <span className="text-lg font-black text-blue-600">{selectedTests.length}</span>
+                  <span className="text-lg font-black text-indigo-600">{selectedTests.length}</span>
                </div>
                <div>
-                  <span className={`status-pill ${isUrgent ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-500'}`}>
+                  <span className={`status-pill ${isUrgent ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-500'}`}>
                      {isUrgent ? 'Urgent' : 'Routine'}
                   </span>
                </div>
@@ -582,7 +582,7 @@ export function AnalyseForm() {
                <button 
                   onClick={handleSubmit}
                   disabled={submitting} 
-                  className="btn-primary h-12 shadow-blue-500/30 shadow-lg flex-1 sm:flex-none"
+                  className="btn-primary h-12 shadow-indigo-500/30 shadow-lg flex-1 sm:flex-none"
                >
                   {submitting ? (
                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

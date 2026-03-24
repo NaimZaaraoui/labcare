@@ -152,7 +152,7 @@ export function PrintSettingsForm({ initialSettings }: Props) {
                 />
                 <button
                   onClick={handleStampDelete}
-                  className="absolute -top-2 -right-2 p-1.5 bg-red-100 text-red-600 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-200"
+                  className="absolute -top-2 -right-2 p-1.5 bg-rose-100 text-rose-600 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-rose-200"
                   title="Supprimer le cachet"
                 >
                   <Trash2 size={14} />
@@ -170,7 +170,7 @@ export function PrintSettingsForm({ initialSettings }: Props) {
             <div 
               className={`
                 relative border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer
-                ${uploadingStamp ? 'bg-slate-50 border-blue-200' : 'bg-white border-slate-100 hover:border-blue-400 hover:bg-blue-50/30'}
+                ${uploadingStamp ? 'bg-slate-50 border-indigo-200' : 'bg-white border-slate-100 hover:border-indigo-400 hover:bg-indigo-50/30'}
               `}
               onClick={() => document.getElementById('stamp-upload')?.click()}
             >
@@ -187,8 +187,8 @@ export function PrintSettingsForm({ initialSettings }: Props) {
               <div className="flex flex-col items-center gap-2">
                 {uploadingStamp ? (
                   <>
-                    <Loader2 size={24} className="text-blue-600 animate-spin" />
-                    <p className="text-xs font-bold text-blue-600">Chargement en cours...</p>
+                    <Loader2 size={24} className="text-indigo-600 animate-spin" />
+                    <p className="text-xs font-bold text-indigo-600">Chargement en cours...</p>
                   </>
                 ) : (
                   <>
@@ -201,7 +201,7 @@ export function PrintSettingsForm({ initialSettings }: Props) {
             </div>
             
             {stampError && (
-              <p className="text-[10px] font-bold text-red-500 bg-red-50 px-3 py-1.5 rounded-lg border border-red-100">
+              <p className="text-[10px] font-bold text-rose-500 bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-100">
                 ⚠️ {stampError}
               </p>
             )}
@@ -233,7 +233,7 @@ export function PrintSettingsForm({ initialSettings }: Props) {
                 />
                 <button
                   onClick={handleSignatureDelete}
-                  className="absolute -top-2 -right-2 p-1.5 bg-red-100 text-red-600 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-200"
+                  className="absolute -top-2 -right-2 p-1.5 bg-rose-100 text-rose-600 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-rose-200"
                   title="Supprimer la signature"
                 >
                   <Trash2 size={14} />
@@ -251,7 +251,7 @@ export function PrintSettingsForm({ initialSettings }: Props) {
             <div 
               className={`
                 relative border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer
-                ${uploadingSignature ? 'bg-slate-50 border-blue-200' : 'bg-white border-slate-100 hover:border-blue-400 hover:bg-blue-50/30'}
+                ${uploadingSignature ? 'bg-slate-50 border-indigo-200' : 'bg-white border-slate-100 hover:border-indigo-400 hover:bg-indigo-50/30'}
               `}
               onClick={() => document.getElementById('signature-upload')?.click()}
             >
@@ -268,8 +268,8 @@ export function PrintSettingsForm({ initialSettings }: Props) {
               <div className="flex flex-col items-center gap-2">
                 {uploadingSignature ? (
                   <>
-                    <Loader2 size={24} className="text-blue-600 animate-spin" />
-                    <p className="text-xs font-bold text-blue-600">Chargement en cours...</p>
+                    <Loader2 size={24} className="text-indigo-600 animate-spin" />
+                    <p className="text-xs font-bold text-indigo-600">Chargement en cours...</p>
                   </>
                 ) : (
                   <>
@@ -282,7 +282,7 @@ export function PrintSettingsForm({ initialSettings }: Props) {
             </div>
             
             {signatureError && (
-              <p className="text-[10px] font-bold text-red-500 bg-red-50 px-3 py-1.5 rounded-lg border border-red-100">
+              <p className="text-[10px] font-bold text-rose-500 bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-100">
                 ⚠️ {signatureError}
               </p>
             )}
@@ -303,7 +303,7 @@ export function PrintSettingsForm({ initialSettings }: Props) {
         </h2>
         <div>
           <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">
-            Nom du laboratoire <span className="text-red-400">*</span>
+            Nom du laboratoire <span className="text-rose-400">*</span>
           </label>
           <input
             className={inputClass}
@@ -434,7 +434,7 @@ export function PrintSettingsForm({ initialSettings }: Props) {
             </div>
           </div>
           <div>
-            <label className="block text-xs font-bold text-red-500 uppercase tracking-widest mb-1.5">Seuil dépassement</label>
+            <label className="block text-xs font-bold text-rose-500 uppercase tracking-widest mb-1.5">Seuil dépassement</label>
             <div className="relative">
               <input
                 className={`${inputClass} pr-14`}
@@ -444,7 +444,7 @@ export function PrintSettingsForm({ initialSettings }: Props) {
                 value={values.tat_alert ?? '60'}
                 onChange={e => set('tat_alert', e.target.value)}
               />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black text-red-500">min</span>
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black text-rose-500">min</span>
             </div>
           </div>
         </div>
@@ -459,7 +459,7 @@ export function PrintSettingsForm({ initialSettings }: Props) {
           </div>
         )}
         {error && (
-          <p className="text-sm font-bold text-red-600 bg-red-50 border border-red-100 rounded-2xl px-4 py-2">{error}</p>
+          <p className="text-sm font-bold text-rose-600 bg-rose-50 border border-rose-100 rounded-2xl px-4 py-2">{error}</p>
         )}
         {success && (
           <p className="text-sm font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 rounded-2xl px-4 py-2">

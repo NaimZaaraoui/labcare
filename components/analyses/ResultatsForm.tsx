@@ -691,13 +691,13 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
             </button>
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="status-pill bg-blue-50 text-blue-600">N° {analysis.orderNumber}</span>
+                <span className="status-pill bg-indigo-50 text-indigo-600">N° {analysis.orderNumber}</span>
                 <span className="text-slate-300 text-xs">•</span>
                 <span className="text-slate-400 text-sm font-medium">{format(new Date(analysis.creationDate), 'dd MMMM yyyy', { locale: fr })}</span>
               </div>
               <h1 className={`text-2xl font-bold text-slate-800 tracking-tight ${!analysis.patientFirstName && !analysis.patientLastName ? 'text-slate-400 italic' : ''}`}>
                 {(analysis.patientFirstName || analysis.patientLastName) ? (
-                   <>{analysis.patientFirstName} <span className="text-blue-600">{analysis.patientLastName}</span></>
+                   <>{analysis.patientFirstName} <span className="text-indigo-600">{analysis.patientLastName}</span></>
                 ) : 'Patient Sans Nom'}
               </h1>
               {analysis.validatedTechAt && (
@@ -716,7 +716,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
           </div>
 
           {validationError && (
-            <div className="w-full px-3 py-2 rounded-xl bg-red-50 text-red-600 text-sm font-medium">
+            <div className="w-full px-3 py-2 rounded-xl bg-rose-50 text-rose-600 text-sm font-medium">
               {validationError}
             </div>
           )}
@@ -731,7 +731,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                 <div className="flex flex-wrap items-center gap-4 bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
                   {/* Workflow Step 1: Technical */}
                   <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${analysis.status !== 'pending' ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-200 text-slate-500'}`}>1</div>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${analysis.status !== 'pending' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-200 text-slate-500'}`}>1</div>
                     <div className="flex flex-col">
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Validation Technique</span>
                       {analysis.status === 'validated_tech' || analysis.status === 'validated_bio' || analysis.status === 'completed' ? (
@@ -744,7 +744,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                       ) : (
                         <div className="flex items-center gap-2">
                           {canTech && analysis.status === 'in_progress' ? (
-                            <button onClick={() => handleValidation('tech')} disabled={validating} className="btn-primary !h-7 !px-3 !text-[10px] shadow-blue-500/20">
+                            <button onClick={() => handleValidation('tech')} disabled={validating} className="btn-primary !h-7 !px-3 !text-[10px] shadow-indigo-500/20">
                               Valider
                             </button>
                           ) : (
@@ -761,7 +761,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
 
                   {/* Workflow Step 2: Biological */}
                   <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${analysis.status === 'validated_tech' ? 'bg-blue-600 text-white shadow-sm' : isFinalValidated ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-500'}`}>2</div>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${analysis.status === 'validated_tech' ? 'bg-indigo-600 text-white shadow-sm' : isFinalValidated ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-500'}`}>2</div>
                     <div className="flex flex-col">
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Validation Biologique</span>
                       {isFinalValidated ? (
@@ -842,15 +842,15 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
            <div>
               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Progression</div>
               <div className="flex items-center gap-3">
-                <span className={`font-bold text-lg ${progressPct === 100 ? 'text-emerald-600' : 'text-blue-600'}`}>{progressPct}%</span>
+                <span className={`font-bold text-lg ${progressPct === 100 ? 'text-emerald-600' : 'text-indigo-600'}`}>{progressPct}%</span>
                 <div className="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                  <div className={`h-full rounded-full transition-all ${progressPct === 100 ? 'bg-emerald-500' : 'bg-blue-500'}`} style={{ width: `${progressPct}%` }} />
+                  <div className={`h-full rounded-full transition-all ${progressPct === 100 ? 'bg-emerald-500' : 'bg-indigo-500'}`} style={{ width: `${progressPct}%` }} />
                 </div>
               </div>
            </div>
            <div>
               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Anomalies</div>
-              <div className={`font-bold text-lg ${abnormalCount > 0 ? 'text-red-500' : 'text-emerald-600'}`}>
+              <div className={`font-bold text-lg ${abnormalCount > 0 ? 'text-rose-500' : 'text-emerald-600'}`}>
                  {abnormalCount} Détectée{abnormalCount > 1 ? 's' : ''}
               </div>
            </div>
@@ -884,7 +884,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                 value={globalNote}
                 onChange={(e) => setGlobalNote(e.target.value)}
                 placeholder="Ajouter une note globale (conclusion, recommandation, commentaire général)..."
-                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none resize-none min-h-[84px]"
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none resize-none min-h-[84px]"
               />
               <div className="flex justify-end">
                 <button onClick={saveGlobalNote} disabled={saveGlobalNoteBusy} className="btn-secondary h-9 disabled:opacity-60 disabled:cursor-not-allowed">
@@ -901,7 +901,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
          {/* Toolbar */}
          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
             <div className="flex items-center gap-3">
-               <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+               <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
                   <Activity size={16} />
                </div>
                <h2 className="text-lg font-bold text-slate-800">Résultats des Tests</h2>
@@ -910,10 +910,10 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
             <div className="flex items-center gap-3 flex-wrap">
                {/* Tabs */}
                <div className="flex bg-slate-50 border border-slate-100 p-1 rounded-xl gap-1">
-                  <button onClick={() => setActiveTab('all')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'all' ? 'bg-white shadow-sm text-blue-600 border border-slate-100' : 'text-slate-500 hover:text-slate-700'}`}>Tous ({totalCount})</button>
-                  <button onClick={() => setActiveTab('urgent')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'urgent' ? 'bg-red-500 text-white shadow-sm' : 'text-slate-500 hover:text-red-500'}`}>Anomalies ({abnormalCount})</button>
+                  <button onClick={() => setActiveTab('all')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'all' ? 'bg-white shadow-sm text-indigo-600 border border-slate-100' : 'text-slate-500 hover:text-slate-700'}`}>Tous ({totalCount})</button>
+                  <button onClick={() => setActiveTab('urgent')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'urgent' ? 'bg-rose-500 text-white shadow-sm' : 'text-slate-500 hover:text-rose-500'}`}>Anomalies ({abnormalCount})</button>
                   {analysis.histogramData && (
-                     <button onClick={() => setActiveTab('charts')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'charts' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-blue-600'}`}>Graphiques</button>
+                     <button onClick={() => setActiveTab('charts')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'charts' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-indigo-600'}`}>Graphiques</button>
                   )}
                </div>
                
@@ -939,7 +939,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
 
                {isFinalValidated && (
                  <button className="btn-secondary h-9 text-xs" onClick={toggleSelectAll}>
-                   <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all ${selectedIds.length === totalCount ? 'bg-blue-600 border-blue-600' : 'border-slate-300'}`}>
+                   <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all ${selectedIds.length === totalCount ? 'bg-indigo-600 border-indigo-600' : 'border-slate-300'}`}>
                      {selectedIds.length === totalCount && <CheckCircle size={10} className="text-white" />}
                    </div>
                    Tout sélectionner
@@ -962,7 +962,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                       return (
                         <div className="flex flex-col gap-6 py-4">
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <HistogramView data={data.wbc} title="WBC (LEUCOCYTES)" color="#3b82f6" width={350} height={200} xAxisMax={400} />
+                            <HistogramView data={data.wbc} title="WBC (LEUCOCYTES)" color="#6366f1" width={350} height={200} xAxisMax={400} />
                             <HistogramView data={data.rbc} title="RBC (ÉRYTHROCYTES)" color="#ef4444" width={350} height={200} xAxisMax={250} />
                             <HistogramView data={pltData} title="PLT (PLAQUETTES)" color="#10b981" width={350} height={200} xAxisMax={60} />
                           </div>
@@ -971,19 +971,19 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                             const interpretations = getHematologyInterpretations(analysis, results);
                             if (interpretations.length === 0) return (
                               <div className="p-5 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center gap-2">
-                                <Sparkles className="text-blue-500" size={16} />
+                                <Sparkles className="text-indigo-500" size={16} />
                                 <p className="text-sm font-semibold text-slate-500">Aucune anomalie morphologique majeure détectée</p>
                               </div>
                             );
 
                             return (
-                              <div className="p-5 bg-blue-50/50 border border-blue-100 rounded-2xl">
-                                <h4 className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-3 flex items-center gap-2">
+                              <div className="p-5 bg-indigo-50/50 border border-indigo-100 rounded-2xl">
+                                <h4 className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest mb-3 flex items-center gap-2">
                                   <Activity size={12} /> Interprétations Diagnostiques
                                 </h4>
                                 <div className="flex flex-wrap gap-2">
                                   {interpretations.map(flag => (
-                                    <span key={flag} className="status-pill bg-white border border-blue-200 text-blue-700 shadow-sm">
+                                    <span key={flag} className="status-pill bg-white border border-indigo-200 text-indigo-700 shadow-sm">
                                       {flag}
                                     </span>
                                   ))}
@@ -1051,13 +1051,13 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                         ) : (
                             <>
                             {/* Result Row */}
-                            <div className={`group flex flex-col lg:flex-row items-stretch lg:items-center gap-3 lg:gap-4 px-4 py-3 rounded-2xl transition-colors ${test.parentId ? 'pl-6' : ''} ${abnormal ? 'bg-red-50/60' : 'hover:bg-slate-50/50'}`}>
+                            <div className={`group flex flex-col lg:flex-row items-stretch lg:items-center gap-3 lg:gap-4 px-4 py-3 rounded-2xl transition-colors ${test.parentId ? 'pl-6' : ''} ${abnormal ? 'bg-rose-50/60' : 'hover:bg-slate-50/50'}`}>
                                
                                {/* Selection Checkbox */}
                                {isFinalValidated && (
                                   <div 
                                      onClick={() => toggleSelection(result.id)}
-                                     className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-all shrink-0 ${selectedIds.includes(result.id) ? 'bg-blue-600 border-blue-600' : 'border-slate-300 hover:border-blue-400'}`}
+                                     className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-all shrink-0 ${selectedIds.includes(result.id) ? 'bg-indigo-600 border-indigo-600' : 'border-slate-300 hover:border-indigo-400'}`}
                                   >
                                      {selectedIds.includes(result.id) && <CheckCircle size={10} className="text-white" />}
                                   </div>
@@ -1065,13 +1065,13 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
 
                                {/* Test Name + Icon */}
                                <div className="flex items-center gap-3 lg:w-56 shrink-0">
-                                 <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${abnormal ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-500'}`}>
+                                 <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${abnormal ? 'bg-rose-100 text-rose-600' : 'bg-slate-100 text-slate-500'}`}>
                                     {test.category === 'HEMA' ? <Droplets size={14} /> : test.category === 'BIO' ? <Microscope size={14} /> : <Beaker size={14} />}
                                  </div>
                                  <div className="flex flex-col min-w-0">
                                     <div className="flex items-center gap-1.5">
                                        <span className="font-semibold text-sm text-slate-800 truncate">{displayName}</span>
-                                       {isFormula && <Calculator size={12} className="text-blue-400 shrink-0" />}
+                                       {isFormula && <Calculator size={12} className="text-indigo-400 shrink-0" />}
                                     </div>
                                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{test.code}</span>
                                  </div>
@@ -1098,7 +1098,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                                              onChange={(e) => handleResultChange(result.id, e.target.value)}
                                              onKeyDown={(e) => handleKeyDown(e, index, sortedResults.length)}
                                             disabled={isFinalValidated || isFormula}
-                                             className={`h-10 w-full max-w-[200px] px-4 rounded-xl border text-sm font-bold transition-all outline-none focus:ring-4 focus:ring-blue-500/10 ${results[result.id] ? 'text-blue-700 border-blue-200 bg-blue-50/50' : 'text-slate-600 border-slate-200 bg-slate-50 hover:bg-white'}`}
+                                             className={`h-10 w-full max-w-[200px] px-4 rounded-xl border text-sm font-bold transition-all outline-none focus:ring-4 focus:ring-indigo-500/10 ${results[result.id] ? 'text-indigo-700 border-indigo-200 bg-indigo-50/50' : 'text-slate-600 border-slate-200 bg-slate-50 hover:bg-white'}`}
                                            >
                                               <option value="">-- Sélectionner --</option>
                                               {test.options?.split(',').map(opt => (
@@ -1121,9 +1121,9 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                                                 onKeyDown={(e) => handleKeyDown(e, index, sortedResults.length)}
                                                 disabled={isFinalValidated || isFormula}
                                               placeholder="--"
-                                              className={`h-10 rounded-xl border transition-all outline-none focus:ring-4 font-bold ${isNumeric ? 'w-28 text-lg text-center tracking-tight' : 'w-48 text-sm px-4'} ${abnormal ? 'text-red-600 border-red-300 bg-red-50 focus:border-red-400 focus:ring-red-500/10' : 'text-slate-800 border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-blue-500/10 hover:border-slate-300'} ${isFormula ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-transparent' : ''}`}
+                                              className={`h-10 rounded-xl border transition-all outline-none focus:ring-4 font-mono font-bold ${isNumeric ? 'w-28 text-lg text-center tracking-tight' : 'w-48 text-sm px-4'} ${abnormal ? 'text-rose-600 border-rose-300 bg-rose-50 focus:border-rose-400 focus:ring-rose-500/10' : 'text-slate-800 border-slate-200 bg-slate-50 focus:bg-white focus:border-indigo-500 focus:ring-indigo-500/10 hover:border-slate-300'} ${isFormula ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-transparent' : ''}`}
                                             />
-                                            {abnormal && <AlertCircle className="absolute -right-7 top-1/2 -translate-y-1/2 text-red-500" size={16} />}
+                                            {abnormal && <AlertCircle className="absolute -right-7 top-1/2 -translate-y-1/2 text-rose-500" size={16} />}
                                          </div>
                                       )}
                                    </div>
@@ -1133,7 +1133,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                                     <div className="flex items-center gap-1.5 text-[10px] text-slate-400 mt-0.5">
                                        <History size={10} />
                                        <span>Préc: </span>
-                                       <span className="font-semibold text-slate-600">{prevResult.value} {prevResult.unit}</span>
+                                       <span className="font-mono font-bold text-slate-600">{prevResult.value} {prevResult.unit}</span>
                                        <span className="opacity-60">({format(new Date(prevResult.createdAt), 'dd/MM/yy')})</span>
                                     </div>
                                  )}
@@ -1147,7 +1147,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                                     </div>
                                     <div className="text-right w-20">
                                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Réf.</div>
-                                       <span className="text-xs font-semibold text-slate-800">
+                                       <span className="text-xs font-mono font-bold text-slate-800">
                                           {(() => {
                                             if (!isNumeric) return 'QUALIT.';
                                             const refVals = getTestReferenceValues(test, analysis.patientGender);
@@ -1158,7 +1158,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                                     {!isFinalValidated && (
                                       <button 
                                          onClick={() => toggleNote(result.id)}
-                                         className={`p-1.5 rounded-lg transition-colors ${notes[result.id] ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:text-blue-500 hover:bg-slate-50'}`}
+                                         className={`p-1.5 rounded-lg transition-colors ${notes[result.id] ? 'text-indigo-600 bg-indigo-50' : 'text-slate-400 hover:text-indigo-500 hover:bg-slate-50'}`}
                                          tabIndex={-1}
                                          title={notes[result.id] ? 'Modifier Note' : 'Ajouter Note'}
                                       >
@@ -1174,14 +1174,14 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                                   <div className="bg-slate-50 border border-slate-100 rounded-xl p-4">
                                      <div className="flex items-center justify-between mb-3">
                                         <div className="flex items-center gap-2 text-slate-500">
-                                           <MessageSquare size={12} className="text-blue-500" />
+                                           <MessageSquare size={12} className="text-indigo-500" />
                                            <span className="text-[10px] font-bold uppercase tracking-widest">Note Technique</span>
                                         </div>
                                         <div className="flex items-center gap-2">
                                             {notes[result.id] && (
                                                 <button 
                                                     onClick={() => deleteNote(result.id)}
-                                                    className="px-2.5 py-1 rounded-lg bg-red-50 text-red-600 text-[10px] font-bold hover:bg-red-100 transition-colors"
+                                                    className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-600 text-[10px] font-bold hover:bg-rose-100 transition-colors"
                                                     disabled={isFinalValidated}
                                                 >
                                                     Supprimer
@@ -1207,7 +1207,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                                         onChange={(e) => handleNoteChange(result.id, e.target.value)}
                                         placeholder="Saisissez une observation (ex: prélèvement hémolysé, contrôle refait...)"
                                         disabled={isFinalValidated}
-                                        className="w-full bg-white border border-slate-100 rounded-lg p-3 text-xs focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none resize-none transition-all min-h-[72px]"
+                                        className="w-full bg-white border border-slate-100 rounded-lg p-3 text-xs focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none resize-none transition-all min-h-[72px]"
                                         rows={2}
                                      />
                                   </div>
@@ -1217,8 +1217,8 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                             {/* Static Note Indicator */}
                             {!expandedNotes.includes(result.id) && notes[result.id] && (
                                 <div
-                                  className={`ml-10 mr-4 mb-1 flex items-center gap-1.5 text-[10px] text-blue-600 font-medium px-3 py-1.5 rounded-lg bg-blue-50/50 w-fit transition-colors ${
-                                    isFinalValidated ? 'cursor-default' : 'cursor-pointer hover:bg-blue-50'
+                                  className={`ml-10 mr-4 mb-1 flex items-center gap-1.5 text-[10px] text-indigo-600 font-medium px-3 py-1.5 rounded-lg bg-indigo-50/50 w-fit transition-colors ${
+                                    isFinalValidated ? 'cursor-default' : 'cursor-pointer hover:bg-indigo-50'
                                   }`}
                                   onClick={() => {
                                     if (!isFinalValidated) toggleNote(result.id);
@@ -1272,7 +1272,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
         <DialogContent className="sm:max-w-2xl bg-white border-slate-200 shadow-2xl p-0 overflow-hidden flex flex-col max-h-[85vh]">
           <DialogHeader className="p-6 pb-4 border-b border-slate-100">
             <div className="flex items-center gap-3">
-               <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center">
+               <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center">
                   <Microscope size={20} />
                </div>
                <div>
@@ -1283,7 +1283,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
           </DialogHeader>
           
           <div className="p-6 overflow-y-auto flex-1">
-            <div className="mb-5 flex items-center gap-2.5 p-4 bg-blue-50 text-blue-700 rounded-xl border border-blue-100">
+            <div className="mb-5 flex items-center gap-2.5 p-4 bg-indigo-50 text-indigo-700 rounded-xl border border-indigo-100">
                <AlertCircle size={18} className="shrink-0" />
                <p className="text-sm font-medium">Plusieurs analyses ont été détectées dans ce fichier. Choisissez celle qui correspond à votre patient.</p>
             </div>
@@ -1293,16 +1293,16 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                 <button
                   key={record.index}
                   onClick={() => handleDiatronSelect(record.index)}
-                  className="group w-full flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-white hover:border-blue-300 hover:shadow-md transition-all text-left"
+                  className="group w-full flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-white hover:border-indigo-300 hover:shadow-md transition-all text-left"
                 >
                   <div className="flex items-center gap-4">
-                     <div className="flex flex-col items-center justify-center w-12 h-12 rounded-xl bg-slate-50 group-hover:bg-blue-600 transition-colors">
-                        <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400 group-hover:text-blue-200">ID</span>
+                     <div className="flex flex-col items-center justify-center w-12 h-12 rounded-xl bg-slate-50 group-hover:bg-indigo-600 transition-colors">
+                        <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400 group-hover:text-indigo-200">ID</span>
                         <span className="text-base font-bold text-slate-700 group-hover:text-white">{record.sampleId || '?'}</span>
                      </div>
                      
                      <div>
-                        <div className="font-semibold text-slate-800 group-hover:text-blue-700 transition-colors">
+                        <div className="font-semibold text-slate-800 group-hover:text-indigo-700 transition-colors">
                            Analyse du {record.date}
                         </div>
                         <div className="text-sm text-slate-500 flex items-center gap-2 mt-0.5">
@@ -1315,7 +1315,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                      </div>
                   </div>
 
-                  <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-500 transition-all">
+                  <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-500 transition-all">
                     <ChevronRight size={16} />
                   </div>
                 </button>
@@ -1362,7 +1362,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                 <button
                   type="button"
                   onClick={() => setEditForm(prev => ({ ...prev, isUrgent: true }))}
-                  className={`h-10 px-4 rounded-xl text-xs font-bold border ${editForm.isUrgent ? 'bg-red-50 border-red-200 text-red-700' : 'bg-white border-slate-200 text-slate-500'}`}
+                  className={`h-10 px-4 rounded-xl text-xs font-bold border ${editForm.isUrgent ? 'bg-rose-50 border-rose-200 text-rose-700' : 'bg-white border-slate-200 text-slate-500'}`}
                 >
                   Urgent
                 </button>
@@ -1370,7 +1370,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
               <div className="col-span-2 pt-3 border-t border-slate-100">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tests sélectionnés</span>
-                  <span className="text-xs font-semibold text-blue-600">{selectedTestIds.length} test(s)</span>
+                  <span className="text-xs font-semibold text-indigo-600">{selectedTestIds.length} test(s)</span>
                 </div>
                 <input
                   value={testSearch}
@@ -1392,12 +1392,12 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                         onClick={() => toggleSelectedTest(test.id)}
                         className={`w-full flex items-center justify-between px-3 py-2 rounded-lg border text-left transition-all ${
                           selectedTestIds.includes(test.id)
-                            ? 'bg-blue-50 border-blue-200 text-blue-700'
+                            ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
                             : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
                         }`}
                       >
                         <span className="text-xs font-bold">{test.code} - {test.name}</span>
-                        <span className={`w-4 h-4 rounded border-2 flex items-center justify-center ${selectedTestIds.includes(test.id) ? 'bg-blue-600 border-blue-600' : 'border-slate-300'}`}>
+                        <span className={`w-4 h-4 rounded border-2 flex items-center justify-center ${selectedTestIds.includes(test.id) ? 'bg-indigo-600 border-indigo-600' : 'border-slate-300'}`}>
                           {selectedTestIds.includes(test.id) && <CheckCircle size={10} className="text-white" />}
                         </span>
                       </button>

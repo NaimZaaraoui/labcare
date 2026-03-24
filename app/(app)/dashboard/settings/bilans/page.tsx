@@ -179,9 +179,9 @@ export default function BilansPage() {
         <div className="flex flex-col gap-4">
           <button 
             onClick={() => router.push('/dashboard/settings')}
-            className="group flex items-center gap-2 text-slate-400 font-bold hover:text-blue-600 transition-all"
+            className="group flex items-center gap-2 text-slate-400 font-bold hover:text-indigo-600 transition-all"
           >
-            <div className="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center group-hover:bg-blue-50 shadow-sm transition-all group-hover:border-blue-100">
+            <div className="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center group-hover:bg-indigo-50 shadow-sm transition-all group-hover:border-indigo-100">
                <ArrowLeft size={16} />
             </div>
             <span className="text-xs uppercase tracking-widest">Paramètres</span>
@@ -195,7 +195,7 @@ export default function BilansPage() {
 
         <button
           onClick={() => handleOpenModal()}
-          className="btn-primary flex items-center gap-2 px-6 py-4 shadow-xl shadow-blue-100 h-14"
+          className="btn-primary flex items-center gap-2 px-6 py-4 shadow-xl shadow-indigo-100 h-14"
         >
           <Plus size={20} />
           <span>Nouveau Bilan</span>
@@ -204,7 +204,7 @@ export default function BilansPage() {
 
       {loading ? (
         <div className="bento-panel p-20 flex flex-col items-center justify-center text-slate-400 gap-4">
-          <RefreshCw size={40} className="animate-spin text-blue-500" />
+          <RefreshCw size={40} className="animate-spin text-indigo-500" />
           <p className="font-bold uppercase tracking-widest text-xs">Chargement des bilans...</p>
         </div>
       ) : (
@@ -213,11 +213,11 @@ export default function BilansPage() {
             <div key={bilan.id} className="bento-panel p-8 group relative overflow-hidden flex flex-col gap-6">
               <div className="flex justify-between items-center flex-wrap gap-2">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-inner">
+                  <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-inner">
                     <Sparkles size={28} />
                   </div>
                   <div>
-                    <h3 className="text-xl font-black text-slate-900 group-hover:text-blue-600 transition-colors uppercase tracking-tight">{bilan.name}</h3>
+                    <h3 className="text-xl font-black text-slate-900 group-hover:text-indigo-600 transition-colors uppercase tracking-tight">{bilan.name}</h3>
                     {bilan.code && <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{bilan.code}</span>}
                   </div>
                 </div>
@@ -225,7 +225,7 @@ export default function BilansPage() {
                 <div className="flex gap-1">
                   <button 
                     onClick={() => handleOpenModal(bilan)}
-                    className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-white rounded-xl transition-all shadow-sm border border-transparent hover:border-slate-100"
+                    className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-white rounded-xl transition-all shadow-sm border border-transparent hover:border-slate-100"
                   >
                     <Edit2 size={16} />
                   </button>
@@ -251,7 +251,7 @@ export default function BilansPage() {
                     </span>
                   ))}
                   {bilan.tests.length > 6 && (
-                    <span className="px-3 py-1.5 rounded-xl bg-blue-50 text-blue-600 text-[10px] font-black border border-blue-100">
+                    <span className="px-3 py-1.5 rounded-xl bg-indigo-50 text-indigo-600 text-[10px] font-black border border-indigo-100">
                       +{bilan.tests.length - 6}
                     </span>
                   )}
@@ -259,7 +259,7 @@ export default function BilansPage() {
               </div>
 
               {/* Decorative Accent */}
-              <div className="absolute -bottom-6 -right-6 w-24 h-24 rounded-full bg-blue-50 opacity-0 group-hover:opacity-30 transition-opacity blur-2xl" />
+              <div className="absolute -bottom-6 -right-6 w-24 h-24 rounded-full bg-indigo-50 opacity-0 group-hover:opacity-30 transition-opacity blur-2xl" />
             </div>
           ))}
 
@@ -282,7 +282,7 @@ export default function BilansPage() {
             {/* Modal Header - Redesigned like ConfirmationModal */}
             <div className="p-10 pb-6 flex items-start justify-between">
               <div className="flex items-start gap-6">
-                <div className="w-16 h-16 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-200 shrink-0">
+                <div className="w-16 h-16 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-200 shrink-0">
                   <Sparkles size={32} />
                 </div>
                 <div>
@@ -328,19 +328,19 @@ export default function BilansPage() {
               <div className="space-y-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                    <div className="flex items-center gap-3">
-                     <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 shadow-inner">
+                     <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-inner">
                         <Filter size={16} />
                      </div>
                      <label className="text-xs font-black text-slate-900 uppercase tracking-widest">analyses incluses ({selectedTests.length})</label>
                    </div>
                    
                    <div className="relative w-full md:w-80 group">
-                     <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" />
+                     <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors" />
                      <input 
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder="Chercher une analyse..."
-                        className="w-full pl-12 pr-4 py-4 rounded-2xl bg-white border border-slate-100 text-sm font-bold focus:ring-4 focus:ring-blue-100 outline-none transition-all placeholder:text-slate-300 shadow-sm"
+                        className="w-full pl-12 pr-4 py-4 rounded-2xl bg-white border border-slate-100 text-sm font-bold focus:ring-4 focus:ring-indigo-100 outline-none transition-all placeholder:text-slate-300 shadow-sm"
                      />
                    </div>
                 </div>
@@ -354,13 +354,13 @@ export default function BilansPage() {
                           onClick={() => toggleTest(test.id)}
                           className={`p-4 rounded-2xl border text-left transition-all flex items-center justify-between h-full group ${
                             isSelected 
-                              ? 'bg-blue-600 border-blue-600 shadow-lg shadow-blue-100 translate-y-[-2px]' 
-                              : 'bg-white border-slate-100 hover:border-blue-200 hover:shadow-md'
+                              ? 'bg-indigo-600 border-indigo-600 shadow-lg shadow-indigo-100 translate-y-[-2px]' 
+                              : 'bg-white border-slate-100 hover:border-indigo-200 hover:shadow-md'
                           }`}
                         >
                           <div className="overflow-hidden">
                             <span className={`block text-sm font-black truncate leading-none mb-1 ${isSelected ? 'text-white' : 'text-slate-900'}`}>{test.code}</span>
-                            <span className={`text-[10px] truncate block opacity-60 font-medium ${isSelected ? 'text-blue-50' : 'text-slate-500 italic'}`}>{test.name}</span>
+                            <span className={`text-[10px] truncate block opacity-60 font-medium ${isSelected ? 'text-indigo-50' : 'text-slate-500 italic'}`}>{test.name}</span>
                           </div>
                           
                           <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all shrink-0 ${
@@ -393,7 +393,7 @@ export default function BilansPage() {
               </button>
               <button 
                 onClick={handleSubmit}
-                className="px-8 py-4 rounded-2xl bg-blue-600 text-white font-black hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all flex items-center gap-2 uppercase text-[10px] tracking-widest active:scale-95 min-w-[180px] justify-center"
+                className="px-8 py-4 rounded-2xl bg-indigo-600 text-white font-black hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all flex items-center gap-2 uppercase text-[10px] tracking-widest active:scale-95 min-w-[180px] justify-center"
               >
                 <Save size={18} /> 
                 <span>Enregistrer</span>

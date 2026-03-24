@@ -121,7 +121,7 @@ export const EnvelopeImpression = forwardRef<HTMLDivElement, EnvelopeImpressionP
                         {LAB_NAME}
                         <span className='flex-1 h-1 bg-slate-900'/>
                       </h1>
-                      <div className="text-[9px] font-extrabold text-blue-600 uppercase tracking-widest mt-0.5 print:text-black">
+                      <div className="text-[9px] font-extrabold text-indigo-600 uppercase tracking-widest mt-0.5 print:text-black">
                         {LAB_SUBTITLE.toUpperCase()}
                       </div>
                     </div>
@@ -232,7 +232,7 @@ export const EnvelopeImpression = forwardRef<HTMLDivElement, EnvelopeImpressionP
 
           {/* 4. Fond bas — 20mm */}
           <div
-            className="absolute bottom-0 left-0 right-0 border-t-[0.5mm] border-dotted border-blue-500 bg-blue-50/30 print:bg-transparent print:border-black flex flex-col items-center justify-center"
+            className="absolute bottom-0 left-0 right-0 border-t-[0.5mm] border-dotted border-indigo-500 bg-indigo-50/30 print:bg-transparent print:border-black flex flex-col items-center justify-center"
             style={{ height: '20mm' }}
           >
            
@@ -243,41 +243,41 @@ export const EnvelopeImpression = forwardRef<HTMLDivElement, EnvelopeImpressionP
           {/* Coins à couper / coller */}
           {/* ── ZONES À COUPER : Rabat (haut) ── */}
           {/* Coin haut-gauche ✂ */}
-          <div className="absolute top-0 left-0 bg-red-50/60 print:bg-transparent flex flex-col items-center justify-center gap-1"
+          <div className="absolute top-0 left-0 bg-rose-50/60 print:bg-transparent flex flex-col items-center justify-center gap-1"
             style={{ width: '63mm', height: '67mm' }}>
             {/* Ligne de coupe verticale (côté intérieur) */}
-            <div className="absolute top-0 right-0 w-[0.4mm] h-full border-r-[0.5mm] border-dashed border-red-400 print:border-black" />
+            <div className="absolute top-0 right-0 w-[0.4mm] h-full border-r-[0.5mm] border-dashed border-rose-400 print:border-black" />
             {/* Ligne de coupe horizontale (bas) */}
-            <div className="absolute bottom-0 left-0 h-[0.4mm] w-full border-b-[0.5mm] border-dashed border-red-400 print:border-black" />
+            <div className="absolute bottom-0 left-0 h-[0.4mm] w-full border-b-[0.5mm] border-dashed border-rose-400 print:border-black" />
             
           </div>
           {/* Coin haut-droit ✂ */}
-          <div className="absolute top-0 right-0 bg-red-50/60 print:bg-transparent flex flex-col items-center justify-center gap-1"
+          <div className="absolute top-0 right-0 bg-rose-50/60 print:bg-transparent flex flex-col items-center justify-center gap-1"
             style={{ width: '63mm', height: '67mm' }}>
             {/* Ligne de coupe verticale (côté intérieur) */}
-            <div className="absolute top-0 left-0 w-[0.4mm] h-full border-l-[0.5mm] border-dashed border-red-400 print:border-black" />
+            <div className="absolute top-0 left-0 w-[0.4mm] h-full border-l-[0.5mm] border-dashed border-rose-400 print:border-black" />
             {/* Ligne de coupe horizontale (bas) */}
-            <div className="absolute bottom-0 left-0 h-[0.4mm] w-full border-b-[0.5mm] border-dashed border-red-400 print:border-black" />
+            <div className="absolute bottom-0 left-0 h-[0.4mm] w-full border-b-[0.5mm] border-dashed border-rose-400 print:border-black" />
            
           </div>
 
           {/* ── ZONES À COUPER : Fond (bas) ── */}
           {/* Coin bas-gauche ✂ */}
-          <div className="absolute bottom-0 left-0 bg-red-50/60 print:bg-transparent flex flex-col items-center justify-center gap-1"
+          <div className="absolute bottom-0 left-0 bg-rose-50/60 print:bg-transparent flex flex-col items-center justify-center gap-1"
             style={{ width: '63mm', height: '20mm' }}>
             {/* Ligne de coupe verticale (côté intérieur) */}
-            <div className="absolute top-0 right-0 w-[0.4mm] h-full border-r-[0.5mm] border-dashed border-red-400 print:border-black" />
+            <div className="absolute top-0 right-0 w-[0.4mm] h-full border-r-[0.5mm] border-dashed border-rose-400 print:border-black" />
             {/* Ligne de coupe horizontale (haut) */}
-            <div className="absolute top-0 left-0 h-[0.4mm] w-full border-t-[0.5mm] border-dashed border-red-400 print:border-black" />
+            <div className="absolute top-0 left-0 h-[0.4mm] w-full border-t-[0.5mm] border-dashed border-rose-400 print:border-black" />
            
           </div>
           {/* Coin bas-droit ✂ */}
-          <div className="absolute bottom-0 right-0 bg-red-50/60 print:bg-transparent flex flex-col items-center justify-center gap-1"
+          <div className="absolute bottom-0 right-0 bg-rose-50/60 print:bg-transparent flex flex-col items-center justify-center gap-1"
             style={{ width: '63mm', height: '20mm' }}>
             {/* Ligne de coupe verticale (côté intérieur) */}
-            <div className="absolute top-0 left-0 w-[0.4mm] h-full border-l-[0.5mm] border-dashed border-red-400 print:border-black" />
+            <div className="absolute top-0 left-0 w-[0.4mm] h-full border-l-[0.5mm] border-dashed border-rose-400 print:border-black" />
             {/* Ligne de coupe horizontale (haut) */}
-            <div className="absolute top-0 left-0 h-[0.4mm] w-full border-t-[0.5mm] border-dashed border-red-400 print:border-black" />
+            <div className="absolute top-0 left-0 h-[0.4mm] w-full border-t-[0.5mm] border-dashed border-rose-400 print:border-black" />
             
           </div>
 

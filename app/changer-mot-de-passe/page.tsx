@@ -87,7 +87,7 @@ export default function ChangePasswordPage() {
                 Nouveau mot de passe
               </label>
               <div className="relative input-premium flex gap-2 items-center group">
-                <Lock size={18} className="text-slate-400 group-focus-within:text-blue-500" />
+                <Lock size={18} className="text-slate-400 group-focus-within:text-indigo-500" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={newPassword}
@@ -105,7 +105,7 @@ export default function ChangePasswordPage() {
                 Confirmer le mot de passe
               </label>
               <div className="relative input-premium flex gap-2 items-center group">
-                <Lock size={18} className="text-slate-400 group-focus-within:text-blue-500" />
+                <Lock size={18} className="text-slate-400 group-focus-within:text-indigo-500" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={confirmPassword}
@@ -119,7 +119,7 @@ export default function ChangePasswordPage() {
                 <button 
                 type='button'
                 onClick={() => setShowPassword(!showPassword)}
-                className='flex gap-2 items-center text-slate-400 hover:text-blue-500 transition-colors'>
+                className='flex gap-2 items-center text-slate-400 hover:text-indigo-500 transition-colors'>
                   {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
                   {showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
                 </button>

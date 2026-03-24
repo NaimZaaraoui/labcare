@@ -57,14 +57,14 @@ export function Navigation() {
     <>
       {/* Desktop Sidebar */}
       <aside
-        className={`fixed top-0 left-0 h-full bg-white z-40 transition-all duration-300 hidden lg:flex flex-col shadow-[4px_0_24px_rgb(0,0,0,0.02)] ${
+        className={`fixed top-0 left-0 h-full bg-white z-50 transition-all duration-300 hidden lg:flex flex-col shadow-[4px_0_24px_rgb(0,0,0,0.02)] ${
           sidebarOpen ? 'w-64' : 'w-20'
         }`}
       >
         {/* Logo */}
         <div className="h-24 px-6 flex items-center gap-4">
-          <div className="w-10 h-10 rounded-2xl bg-blue-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/20">
-            <Microscope className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 border border-indigo-400/30 flex items-center justify-center flex-shrink-0 shadow-lg shadow-indigo-500/30">
+            <Microscope className="w-5 h-5 text-white drop-shadow-sm" />
           </div>
           {sidebarOpen && (
             <div className="overflow-hidden">
@@ -94,11 +94,11 @@ export function Navigation() {
                       href={item.href}
                       className={`flex items-center gap-3 py-3 rounded-2xl font-semibold transition-all duration-200 ${
                         active
-                          ? 'bg-blue-50 text-blue-600 px-4'
+                          ? 'bg-indigo-50 text-indigo-600 px-4'
                           : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50 px-4'
                       } ${!sidebarOpen && 'justify-center px-0'}`}
                     >
-                      <item.icon className={`w-5 h-5 flex-shrink-0 ${active ? 'text-blue-500' : 'text-slate-400'}`} />
+                      <item.icon className={`w-5 h-5 flex-shrink-0 ${active ? 'text-indigo-500' : 'text-slate-400'}`} />
                       {sidebarOpen && (
                         <span className="text-sm flex-1">{item.name}</span>
                       )}
@@ -114,11 +114,11 @@ export function Navigation() {
         <div className="p-4 space-y-2 mt-auto">
           <button 
             onClick={() => setShowLogoutConfirm(true)}
-            className={`w-full flex items-center gap-3 py-3 rounded-2xl font-semibold text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors ${
+            className={`w-full flex items-center gap-3 py-3 rounded-2xl font-semibold text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors ${
               !sidebarOpen ? 'justify-center px-0' : 'px-4'
             }`}
           >
-            <LogOut className="w-5 h-5 flex-shrink-0 text-slate-400 group-hover:text-red-500" />
+            <LogOut className="w-5 h-5 flex-shrink-0 text-slate-400 group-hover:text-rose-500" />
             {sidebarOpen && <span className="text-sm">Déconnexion</span>}
           </button>
 
@@ -151,8 +151,8 @@ export function Navigation() {
         }`}
       >
         <div className="h-24 px-6 flex items-center gap-4 border-b border-slate-100">
-          <div className="w-10 h-10 rounded-2xl bg-blue-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/20">
-            <Microscope className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 border border-indigo-400/30 flex items-center justify-center flex-shrink-0 shadow-lg shadow-indigo-500/30">
+            <Microscope className="w-5 h-5 text-white drop-shadow-sm" />
           </div>
           <div className="overflow-hidden">
             <h1 className="text-xl font-bold text-slate-800">NexLab</h1>
@@ -176,11 +176,11 @@ export function Navigation() {
                       onClick={handleNavClick}
                       className={`flex items-center gap-3 px-4 py-3 rounded-2xl font-semibold transition-all ${
                         active
-                          ? 'bg-blue-50 text-blue-600'
+                          ? 'bg-indigo-50 text-indigo-600'
                           : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
                       }`}
                     >
-                      <item.icon className={`w-5 h-5 flex-shrink-0 ${active ? 'text-blue-500' : 'text-slate-400'}`} />
+                      <item.icon className={`w-5 h-5 flex-shrink-0 ${active ? 'text-indigo-500' : 'text-slate-400'}`} />
                       <span className="text-sm flex-1">{item.name}</span>
                     </Link>
                   );
@@ -193,9 +193,9 @@ export function Navigation() {
          <div className="p-4 space-y-2 mt-auto border-t border-slate-100">
           <button 
             onClick={() => setShowLogoutConfirm(true)}
-            className="w-full flex items-center gap-3 py-3 px-4 rounded-2xl font-semibold text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+            className="w-full flex items-center gap-3 py-3 px-4 rounded-2xl font-semibold text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors"
           >
-            <LogOut className="w-5 h-5 flex-shrink-0 text-slate-400 group-hover:text-red-500" />
+            <LogOut className="w-5 h-5 flex-shrink-0 text-slate-400 group-hover:text-rose-500" />
             <span className="text-sm">Déconnexion</span>
           </button>
 

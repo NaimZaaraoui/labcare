@@ -89,7 +89,7 @@ export function HistogramView({ data, title, color = '#3b82f6', width = 300, hei
                 strokeWidth="1"
                 strokeDasharray="4 2"
               />
-              <text x={x} y={height - bottomPadding + 14} textAnchor="middle" fontSize="10" className="fill-blue-600 font-medium">
+              <text x={x} y={height - bottomPadding + 14} textAnchor="middle" fontSize="10" className="fill-indigo-600 font-medium">
                 {fLValue}
               </text>
               <text x={x} y={height - bottomPadding + 28} textAnchor="middle" fontSize="8" className="fill-slate-400 font-medium uppercase tracking-tighter">

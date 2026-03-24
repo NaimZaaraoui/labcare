@@ -42,7 +42,7 @@ export function ConfirmationModal({
     switch (type) {
       case 'danger': return 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-100';
       case 'warning': return 'bg-amber-500 hover:bg-amber-600 text-white shadow-amber-100';
-      default: return 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-100';
+      default: return 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-100';
     }
   };
 
@@ -50,7 +50,7 @@ export function ConfirmationModal({
     switch (type) {
       case 'danger': return 'bg-rose-50';
       case 'warning': return 'bg-amber-50';
-      default: return 'bg-blue-50';
+      default: return 'bg-indigo-50';
     }
   };
 

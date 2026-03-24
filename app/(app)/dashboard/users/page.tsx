@@ -37,7 +37,7 @@ interface User {
 
 const ROLE_CONFIG: Record<string, { label: string; class: string }> = {
   ADMIN: { label: 'Administrateur', class: 'bg-purple-50 text-purple-600 border-purple-100' },
-  MEDECIN: { label: 'Médecin', class: 'bg-blue-50 text-blue-600 border-blue-100' },
+  MEDECIN: { label: 'Médecin', class: 'bg-indigo-50 text-indigo-600 border-indigo-100' },
   TECHNICIEN: { label: 'Technicien', class: 'bg-indigo-50 text-indigo-600 border-indigo-100' },
   RECEPTIONNISTE: { label: 'Réceptionniste', class: 'bg-slate-50 text-slate-600 border-slate-100' },
 };
@@ -187,9 +187,9 @@ export default function UsersManagementPage() {
         <div>
           <button 
             onClick={() => router.push('/')}
-            className="group flex items-center gap-2 text-slate-400 font-bold hover:text-blue-600 transition-all mb-4"
+            className="group flex items-center gap-2 text-slate-400 font-bold hover:text-indigo-600 transition-all mb-4"
           >
-            <div className="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center group-hover:bg-blue-50 shadow-sm transition-all group-hover:border-blue-100">
+            <div className="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center group-hover:bg-indigo-50 shadow-sm transition-all group-hover:border-indigo-100">
                <ArrowLeft size={16} />
             </div>
             <span className="text-xs uppercase tracking-widest">Tableau de bord</span>
@@ -199,7 +199,7 @@ export default function UsersManagementPage() {
         </div>
 
        
-          <div className="hidden lg:flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-2xl border border-blue-100">
+          <div className="hidden lg:flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-2xl border border-indigo-100">
                     <Settings className="w-4 h-4 animate-spin-slow" />
                     <span className="text-xs font-black uppercase tracking-wider">Mode Administrateur</span>
                   </div>
@@ -212,12 +212,12 @@ export default function UsersManagementPage() {
           <div className="bento-panel overflow-hidden">
             <div className="p-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/30">
               <h3 className="font-black text-slate-900 flex items-center gap-2">
-                <UserIcon size={18} className="text-blue-500" />
+                <UserIcon size={18} className="text-indigo-500" />
                 Liste du Personnel
               </h3>
               <button 
                 onClick={fetchUsers}
-                className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white text-slate-400 hover:text-blue-600 transition-all border border-transparent hover:border-slate-100"
+                className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white text-slate-400 hover:text-indigo-600 transition-all border border-transparent hover:border-slate-100"
               >
                 <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
               </button>
@@ -226,7 +226,7 @@ export default function UsersManagementPage() {
             <div className="overflow-x-auto">
               {loading ? (
                 <div className="p-20 flex flex-col items-center justify-center text-slate-400 gap-4">
-                  <RefreshCw size={40} className="animate-spin text-blue-500" />
+                  <RefreshCw size={40} className="animate-spin text-indigo-500" />
                   <p className="font-bold uppercase tracking-widest text-xs">Chargement des données...</p>
                 </div>
               ) : (
@@ -244,7 +244,7 @@ export default function UsersManagementPage() {
                       <tr key={user.id} className={`group transition-colors ${!user.isActive ? 'bg-slate-50/50 grayscale-[0.5] opacity-60' : 'hover:bg-slate-50/30'}`}>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shadow-sm ${user.isActive ? 'bg-white text-blue-600 border border-slate-100' : 'bg-slate-200 text-slate-400'}`}>
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shadow-sm ${user.isActive ? 'bg-white text-indigo-600 border border-slate-100' : 'bg-slate-200 text-slate-400'}`}>
                               {user.name.charAt(0)}
                             </div>
                             <div>
@@ -308,7 +308,7 @@ export default function UsersManagementPage() {
         <div className="space-y-6">
           <div className="bento-panel p-8 sticky top-8">
             <h3 className="text-xl font-black text-slate-900 mb-6 flex items-center gap-2">
-              <UserPlus size={20} className="text-blue-500" />
+              <UserPlus size={20} className="text-indigo-500" />
               Nouveau Compte
             </h3>
 
@@ -379,7 +379,7 @@ export default function UsersManagementPage() {
               <button 
                 type="submit" 
                 disabled={submitLoading}
-                className="btn-primary w-full h-12 text-sm font-black shadow-lg shadow-blue-100"
+                className="btn-primary w-full h-12 text-sm font-black shadow-lg shadow-indigo-100"
               >
                 {submitLoading ? <RefreshCw className="animate-spin mx-auto" size={18} /> : 'Créer le Compte'}
               </button>

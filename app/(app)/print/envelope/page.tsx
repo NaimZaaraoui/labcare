@@ -72,7 +72,7 @@ function EnvelopeContent() {
             </button>
             <div>
               <h1 className="text-xl font-black text-slate-900 leading-none">Gabarit Enveloppe</h1>
-              <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-1">Conception Professionnelle A4</p>
+              <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mt-1">Conception Professionnelle A4</p>
             </div>
           </div>
           
@@ -109,11 +109,11 @@ function EnvelopeContent() {
         <div className="w-full lg:w-80 space-y-6 print:hidden">
            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
               <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-                <Scissors size={18} className="text-blue-600" /> Instructions de Montage
+                <Scissors size={18} className="text-indigo-600" /> Instructions de Montage
               </h3>
               <div className="space-y-6">
                  <div className="flex gap-4">
-                    <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-black flex-shrink-0">1</div>
+                    <div className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center font-black flex-shrink-0">1</div>
                     <div className="text-sm text-slate-600 font-medium">
                        <p className="font-black text-slate-900 uppercase text-[10px] mb-1">Impression</p>
                        Imprimez les 2 pages. Si votre imprimante le permet, utilisez le mode <span className="font-bold text-slate-900 italic">Recto-Verso (Retournement bord long)</span>.
@@ -121,7 +121,7 @@ function EnvelopeContent() {
                  </div>
 
                  <div className="flex gap-4">
-                    <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-black flex-shrink-0">2</div>
+                    <div className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center font-black flex-shrink-0">2</div>
                     <div className="text-sm text-slate-600 font-medium">
                        <p className="font-black text-slate-900 uppercase text-[10px] mb-1">Découpe</p>
                        Découpez les coins selon les guides. Les rabats latéraux doivent pouvoir se replier sans gêne.
@@ -129,10 +129,10 @@ function EnvelopeContent() {
                  </div>
 
                  <div className="flex gap-4">
-                    <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-black flex-shrink-0">3</div>
+                    <div className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center font-black flex-shrink-0">3</div>
                     <div className="text-sm text-slate-600 font-medium">
                        <p className="font-black text-slate-900 uppercase text-[10px] mb-1">Pliage</p>
-                       Pliez d&apos;abord les côtés vers l&apos;intérieur, puis remontez le fond de <span className="font-bold text-blue-600">2 cm</span> pour former la pochette.
+                       Pliez d&apos;abord les côtés vers l&apos;intérieur, puis remontez le fond de <span className="font-bold text-indigo-600">2 cm</span> pour former la pochette.
                     </div>
                  </div>
 
@@ -148,7 +148,7 @@ function EnvelopeContent() {
            <div className="bg-slate-900 p-6 rounded-3xl text-white shadow-xl">
               <p className="text-[10px] font-black uppercase tracking-widest opacity-40 mb-2">Conseil Pro</p>
               <p className="text-sm font-medium leading-relaxed">
-                Utilisez un papier de <span className="text-blue-400 font-bold">120g/m²</span> ou plus pour une tenue parfaite et un rendu &quot;Haut de Gamme&quot;.
+                Utilisez un papier de <span className="text-indigo-400 font-bold">120g/m²</span> ou plus pour une tenue parfaite et un rendu &quot;Haut de Gamme&quot;.
               </p>
            </div>
         </div>
@@ -162,7 +162,7 @@ export default function EnvelopePage() {
     <Suspense fallback={
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
           <p className="text-slate-500 font-bold animate-pulse">Chargement du gabarit...</p>
         </div>
       </div>

@@ -142,16 +142,16 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
 
   const getNotificationIcon = (type: string) => {
     const icons: Record<string, React.ReactNode> = {
-      success: <Check className="w-4 h-4 text-green-600" />,
+      success: <Check className="w-4 h-4 text-emerald-600" />,
       warning: <Clock className="w-4 h-4 text-amber-600" />,
-      error: <X className="w-4 h-4 text-red-600" />,
-      info: <Bell className="w-4 h-4 text-blue-600" />,
+      error: <X className="w-4 h-4 text-rose-600" />,
+      info: <Bell className="w-4 h-4 text-indigo-600" />,
     };
     return icons[type] || icons['info'];
   };
 
   return (
-    <header className="sticky top-0 z-30 h-24 bg-[#F4F7FB]/90 backdrop-blur-xl border-none">
+    <header className="sticky top-0 z-40 h-24 bg-[#F4F7FB]/90 backdrop-blur-xl border-none">
       <div className="h-full px-4 lg:px-8 flex items-center justify-between gap-4">
         {/* Left - Menu + Search */}
         <div className="flex items-center gap-4 flex-1 min-w-0">
@@ -168,9 +168,9 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
           <div className="flex-1 relative max-w-md" ref={searchRef}>
             <div className="relative group">
               {isSearching ? (
-                <Loader2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-500 animate-spin" />
+                <Loader2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-indigo-500 animate-spin" />
               ) : (
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
               )}
               <input
                 ref={searchInputRef}
@@ -179,7 +179,7 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => searchQuery.length >= 2 && setShowSearchResults(true)}
                 placeholder="Rechercher patient, analyse (Ctrl+K)..."
-                className="w-full h-12 pl-12 pr-4 bg-white border-none rounded-full shadow-[0_2px_10px_rgb(0,0,0,0.02)] text-sm font-medium placeholder:text-slate-400 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none"
+                className="w-full h-12 pl-12 pr-4 bg-white border-none rounded-full shadow-[0_2px_10px_rgb(0,0,0,0.02)] text-sm font-medium placeholder:text-slate-400 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none"
               />
             </div>
 
@@ -190,11 +190,13 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
                     <button
                       key={result.id}
                       onClick={() => {
-                        router.push(`/${result.type}/${result.id}`);
+                        const baseUrl = result.type === 'patient' ? '/dashboard/patients' : 
+                                      result.type === 'analysis' ? '/analyses' : '/tests';
+                        router.push(`${baseUrl}/${result.id}`);
                         setShowSearchResults(false);
                         setSearchQuery('');
                       }}
-                      className="w-full px-4 py-3 text-left hover:bg-blue-50 border-b border-slate-100 last:border-b-0 transition-colors flex items-start gap-3"
+                      className="w-full px-4 py-3 text-left hover:bg-indigo-50 border-b border-slate-100 last:border-b-0 transition-colors flex items-start gap-3"
                     >
                       <div className="flex-shrink-0 text-slate-400 mt-0.5">
                         {getIconByType(result.type)}
@@ -224,9 +226,9 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
               onClick={() => setShowNotifications(!showNotifications)}
               className="relative p-3 bg-white rounded-full shadow-[0_2px_10px_rgb(0,0,0,0.02)] hover:shadow-md transition-all group"
             >
-              <Bell className="w-5 h-5 text-slate-500 group-hover:text-blue-500 transition-colors" />
+              <Bell className="w-5 h-5 text-slate-500 group-hover:text-indigo-500 transition-colors" />
               {unreadCount > 0 && (
-                <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                <span className="absolute top-0 right-0 w-2 h-2 bg-rose-500 rounded-full animate-pulse" />
               )}
             </button>
 
@@ -235,7 +237,7 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
                 <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
                   <h3 className="text-sm font-bold text-slate-900">Notifications</h3>
                   {unreadCount > 0 && (
-                    <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">
+                    <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full">
                       {unreadCount} nouveau
                     </span>
                   )}
@@ -247,7 +249,7 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
                         key={notif.id}
                         onClick={() => handleNotificationClick(notif.id)}
                         className={`w-full px-4 py-3 text-left hover:bg-slate-50 transition-colors flex items-start gap-3 ${
-                          !notif.isRead ? 'bg-blue-50/30' : ''
+                          !notif.isRead ? 'bg-indigo-50/30' : ''
                         }`}
                       >
                         <div className="flex-shrink-0 mt-0.5">
@@ -262,7 +264,7 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
                           </div>
                         </div>
                         {!notif.isRead && (
-                          <div className="flex-shrink-0 w-2 h-2 bg-blue-600 rounded-full mt-2" />
+                          <div className="flex-shrink-0 w-2 h-2 bg-indigo-600 rounded-full mt-2" />
                         )}
                       </button>
                     ))
@@ -281,7 +283,7 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
               <div className="text-xs font-bold text-slate-900">{user?.name || 'Utilisateur'}</div>
               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{roleLabel}</div>
             </div>
-            <div className="w-10 h-10 rounded-2xl bg-blue-500 flex items-center justify-center text-white text-sm font-black cursor-pointer shadow-lg shadow-blue-500/20 hover:shadow-xl transition-all hover:-translate-y-0.5" title={user?.email || ''}>
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 border border-indigo-400/30 flex items-center justify-center text-white text-sm font-black cursor-pointer shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 hover:brightness-110 transition-all hover:-translate-y-0.5" title={user?.email || ''}>
               {initials}
             </div>
           </div>

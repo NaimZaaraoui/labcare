@@ -14,9 +14,9 @@ export default function TestsPage() {
         <div>
           <button 
             onClick={() => router.push('/dashboard/settings')}
-            className="group flex items-center gap-2 text-slate-400 font-bold hover:text-blue-600 transition-all mb-4"
+            className="group flex items-center gap-2 text-slate-400 font-bold hover:text-indigo-600 transition-all mb-4"
           >
-            <div className="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center group-hover:bg-blue-50 shadow-sm transition-all group-hover:border-blue-100">
+            <div className="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center group-hover:bg-indigo-50 shadow-sm transition-all group-hover:border-indigo-100">
                <ArrowLeft size={16} />
             </div>
             <span className="text-xs uppercase tracking-widest">Paramètres</span>

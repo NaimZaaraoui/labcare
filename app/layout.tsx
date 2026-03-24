@@ -1,10 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Geist, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({
+const geistSans = Geist({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-geist",
   display: "swap",
 });
 
@@ -12,7 +12,7 @@ const mono   = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-jetbrains",
   display: "swap",
-  weight: ['400', '500'],
+  weight: ['400', '500', '700', '800'],
 });
 
 export const metadata: Metadata = {
@@ -37,7 +37,7 @@ export default async function RootLayout({
   const session = await auth();
   
   return (
-    <html lang="fr" className={`${inter.variable} ${mono.variable}`}>
+    <html lang="fr" className={`${geistSans.variable} ${mono.variable}`}>
       <body className="bg-[var(--color-page)] font-sans antialiased text-[var(--color-text-secondary)]">
         <Providers session={session}>
           {children}

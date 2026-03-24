@@ -31,7 +31,7 @@ export default function SettingsPage() {
   if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -48,8 +48,8 @@ export default function SettingsPage() {
           title: "Raccourcis & Bilans",
           description: "Gérez vos groupes de tests rapides et bilans standards",
           icon: Sparkles,
-          color: "text-blue-600",
-          bgColor: "bg-blue-50",
+          color: "text-indigo-600",
+          bgColor: "bg-indigo-50",
           href: "/dashboard/settings/bilans"
         },
         {
@@ -108,9 +108,9 @@ export default function SettingsPage() {
         <div>
           <button 
             onClick={() => router.push('/')}
-            className="group flex items-center gap-2 text-slate-400 font-bold hover:text-blue-600 transition-all mb-4"
+            className="group flex items-center gap-2 text-slate-400 font-bold hover:text-indigo-600 transition-all mb-4"
           >
-            <div className="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center group-hover:bg-blue-50 shadow-sm transition-all group-hover:border-blue-100">
+            <div className="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center group-hover:bg-indigo-50 shadow-sm transition-all group-hover:border-indigo-100">
                <ArrowLeft size={16} />
             </div>
             <span className="text-xs uppercase tracking-widest">Tableau de bord</span>
@@ -119,7 +119,7 @@ export default function SettingsPage() {
           <p className="text-slate-500 font-medium mt-1">Configurez le fonctionnement global de NexLab CSSB.</p>
         </div>
 
-        <div className="hidden lg:flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-2xl border border-blue-100">
+        <div className="hidden lg:flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-2xl border border-indigo-100">
           <Settings className="w-4 h-4 animate-spin-slow" />
           <span className="text-xs font-black uppercase tracking-wider">Mode Administrateur</span>
         </div>
@@ -139,14 +139,14 @@ export default function SettingsPage() {
                 <button
                   key={index}
                   onClick={() => router.push(item.href)}
-                  className="bento-panel p-8 group text-left flex flex-col gap-6 relative overflow-hidden transition-all hover:ring-2 hover:ring-blue-100"
+                  className="bento-panel p-8 group text-left flex flex-col gap-6 relative overflow-hidden transition-all hover:ring-2 hover:ring-indigo-100"
                 >
                   <div className={`w-14 h-14 rounded-2xl ${item.bgColor} ${item.color} flex items-center justify-center transition-all group-hover:scale-110 group-hover:rotate-3 shadow-inner`}>
                     <item.icon size={28} />
                   </div>
                   
                   <div>
-                    <h3 className="text-xl font-black text-slate-900 mb-2 group-hover:text-blue-600 transition-colors">
+                    <h3 className="text-xl font-black text-slate-900 mb-2 group-hover:text-indigo-600 transition-colors">
                       {item.title}
                     </h3>
                     <p className="text-sm font-medium text-slate-500 leading-relaxed pr-6">
@@ -154,7 +154,7 @@ export default function SettingsPage() {
                     </p>
                   </div>
 
-                  <div className="absolute top-8 right-8 w-10 h-10 rounded-xl bg-slate-50 text-slate-300 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all transform group-hover:translate-x-1 shadow-sm">
+                  <div className="absolute top-8 right-8 w-10 h-10 rounded-xl bg-slate-50 text-slate-300 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-all transform group-hover:translate-x-1 shadow-sm">
                      <ChevronRight size={20} />
                   </div>
 

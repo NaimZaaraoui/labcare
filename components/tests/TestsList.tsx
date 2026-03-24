@@ -228,7 +228,7 @@ export function TestsList() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center p-20 text-slate-400 gap-4">
-        <RefreshCw size={48} className="animate-spin text-blue-500" />
+        <RefreshCw size={48} className="animate-spin text-indigo-500" />
         <p className="font-black uppercase tracking-widest text-xs">Chargement du catalogue...</p>
       </div>
     );
@@ -239,12 +239,12 @@ export function TestsList() {
       {/* Search and Filters */}
       <div className="bento-panel p-6 flex flex-col xl:flex-row items-center gap-6 shadow-sm border-slate-100">
         <div className="relative flex-1 group w-full">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-blue-500 transition-colors" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-indigo-500 transition-colors" />
           <input 
             placeholder="Rechercher par code ou nom d'analyse..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-50 border-none text-sm font-bold focus:ring-4 focus:ring-blue-100 outline-none transition-all placeholder:text-slate-300 shadow-inner-sm"
+            className="w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-50 border-none text-sm font-bold focus:ring-4 focus:ring-indigo-100 outline-none transition-all placeholder:text-slate-300 shadow-inner-sm"
           />
         </div>
 
@@ -265,7 +265,7 @@ export function TestsList() {
 
           <button 
             onClick={() => setShowForm(true)}
-            className="btn-primary flex items-center gap-2 px-8 py-4 h-14 whitespace-nowrap shadow-xl shadow-blue-100"
+            className="btn-primary flex items-center gap-2 px-8 py-4 h-14 whitespace-nowrap shadow-xl shadow-indigo-100"
           >
             <Plus size={20} />
             <span>Nouveau Test</span>
@@ -296,7 +296,7 @@ export function TestsList() {
                    <div>
                       <h2 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-3 uppercase">
                          {categoryName}
-                         <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg tracking-normal">{categoryTests.length}</span>
+                         <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg tracking-normal">{categoryTests.length}</span>
                       </h2>
                    </div>
                    <div className="flex-1 h-[1px] bg-slate-100" />
@@ -304,14 +304,14 @@ export function TestsList() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {categoryTests.map(test => (
-                    <div key={test.id} className="bento-panel p-8 group relative overflow-hidden flex flex-col gap-6 bg-white border-slate-100 hover:shadow-2xl hover:border-blue-100 transition-all">
+                    <div key={test.id} className="bento-panel p-8 group relative overflow-hidden flex flex-col gap-6 bg-white border-slate-100 hover:shadow-2xl hover:border-indigo-100 transition-all">
                       <div className="flex justify-between items-center flex-wrap">
                          <div className="space-y-1">
-                            <span className="text-[10px] font-black text-blue-600 tracking-[0.2em] uppercase">{test.code}</span>
-                            <h3 className="text-xl font-black text-slate-900 group-hover:text-blue-600 transition-colors uppercase leading-tight">{test.name}</h3>
+                            <span className="text-[10px] font-black text-indigo-600 tracking-[0.2em] uppercase">{test.code}</span>
+                            <h3 className="text-xl font-black text-slate-900 group-hover:text-indigo-600 transition-colors uppercase leading-tight">{test.name}</h3>
                          </div>
                          <div className="flex gap-1">
-                           <button onClick={() => handleEdit(test)} className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl"><Pencil size={18} /></button>
+                           <button onClick={() => handleEdit(test)} className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl"><Pencil size={18} /></button>
                            <button onClick={() => handleDelete(test)} className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl"><Trash2 size={18} /></button>
                          </div>
                       </div>
@@ -320,13 +320,13 @@ export function TestsList() {
                             <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest block">Référence</span>
                             <div className="flex items-baseline gap-1">
                                {test.isGroup ? (
-                                  <span className="text-sm font-black text-blue-500 uppercase flex items-center gap-2">Panel ({tests.filter(t => t.parentId === test.id).length})</span>
+                                  <span className="text-sm font-black text-indigo-500 uppercase flex items-center gap-2">Panel ({tests.filter(t => t.parentId === test.id).length})</span>
                                ) : test.resultType === 'numeric' ? (
                                   <>
                                       { (test.minValueM !== null || test.maxValueM !== null || test.minValueF !== null || test.maxValueF !== null) ? (
                                         <div className="space-y-0.5">
                                           <div className="flex items-center gap-2">
-                                            <span className="text-[10px] font-black text-blue-400 uppercase w-4 text-center">H</span>
+                                            <span className="text-[10px] font-black text-indigo-400 uppercase w-4 text-center">H</span>
                                             <span className="text-sm font-black text-slate-900 tracking-tighter">{test.minValueM ?? '0'} — {test.maxValueM ?? '∞'}</span>
                                           </div>
                                           <div className="flex items-center gap-2">
@@ -337,14 +337,14 @@ export function TestsList() {
                                       ) : (
                                         <span className="text-lg font-black text-slate-900 tracking-tighter">{test.minValue ?? '0'} — {test.maxValue ?? '∞'}</span>
                                       )}
-                                    <span className="text-xs font-bold text-blue-500 truncate" dangerouslySetInnerHTML={{ __html: test.unit || '—' }} />
+                                    <span className="text-xs font-bold text-indigo-500 truncate" dangerouslySetInnerHTML={{ __html: test.unit || '—' }} />
                                   </>
                                ) : (
                                   <span className="text-sm font-black text-amber-500 uppercase flex items-center gap-2"> {test.resultType === 'dropdown' ? 'Liste' : 'Texte'}</span>
                                )}
                             </div>
                          </div>
-                         <button onClick={() => handleEdit(test)} className="w-10 h-10 rounded-full bg-slate-50 text-slate-200 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all transform group-hover:scale-110">
+                         <button onClick={() => handleEdit(test)} className="w-10 h-10 rounded-full bg-slate-50 text-slate-200 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-all transform group-hover:scale-110">
                             <ChevronRight size={20} />
                          </button>
                       </div>
@@ -368,12 +368,12 @@ export function TestsList() {
             {/* Header consistent with ConfirmationModal */}
             <div className="p-10 pb-6 flex items-start justify-between">
               <div className="flex items-start gap-6">
-                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg shrink-0 ${editingTestId ? 'bg-blue-600' : 'bg-slate-900'} text-white shadow-blue-200`}>
+                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg shrink-0 ${editingTestId ? 'bg-indigo-600' : 'bg-slate-900'} text-white shadow-indigo-200`}>
                   {editingTestId ? <Settings2 size={32} /> : <Plus size={32} />}
                 </div>
                 <div>
                   <h3 className="text-3xl font-black text-slate-900 tracking-tight">
-                    {editingTestId ? 'Modifier' : 'Ajouter'} <span className="text-blue-600">Test</span>
+                    {editingTestId ? 'Modifier' : 'Ajouter'} <span className="text-indigo-600">Test</span>
                   </h3>
                   <p className="text-slate-500 font-medium mt-1">Configurez les paramètres de l'analyse biologique.</p>
                 </div>
@@ -391,14 +391,14 @@ export function TestsList() {
                 <button
                   type="button"
                   onClick={() => setNewTest({...newTest, isGroup: false})}
-                  className={`p-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all border ${!newTest.isGroup ? 'bg-blue-50 border-blue-200 text-blue-600 shadow-sm' : 'border-slate-50 text-slate-400 hover:bg-slate-50'}`}
+                  className={`p-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all border ${!newTest.isGroup ? 'bg-indigo-50 border-indigo-200 text-indigo-600 shadow-sm' : 'border-slate-50 text-slate-400 hover:bg-slate-50'}`}
                 >
                   Individuel
                 </button>
                 <button
                   type="button"
                   onClick={() => setNewTest({...newTest, isGroup: true, resultType: 'text', unit: '', minValue: '', maxValue: ''})}
-                  className={`p-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all border ${newTest.isGroup ? 'bg-blue-50 border-blue-200 text-blue-600 shadow-sm' : 'border-slate-50 text-slate-400 hover:bg-slate-50'}`}
+                  className={`p-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all border ${newTest.isGroup ? 'bg-indigo-50 border-indigo-200 text-indigo-600 shadow-sm' : 'border-slate-50 text-slate-400 hover:bg-slate-50'}`}
                 >
                   Panel / Bilan
                 </button>
@@ -445,16 +445,16 @@ export function TestsList() {
                     <button 
                       type="button"
                       onClick={() => setIsSexBased(!isSexBased)}
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[10px] font-black uppercase tracking-wider transition-all ${isSexBased ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-100' : 'bg-white border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-200'}`}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[10px] font-black uppercase tracking-wider transition-all ${isSexBased ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-100' : 'bg-white border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-200'}`}
                     >
                       <Layers size={12} />
                       Plages par sexe
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-blue-50/50 rounded-2xl border border-blue-100 items-end">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-indigo-50/50 rounded-2xl border border-indigo-100 items-end">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-blue-600 uppercase tracking-widest ml-1 text-center block">Unité</label>
+                      <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest ml-1 text-center block">Unité</label>
                       <input value={newTest.unit} onChange={(e) => setNewTest({...newTest, unit: e.target.value})} placeholder="g/L" className="input-premium h-12 bg-white text-center font-black" />
                     </div>
                     <div className="space-y-2">
@@ -473,13 +473,13 @@ export function TestsList() {
                     </div>
 
                     {isSexBased && (
-                      <div className="col-span-2 md:col-span-4 grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-blue-100/50">
+                      <div className="col-span-2 md:col-span-4 grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-indigo-100/50">
                         <div className="space-y-2">
-                          <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest ml-1 text-center block">H Min</label>
+                          <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest ml-1 text-center block">H Min</label>
                           <input step="0.01" type="number" value={newTest.minValueM} onChange={(e) => setNewTest({...newTest, minValueM: e.target.value})} placeholder="Min H" className="input-premium h-12 bg-white text-center font-black" />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest ml-1 text-center block">H Max</label>
+                          <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest ml-1 text-center block">H Max</label>
                           <input step="0.01" type="number" value={newTest.maxValueM} onChange={(e) => setNewTest({...newTest, maxValueM: e.target.value})} placeholder="Max H" className="input-premium h-12 bg-white text-center font-black" />
                         </div>
                         <div className="space-y-2">
@@ -513,7 +513,7 @@ export function TestsList() {
               </button>
               <button 
                 onClick={handleSubmit}
-                className="px-10 py-4 rounded-2xl bg-blue-600 text-white font-black hover:bg-blue-700 shadow-xl shadow-blue-100 transition-all flex items-center gap-2 uppercase text-[10px] tracking-widest active:scale-95 min-w-[160px] justify-center"
+                className="px-10 py-4 rounded-2xl bg-indigo-600 text-white font-black hover:bg-indigo-700 shadow-xl shadow-indigo-100 transition-all flex items-center gap-2 uppercase text-[10px] tracking-widest active:scale-95 min-w-[160px] justify-center"
               >
                 <Save size={18} /> <span>Enregistrer</span>
               </button>

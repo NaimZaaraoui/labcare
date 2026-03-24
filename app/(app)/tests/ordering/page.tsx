@@ -439,7 +439,7 @@ export default function OrderingPage() {
             className={`
               p-4 rounded-xl flex items-center justify-between cursor-pointer transition-all border
               ${selectedCategory?.id === cat.id 
-                ? 'bg-blue-50 border-blue-200 shadow-md' 
+                ? 'bg-indigo-50 border-indigo-200 shadow-md' 
                 : 'bg-white border-transparent hover:bg-slate-50 hover:border-slate-200'}
             `}
             style={{ marginLeft: `${depth * 24}px` }}
@@ -475,7 +475,7 @@ export default function OrderingPage() {
                   e.stopPropagation();
                   openEditModal(cat);
                 }}
-                className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
                 title="Modifier"
               >
                 <Edit2 size={14} />
@@ -496,7 +496,7 @@ export default function OrderingPage() {
                 <Trash2 size={14} />
               </button>
               <div className="w-px h-4 bg-slate-200 mx-1" />
-              <div {...attributes} {...listeners} className="p-2 -mr-2 text-slate-300 hover:text-blue-400 cursor-grab active:cursor-grabbing touch-none">
+              <div {...attributes} {...listeners} className="p-2 -mr-2 text-slate-300 hover:text-indigo-400 cursor-grab active:cursor-grabbing touch-none">
                 <GripVertical size={16} />
               </div>
             </div>
@@ -519,7 +519,7 @@ export default function OrderingPage() {
   const rootCategories = buildCategoryTree(searchQuery ? filteredCategories : categories);
   const visibleCategories = searchQuery ? filteredCategories : getVisibleCategories(rootCategories);
 
-  if (loading) return <div className="flex justify-center p-20"><Loader2 className="animate-spin text-blue-600" /></div>;
+  if (loading) return <div className="flex justify-center p-20"><Loader2 className="animate-spin text-indigo-600" /></div>;
 
   return (
     <div className="p-8 space-y-8 animate-fade-in pb-24">
@@ -529,9 +529,9 @@ export default function OrderingPage() {
         <div className="flex items-center gap-4">
           <button 
             onClick={() => router.back()}
-            className="group flex items-center gap-2 text-slate-400 font-bold hover:text-blue-600 transition-all"
+            className="group flex items-center gap-2 text-slate-400 font-bold hover:text-indigo-600 transition-all"
           >
-            <div className="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center group-hover:bg-blue-50 shadow-sm transition-all group-hover:border-blue-100">
+            <div className="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center group-hover:bg-indigo-50 shadow-sm transition-all group-hover:border-indigo-100">
               <ArrowLeft size={16} />
             </div>
           </button>
@@ -541,7 +541,7 @@ export default function OrderingPage() {
           </div>
         </div>
         <div className="flex items-center gap-3 shrink-0">
-          {saving && <span className="text-sm font-bold text-blue-600 animate-pulse flex items-center gap-2"><Save size={14} /> Sauvegarde...</span>}
+          {saving && <span className="text-sm font-bold text-indigo-600 animate-pulse flex items-center gap-2"><Save size={14} /> Sauvegarde...</span>}
           <button
             onClick={() => setConfirmDialog({
               open: true,
@@ -556,7 +556,7 @@ export default function OrderingPage() {
           </button>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="px-4 py-2.5 rounded-2xl bg-blue-600 text-white hover:bg-blue-700 font-black text-sm flex items-center gap-2 transition-all shadow-lg shadow-blue-100"
+            className="px-4 py-2.5 rounded-2xl bg-indigo-600 text-white hover:bg-indigo-700 font-black text-sm flex items-center gap-2 transition-all shadow-lg shadow-indigo-100"
           >
             <PlusCircle size={16} />
             Nouvelle Catégorie
@@ -572,7 +572,7 @@ export default function OrderingPage() {
           placeholder="Rechercher une catégorie ou un test..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+          className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
         />
       </div>
 
@@ -580,7 +580,7 @@ export default function OrderingPage() {
         {/* Categories Column */}
         <div className="lg:col-span-1 space-y-4">
           <div className="bg-slate-900 text-white p-4 rounded-t-2xl flex items-center gap-3 shadow-lg">
-            <Layers size={20} className="text-blue-400" />
+            <Layers size={20} className="text-indigo-400" />
             <h2 className="font-bold">Catégories</h2>
           </div>
           <div className="bg-white rounded-b-2xl shadow-xl shadow-slate-200/50 p-2 min-h-[400px]">
@@ -617,14 +617,14 @@ export default function OrderingPage() {
                       if (!cat) return null;
                       return (
                         <div 
-                          className="p-4 rounded-xl flex items-center justify-between bg-white border border-blue-200 shadow-2xl opacity-90 scale-105 cursor-grabbing"
+                          className="p-4 rounded-xl flex items-center justify-between bg-white border border-indigo-200 shadow-2xl opacity-90 scale-105 cursor-grabbing"
                           style={{ width: activeDragWidth ? `${activeDragWidth}px` : 'auto' }}
                         >
                           <div className="flex items-center gap-3">
                             <CategoryIcon iconName={cat.icon} />
                             <span className="font-bold text-slate-700">{cat.name}</span>
                           </div>
-                          <GripVertical size={16} className="text-blue-400" />
+                          <GripVertical size={16} className="text-indigo-400" />
                         </div>
                       );
                     })() : null}
@@ -655,14 +655,14 @@ export default function OrderingPage() {
                       {filteredTests.map((test) => (
                           <SortableItem key={test.id} id={test.id} active={false}>
                             {({ attributes, listeners }) => (
-                              <div className="p-3 bg-white border border-slate-100 rounded-xl flex items-center justify-between hover:border-blue-200 hover:shadow-md transition-all group">
+                              <div className="p-3 bg-white border border-slate-100 rounded-xl flex items-center justify-between hover:border-indigo-200 hover:shadow-md transition-all group">
                                 <div className="flex items-center gap-4">
-                                    <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 font-mono text-[10px] flex items-center justify-center font-bold group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors">
+                                    <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 font-mono text-[10px] flex items-center justify-center font-bold group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
                                       {test.code}
                                     </div>
                                     <span className="font-bold text-slate-700">{test.name}</span>
                                 </div>
-                                <div {...attributes} {...listeners} className="p-2 -mr-2 text-slate-300 group-hover:text-blue-400 cursor-grab active:cursor-grabbing touch-none">
+                                <div {...attributes} {...listeners} className="p-2 -mr-2 text-slate-300 group-hover:text-indigo-400 cursor-grab active:cursor-grabbing touch-none">
                                   <GripVertical size={16} />
                                 </div>
                               </div>
@@ -682,16 +682,16 @@ export default function OrderingPage() {
                       if (!test) return null;
                       return (
                         <div 
-                          className="p-3 bg-white border border-blue-200 rounded-xl flex items-center justify-between shadow-2xl opacity-90 scale-105"
+                          className="p-3 bg-white border border-indigo-200 rounded-xl flex items-center justify-between shadow-2xl opacity-90 scale-105"
                           style={{ width: activeDragWidth ? `${activeDragWidth}px` : 'auto' }}
                         >
                           <div className="flex items-center gap-4">
-                              <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 font-mono text-[10px] flex items-center justify-center font-bold">
+                              <div className="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 font-mono text-[10px] flex items-center justify-center font-bold">
                                 {test.code}
                               </div>
                               <span className="font-bold text-slate-700">{test.name}</span>
                           </div>
-                          <GripVertical size={16} className="text-blue-400" />
+                          <GripVertical size={16} className="text-indigo-400" />
                         </div>
                       );
                     })() : null}
@@ -716,7 +716,7 @@ export default function OrderingPage() {
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
                   {showEditModal ? <Edit2 size={20} /> : <PlusCircle size={20} />}
                 </div>
                 <h3 className="text-xl font-black text-slate-900 tracking-tight">
@@ -744,7 +744,7 @@ export default function OrderingPage() {
                   value={newCategoryName}
                   onChange={(e) => setNewCategoryName(e.target.value)}
                   placeholder="Ex: Sérologie, Biochimie..."
-                  className="w-full px-5 py-3 rounded-2xl border border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-50 outline-none transition-all font-bold text-slate-700"
+                  className="w-full px-5 py-3 rounded-2xl border border-slate-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 outline-none transition-all font-bold text-slate-700"
                   autoFocus
                 />
               </div>
@@ -758,8 +758,8 @@ export default function OrderingPage() {
                       onClick={() => setNewCategoryIcon(name)}
                       className={`p-3 rounded-xl transition-all ${
                         newCategoryIcon === name
-                          ? 'bg-blue-600 text-white shadow-lg shadow-blue-200 scale-105'
-                          : 'bg-white text-slate-400 border border-slate-200 hover:border-blue-300 hover:text-blue-500'
+                          ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 scale-105'
+                          : 'bg-white text-slate-400 border border-slate-200 hover:border-indigo-300 hover:text-indigo-500'
                       }`}
                       title={name}
                     >
@@ -774,7 +774,7 @@ export default function OrderingPage() {
                 <select
                   value={newCategoryParent}
                   onChange={(e) => setNewCategoryParent(e.target.value)}
-                  className="w-full px-5 py-3 rounded-2xl border border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-50 outline-none transition-all font-bold text-slate-700 bg-white appearance-none cursor-pointer"
+                  className="w-full px-5 py-3 rounded-2xl border border-slate-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 outline-none transition-all font-bold text-slate-700 bg-white appearance-none cursor-pointer"
                 >
                   <option value="">📂 Catégorie principale (Racine)</option>
                   {categories

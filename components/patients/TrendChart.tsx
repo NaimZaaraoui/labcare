@@ -57,7 +57,7 @@ export function TrendChart({ testName, data, unit }: TrendChartProps) {
         
         {prevValue !== null && (
           <div className={`flex items-center gap-1 text-[10px] font-black px-2 py-1 rounded-lg ${
-            diff > 0 ? 'bg-blue-50 text-blue-600' : diff < 0 ? 'bg-rose-50 text-rose-600' : 'bg-slate-50 text-slate-400'
+            diff > 0 ? 'bg-indigo-50 text-indigo-600' : diff < 0 ? 'bg-rose-50 text-rose-600' : 'bg-slate-50 text-slate-400'
           }`}>
             {diff > 0 ? <TrendingUp size={12} /> : diff < 0 ? <TrendingDown size={12} /> : <Minus size={12} />}
             {Math.abs(diff).toFixed(2)}

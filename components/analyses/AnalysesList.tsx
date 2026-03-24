@@ -17,7 +17,7 @@ const BLOCKED_MEDECIN = ['/analyses/nouvelle']; // Specifically for this button
 
 const tatC = (d: string | Date) => {
   const m = differenceInMinutes(new Date(), new Date(d));
-  return m >= 60 ? 'text-red-500 font-bold' : m >= 45 ? 'text-amber-500 font-bold' : 'text-slate-400 font-medium';
+  return m >= 60 ? 'text-rose-500 font-bold' : m >= 45 ? 'text-amber-500 font-bold' : 'text-slate-400 font-medium';
 };
 
 const fmtD = (d: string | Date) => {
@@ -27,7 +27,7 @@ const fmtD = (d: string | Date) => {
 
 const STATUS_MAP: Record<string, { label: string; classes: string }> = {
   pending: { label: 'En attente', classes: 'bg-amber-50 text-amber-600' },
-  in_progress: { label: 'En cours', classes: 'bg-blue-50 text-blue-600' },
+  in_progress: { label: 'En cours', classes: 'bg-indigo-50 text-indigo-600' },
   validated_tech: { label: 'Valid. Tech.', classes: 'bg-indigo-50 text-indigo-600' },
   validated_bio: { label: 'Validé ✓', classes: 'bg-emerald-50 text-emerald-600' },
   completed: { label: 'Validé ✓', classes: 'bg-emerald-50 text-emerald-600' },
@@ -165,12 +165,12 @@ export function AnalysesList() {
       {/* Search & Filters Group */}
       <div className="flex flex-col items-start gap-4">
         <div className="flex-1 w-full relative group">
-           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
            <input
              placeholder="Rechercher (nom, n° commande)..."
              value={searchId}
              onChange={(e) => setSearchId(e.target.value)}
-             className="w-full bg-white border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 h-12 pl-12 pr-6 rounded-full text-sm transition-all placeholder:text-slate-400 outline-none font-medium shadow-sm"
+             className="w-full bg-white border border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 h-12 pl-12 pr-6 rounded-full text-sm transition-all placeholder:text-slate-400 outline-none font-medium shadow-sm"
            />
         </div>
 
@@ -185,7 +185,7 @@ export function AnalysesList() {
               />
               <button 
                 onClick={() => setDateFilter('today')}
-                className="w-10 h-10 bg-slate-100 text-slate-500 rounded-full flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-colors"
+                className="w-10 h-10 bg-slate-100 text-slate-500 rounded-full flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-colors"
                 title="Annuler la date"
               >
                 <Trash2 size={16} />
@@ -195,7 +195,7 @@ export function AnalysesList() {
             <Menu as="div" className="relative z-50 inline-block text-left">
               <Menu.Button className="h-12 min-w-[200px] rounded-full border border-slate-200 bg-white shadow-sm font-bold text-slate-700 px-5 flex items-center justify-between hover:bg-slate-50 transition-all focus:ring-4 focus:ring-slate-100">
                 <div className="flex items-center gap-2">
-                  <Calendar size={18} className="text-blue-500" />
+                  <Calendar size={18} className="text-indigo-500" />
                   <span className="text-sm">
                     {dateFilter === 'today' && "Aujourd'hui"}
                     {dateFilter === 'yesterday' && "Hier"}
@@ -228,8 +228,8 @@ export function AnalysesList() {
                         <button
                           onClick={() => setDateFilter(item.id)}
                           className={`flex w-full px-4 py-2.5 text-sm font-bold transition-all rounded-xl ${
-                            active ? 'bg-slate-50 text-blue-600' : 'text-slate-600'
-                          } ${dateFilter === item.id ? 'bg-blue-50 text-blue-600' : ''}`}
+                            active ? 'bg-slate-50 text-indigo-600' : 'text-slate-600'
+                          } ${dateFilter === item.id ? 'bg-indigo-50 text-indigo-600' : ''}`}
                         >
                           {item.label}
                         </button>
@@ -244,7 +244,7 @@ export function AnalysesList() {
           <Menu as="div" className="relative z-50 inline-block text-left">
             <Menu.Button className="h-12 min-w-[180px] rounded-full border border-slate-200 bg-white shadow-sm font-bold text-slate-700 px-5 flex items-center justify-between hover:bg-slate-50 transition-all focus:ring-4 focus:ring-slate-100">
               <div className="flex items-center gap-2">
-                <Activity size={18} className="text-blue-500" />
+                <Activity size={18} className="text-indigo-500" />
                 <span className="text-sm">
                   {statusFilter === 'all' && 'Tous les statuts'}
                   {statusFilter === 'pending' && 'En attente'}
@@ -279,8 +279,8 @@ export function AnalysesList() {
                       <button
                         onClick={() => setStatusFilter(item.id as typeof statusFilter)}
                         className={`flex w-full px-4 py-2.5 text-sm font-bold transition-all rounded-xl ${
-                          active ? 'bg-slate-50 text-blue-600' : 'text-slate-600'
-                        } ${statusFilter === item.id ? 'bg-blue-50 text-blue-600' : ''}`}
+                          active ? 'bg-slate-50 text-indigo-600' : 'text-slate-600'
+                        } ${statusFilter === item.id ? 'bg-indigo-50 text-indigo-600' : ''}`}
                       >
                         {item.label}
                       </button>
@@ -292,7 +292,7 @@ export function AnalysesList() {
           </Menu>
 
           {role !== 'MEDECIN' && (
-            <Link href="/analyses/nouvelle" className="btn-primary shrink-0 h-12 px-6 shadow-blue-500/20 shadow-lg">
+            <Link href="/analyses/nouvelle" className="btn-primary shrink-0 h-12 px-6 shadow-indigo-500/20 shadow-lg">
               <Plus size={18} /> Nouvelle Analyse
             </Link>
           )}
@@ -335,21 +335,21 @@ export function AnalysesList() {
                   <Link
                     key={analysis.id}
                     href={`/analyses/${analysis.id}`}
-                    className={`grid grid-cols-1 md:grid-cols-12 px-6 py-4 hover:bg-slate-50/50 transition-colors items-center group relative gap-y-4 ${analysis.isUrgent ? 'border-l-4 border-red-500 pl-2' : ''}`}
+                    className={`grid grid-cols-1 md:grid-cols-12 px-6 py-4 hover:bg-slate-50/50 transition-colors items-center group relative gap-y-4 ${analysis.isUrgent ? 'border-l-4 border-rose-500 pl-2' : ''}`}
                   >
-                    <div className="md:col-span-1 text-center text-xs font-semibold text-slate-400 group-hover:text-blue-500 transition-colors hidden md:block">
+                    <div className="md:col-span-1 text-center text-xs font-semibold text-slate-400 group-hover:text-indigo-500 transition-colors hidden md:block">
                       #{analysis.dailyId || '?'}
                     </div>
                     
                     <div className="md:col-span-4 flex items-center gap-3 md:pl-4">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${analysis.isUrgent ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-600'}`}>
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${analysis.isUrgent ? 'bg-rose-100 text-rose-600' : 'bg-slate-100 text-slate-600'}`}>
                         {analysis.patientFirstName?.[0]}{analysis.patientLastName?.[0]}
                       </div>
                       <div className="overflow-hidden">
                         <div className="font-bold text-sm text-slate-800 truncate flex items-center gap-2">
                           {analysis.patientLastName || 'ANONYME'} <span className="font-semibold text-slate-600">{analysis.patientFirstName}</span>
                           {analysis.isUrgent && (
-                            <span className="status-pill bg-red-50 text-red-600">URGENT</span>
+                            <span className="status-pill bg-rose-50 text-rose-600">URGENT</span>
                           )}
                         </div>
                         <div className="text-[11px] text-slate-400 font-medium truncate mt-0.5 flex items-center gap-2">
@@ -397,7 +397,7 @@ export function AnalysesList() {
                          <button
                             onClick={(e) => handleDeleteClick(e, analysis.id)}
                             className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
-                              deletingId === analysis.id ? 'bg-slate-100 text-slate-400 animate-spin' : 'text-slate-300 hover:bg-red-50 hover:text-red-500'
+                              deletingId === analysis.id ? 'bg-slate-100 text-slate-400 animate-spin' : 'text-slate-300 hover:bg-rose-50 hover:text-rose-500'
                             }`}
                           >
                             <Trash2 size={16} />

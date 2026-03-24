@@ -168,7 +168,7 @@ export default function PatientsPage() {
           {role !== 'MEDECIN' && (
             <button 
               onClick={() => router.push('/analyses/nouvelle')}
-              className="px-5 py-2.5 rounded-2xl bg-blue-600 text-white font-black hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all flex items-center gap-2 active:scale-95"
+              className="px-5 py-2.5 rounded-2xl bg-indigo-600 text-white font-black hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all flex items-center gap-2 active:scale-95"
             >
               <Plus size={18} /> Nouveau Patient
             </button>
@@ -183,7 +183,7 @@ export default function PatientsPage() {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Rechercher par nom, prénom, téléphone..."
-          className="w-full bg-white border border-slate-200 rounded-2xl pl-14 pr-6 h-14 text-base font-bold text-slate-800 placeholder:text-slate-400 focus:ring-4 focus:ring-blue-100 focus:border-blue-300 outline-none transition-all shadow-sm"
+          className="w-full bg-white border border-slate-200 rounded-2xl pl-14 pr-6 h-14 text-base font-bold text-slate-800 placeholder:text-slate-400 focus:ring-4 focus:ring-indigo-100 focus:border-indigo-300 outline-none transition-all shadow-sm"
         />
       </div>
 
@@ -197,18 +197,18 @@ export default function PatientsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {patients.map(patient => (
-            <div key={patient.id} className="bento-panel !p-6 hover:shadow-2xl hover:border-blue-100 transition-all group flex flex-col h-full bg-white">
+            <div key={patient.id} className="bento-panel !p-6 hover:shadow-2xl hover:border-indigo-100 transition-all group flex flex-col h-full bg-white">
                <div className="flex flex-col gap-3 mb-6">
                   <div className="flex items-center gap-4">
                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl shrink-0 shadow-inner ${
-                       patient.gender === 'F' ? 'bg-rose-50 text-rose-500' : 'bg-blue-50 text-blue-500'
+                       patient.gender === 'F' ? 'bg-rose-50 text-rose-500' : 'bg-indigo-50 text-indigo-500'
                      }`}>
                         {patient.firstName[0]}{patient.lastName[0]}
                      </div>
                      <div className="min-w-0">
-                        <h3 className="font-black text-slate-900 leading-tight text-lg truncate uppercase group-hover:text-blue-600 transition-colors">{patient.lastName} {patient.firstName}</h3>
+                        <h3 className="font-black text-slate-900 leading-tight text-lg truncate uppercase group-hover:text-indigo-600 transition-colors">{patient.lastName} {patient.firstName}</h3>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest ${patient.gender === 'M' ? 'bg-blue-100 text-blue-700' : 'bg-rose-100 text-rose-700'}`}>
+                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest ${patient.gender === 'M' ? 'bg-indigo-100 text-indigo-700' : 'bg-rose-100 text-rose-700'}`}>
                             {patient.gender === 'M' ? 'Homme' : 'Femme'}
                           </span>
                           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-100 px-2 py-0.5 rounded-md">
@@ -221,7 +221,7 @@ export default function PatientsPage() {
                       {role !== 'MEDECIN' && (
                         <button 
                           onClick={() => router.push(`/analyses/nouvelle?patientId=${patient.id}`)}
-                          className="w-10 h-10 flex items-center justify-center text-blue-600 hover:bg-blue-50 rounded-xl transition-all shadow-sm border border-slate-100 bg-white"
+                          className="w-10 h-10 flex items-center justify-center text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all shadow-sm border border-slate-100 bg-white"
                           title="Nouvelle Analyse"
                         >
                            <Plus size={18} />
@@ -230,7 +230,7 @@ export default function PatientsPage() {
 
                       <button 
                           onClick={() => setEditingPatient(patient)}
-                          className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all shadow-sm border border-slate-100 bg-white"
+                          className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all shadow-sm border border-slate-100 bg-white"
                       >
                          <Edit2 size={16} />
                       </button>
@@ -266,7 +266,7 @@ export default function PatientsPage() {
                <div className="mt-6">
                   <Link 
                     href={`/dashboard/patients/${patient.id}`}
-                    className="w-full flex items-center justify-between px-5 py-3.5 bg-slate-50 hover:bg-blue-600 rounded-2xl text-[11px] font-black text-slate-500 hover:text-white uppercase tracking-widest transition-all group/link"
+                    className="w-full flex items-center justify-between px-5 py-3.5 bg-slate-50 hover:bg-indigo-600 rounded-2xl text-[11px] font-black text-slate-500 hover:text-white uppercase tracking-widest transition-all group/link"
                   >
                     Voir le dossier complet
                     <ChevronRight size={14} className="group-hover/link:translate-x-1 transition-transform" />
@@ -320,7 +320,7 @@ export default function PatientsPage() {
                          <input 
                             value={editingPatient.firstName}
                             onChange={(e) => setEditingPatient({...editingPatient, firstName: e.target.value})}
-                            className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-100 outline-none font-bold input-premium"
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-100 outline-none font-bold input-premium"
                             required
                          />
                       </div>
@@ -329,7 +329,7 @@ export default function PatientsPage() {
                          <input 
                             value={editingPatient.lastName}
                             onChange={(e) => setEditingPatient({...editingPatient, lastName: e.target.value})}
-                            className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-100 outline-none font-bold input-premium"
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-100 outline-none font-bold input-premium"
                             required
                          />
                       </div>
@@ -341,7 +341,7 @@ export default function PatientsPage() {
                          type="date"
                          value={editingPatient.birthDate ? new Date(editingPatient.birthDate).toISOString().split('T')[0] : ''}
                          onChange={(e) => setEditingPatient({...editingPatient, birthDate: e.target.value})}
-                         className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-100 outline-none font-bold input-premium"
+                         className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-100 outline-none font-bold input-premium"
                          required
                       />
                    </div>
@@ -352,7 +352,7 @@ export default function PatientsPage() {
                         <button
                           type="button"
                           onClick={() => setEditingPatient({...editingPatient, gender: 'M'})}
-                          className={`flex-1 py-3 rounded-xl font-black border-2 transition-all ${editingPatient.gender === 'M' ? 'bg-blue-50 border-blue-200 text-blue-600' : 'border-slate-100 text-slate-400'}`}
+                          className={`flex-1 py-3 rounded-xl font-black border-2 transition-all ${editingPatient.gender === 'M' ? 'bg-indigo-50 border-indigo-200 text-indigo-600' : 'border-slate-100 text-slate-400'}`}
                         >Homme</button>
                         <button
                           type="button"
@@ -367,7 +367,7 @@ export default function PatientsPage() {
                       <input 
                          value={editingPatient.phoneNumber || ''}
                          onChange={(e) => setEditingPatient({...editingPatient, phoneNumber: e.target.value})}
-                         className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-100 outline-none font-bold input-premium"
+                         className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-100 outline-none font-bold input-premium"
                       />
                    </div>
 
@@ -376,7 +376,7 @@ export default function PatientsPage() {
                       <input 
                          value={editingPatient.email || ''}
                          onChange={(e) => setEditingPatient({...editingPatient, email: e.target.value})}
-                         className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-100 outline-none font-bold input-premium"
+                         className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-100 outline-none font-bold input-premium"
                       />
                    </div>
 
@@ -385,7 +385,7 @@ export default function PatientsPage() {
                       <input 
                          value={editingPatient.address || ''}
                          onChange={(e) => setEditingPatient({...editingPatient, address: e.target.value})}
-                         className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-100 outline-none font-bold input-premium"
+                         className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-100 outline-none font-bold input-premium"
                       />
                    </div>
                    

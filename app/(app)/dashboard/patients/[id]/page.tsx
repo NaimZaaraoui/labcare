@@ -161,7 +161,7 @@ export default function PatientDetailsPage({ params }: { params: Promise<{ id: s
              {role !== 'MEDECIN' && (
                <button 
                   onClick={() => router.push(`/analyses/nouvelle?patientId=${id}`)}
-                  className="btn-primary h-11 px-6 shadow-blue-500/20 shadow-lg"
+                  className="btn-primary h-11 px-6 shadow-indigo-500/20 shadow-lg"
                >
                  <Plus size={18} /> Nouvelle Analyse
                </button>
@@ -171,20 +171,20 @@ export default function PatientDetailsPage({ params }: { params: Promise<{ id: s
        </div>
 
        {/* Patient Profile Bento */}
-       <div className="bento-panel p-8 bg-white border-blue-50/50 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/[0.02] rounded-full blur-3xl -mr-32 -mt-32" />
+       <div className="bento-panel p-8 bg-white border-indigo-50/50 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/[0.02] rounded-full blur-3xl -mr-32 -mt-32" />
           
           <div className="relative z-10 flex flex-col lg:flex-row gap-10 items-start">
              <div className="flex gap-8 items-center flex-1">
                 <div className={`w-24 h-24 rounded-[2rem] flex items-center justify-center text-4xl font-black shadow-2xl shadow-inner ${
-                    patient.gender === 'F' ? 'bg-rose-50 text-rose-500' : 'bg-blue-50 text-blue-500'
+                    patient.gender === 'F' ? 'bg-rose-50 text-rose-500' : 'bg-indigo-50 text-indigo-500'
                 }`}>
                    {patient.firstName[0]}{patient.lastName[0]}
                 </div>
                 <div>
                    <div className="flex items-center gap-3 mb-2">
                      <h1 className="text-4xl font-black text-slate-900 tracking-tight uppercase">{patient.lastName} {patient.firstName}</h1>
-                     <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${patient.gender === 'M' ? 'bg-blue-100 text-blue-700' : 'bg-rose-100 text-rose-700'}`}>
+                     <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${patient.gender === 'M' ? 'bg-indigo-100 text-indigo-700' : 'bg-rose-100 text-rose-700'}`}>
                        {patient.gender === 'M' ? 'Homme' : 'Femme'}
                      </span>
                    </div>
@@ -202,19 +202,19 @@ export default function PatientDetailsPage({ params }: { params: Promise<{ id: s
              </div>
 
              <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-4 w-full lg:w-72">
-                <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100/50 group hover:bg-white hover:border-blue-100 transition-all">
+                <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100/50 group hover:bg-white hover:border-indigo-100 transition-all">
                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-2">
                       <Phone size={12} /> Téléphone
                    </div>
                    <div className="text-sm font-black text-slate-700">{patient.phoneNumber || '—'}</div>
                 </div>
-                <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100/50 group hover:bg-white hover:border-blue-100 transition-all">
+                <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100/50 group hover:bg-white hover:border-indigo-100 transition-all">
                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-2">
                       <Mail size={12} /> Email
                    </div>
                    <div className="text-sm font-black text-slate-700 truncate">{patient.email || '—'}</div>
                 </div>
-                <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100/50 group hover:bg-white hover:border-blue-100 transition-all">
+                <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100/50 group hover:bg-white hover:border-indigo-100 transition-all">
                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-2">
                       <MapPin size={12} /> Adresse
                    </div>
@@ -229,13 +229,13 @@ export default function PatientDetailsPage({ params }: { params: Promise<{ id: s
            <div className="flex items-center gap-2 p-1 bg-slate-100 rounded-2xl w-fit">
               <button 
                 onClick={() => setActiveTab('history')}
-                className={`flex items-center gap-2 px-8 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'history' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                className={`flex items-center gap-2 px-8 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'history' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
               >
                 <Info size={14} /> Historique
               </button>
               <button 
                 onClick={() => setActiveTab('trends')}
-                className={`flex items-center gap-2 px-8 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'trends' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                className={`flex items-center gap-2 px-8 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'trends' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
               >
                 <TrendingUpIcon size={14} /> Tendances
               </button>
@@ -247,12 +247,12 @@ export default function PatientDetailsPage({ params }: { params: Promise<{ id: s
                   <Link 
                     href={`/analyses/${analysis.id}`}
                     key={analysis.id} 
-                    className="bento-panel !p-6 hover:shadow-2xl hover:border-blue-200 transition-all group flex items-center justify-between bg-white"
+                    className="bento-panel !p-6 hover:shadow-2xl hover:border-indigo-200 transition-all group flex items-center justify-between bg-white"
                   >
                     <div className="flex items-center gap-8">
-                       <div className="w-14 h-14 rounded-2xl bg-slate-50 flex flex-col items-center justify-center border border-slate-100 group-hover:bg-blue-50 group-hover:border-blue-100 transition-colors">
-                          <span className="text-[10px] font-black text-slate-400 group-hover:text-blue-400 uppercase leading-none mb-1">{new Date(analysis.creationDate).toLocaleString('fr-FR', { month: 'short' })}</span>
-                          <span className="text-xl font-black text-slate-900 group-hover:text-blue-600 leading-none">{new Date(analysis.creationDate).getDate()}</span>
+                       <div className="w-14 h-14 rounded-2xl bg-slate-50 flex flex-col items-center justify-center border border-slate-100 group-hover:bg-indigo-50 group-hover:border-indigo-100 transition-colors">
+                          <span className="text-[10px] font-black text-slate-400 group-hover:text-indigo-400 uppercase leading-none mb-1">{new Date(analysis.creationDate).toLocaleString('fr-FR', { month: 'short' })}</span>
+                          <span className="text-xl font-black text-slate-900 group-hover:text-indigo-600 leading-none">{new Date(analysis.creationDate).getDate()}</span>
                        </div>
                        <div>
                           <div className="flex items-center gap-4 mb-1">
@@ -273,7 +273,7 @@ export default function PatientDetailsPage({ params }: { params: Promise<{ id: s
                        </div>
                     </div>
 
-                    <div className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-300 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm group-hover:shadow-blue-500/30">
+                    <div className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-300 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-sm group-hover:shadow-indigo-500/30">
                        <ArrowRight size={22} className="group-hover:translate-x-1 transition-transform" />
                     </div>
                   </Link>

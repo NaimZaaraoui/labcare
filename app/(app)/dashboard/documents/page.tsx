@@ -18,18 +18,18 @@ export default function DocumentsPage() {
         
         {/* Carte : Enveloppe Générique */}
         <Link href="/print/envelope" className="group block h-full">
-          <div className="bento-panel p-8 group flex flex-col gap-6 relative overflow-hidden bg-white hover:shadow-2xl hover:border-blue-100 transition-all h-full">
+          <div className="bento-panel p-8 group flex flex-col gap-6 relative overflow-hidden bg-white hover:shadow-2xl hover:border-indigo-100 transition-all h-full">
             <div className="flex items-start justify-between">
-              <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
+              <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
                 <Mail size={28} />
               </div>
-              <div className="bg-blue-50 text-blue-600 border border-blue-100 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest">
+              <div className="bg-indigo-50 text-indigo-600 border border-indigo-100 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest">
                 A4 Portrait
               </div>
             </div>
 
             <div className="flex-1">
-              <h3 className="text-xl font-black text-slate-900 mb-2 group-hover:text-blue-600 transition-colors uppercase leading-tight">
+              <h3 className="text-xl font-black text-slate-900 mb-2 group-hover:text-indigo-600 transition-colors uppercase leading-tight">
                 Enveloppe (Gabarit)
               </h3>
               <p className="text-sm font-medium text-slate-500 leading-relaxed">
@@ -38,15 +38,15 @@ export default function DocumentsPage() {
             </div>
 
             <div className="flex items-center justify-between pt-4 border-t border-slate-50">
-              <div className="flex items-center gap-2 text-sm font-black text-blue-600 group-hover:gap-3 transition-all">
+              <div className="flex items-center gap-2 text-sm font-black text-indigo-600 group-hover:gap-3 transition-all">
                 <Printer size={16} />
                 <span>Imprimer le modèle</span>
               </div>
-              <div className="w-10 h-10 rounded-full bg-slate-50 text-slate-300 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all transform group-hover:scale-110 shadow-sm">
+              <div className="w-10 h-10 rounded-full bg-slate-50 text-slate-300 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-all transform group-hover:scale-110 shadow-sm">
                 <Printer size={18} />
               </div>
             </div>
-            <div className="absolute -bottom-10 -right-10 w-32 h-32 rounded-full bg-blue-100 opacity-0 group-hover:opacity-20 transition-opacity blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-10 -right-10 w-32 h-32 rounded-full bg-indigo-100 opacity-0 group-hover:opacity-20 transition-opacity blur-3xl pointer-events-none" />
           </div>
         </Link>
         

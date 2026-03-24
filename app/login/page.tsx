@@ -50,7 +50,7 @@ export default function LoginPage() {
         
         {/* Logo & Header */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-20 h-20 bg-blue-600 rounded-[2.5rem] flex items-center justify-center shadow-2xl shadow-blue-200 mb-6 rotate-3 hover:rotate-0 transition-transform duration-300">
+          <div className="w-20 h-20 bg-indigo-600 rounded-[2.5rem] flex items-center justify-center shadow-2xl shadow-indigo-200 mb-6 rotate-3 hover:rotate-0 transition-transform duration-300">
             <FlaskConical size={40} className="text-white" />
           </div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tighter">NexLab</h1>
@@ -74,7 +74,7 @@ export default function LoginPage() {
                 Adresse Email
               </label>
               <div className="relative input-premium flex gap-2 items-center group">
-                <MailIcon size={18} className="text-slate-400 group-focus-within:text-blue-500" />
+                <MailIcon size={18} className="text-slate-400 group-focus-within:text-indigo-500" />
                 <input
                   type="email"
                   value={email}
@@ -91,7 +91,7 @@ export default function LoginPage() {
                 Mot de passe
               </label>
               <div className="relative input-premium flex gap-2 items-center group">
-                <Lock size={18} className="text-slate-400 group-focus-within:text-blue-500" />
+                <Lock size={18} className="text-slate-400 group-focus-within:text-indigo-500" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
@@ -103,7 +103,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-slate-400 hover:text-blue-500 transition-colors rounded-xl hover:bg-white"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-slate-400 hover:text-indigo-500 transition-colors rounded-xl hover:bg-white"
                 >
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
