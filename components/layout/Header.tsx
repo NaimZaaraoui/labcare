@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, Bell, Menu, Check, X, Clock, Loader2, Users, FileText, Beaker } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { formatDistanceToNow } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import { useMobileMenu } from '@/contexts/MobileMenuContext';
 import { useSession } from 'next-auth/react';
 import { ROLE_LABELS } from '@/lib/constants';
@@ -119,7 +121,7 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
 
   useEffect(() => {
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 60000);
+    const interval = setInterval(fetchNotifications, 10000); // Poll every 10 seconds
     return () => clearInterval(interval);
   }, []);
 
@@ -285,6 +287,10 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
                           </div>
                           <div className="text-xs text-slate-500">
                             {notif.message}
+                          </div>
+                          <div className="text-[10px] text-slate-400 mt-1 flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true, locale: fr })}
                           </div>
                         </div>
                         {!notif.isRead && (

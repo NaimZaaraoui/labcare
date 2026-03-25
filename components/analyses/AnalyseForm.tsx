@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Save, User, Plus, Beaker, Check, Search, Activity, X, CalendarIcon, FileDigit, TestTube } from 'lucide-react';
+import { Save, User, Plus, Beaker, Check, Search, Activity, X, CalendarIcon, FileDigit, TestTube, Loader2 } from 'lucide-react';
 import { Test } from '@/lib/types';
 import { NotificationToast } from '@/components/ui/notification-toast';
 
@@ -35,11 +35,25 @@ export function AnalyseForm() {
   
   const [selectedTests, setSelectedTests] = useState<string[]>([]);
   const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null);
+  const [labSettings, setLabSettings] = useState<Record<string, string>>({
+    amount_unit: 'DA'
+  });
 
   const showNotification = (type: 'success' | 'error', message: string) => {
     setNotification({ type, message });
     setTimeout(() => setNotification(null), 3000);
   };
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.amount_unit) {
+          setLabSettings({ amount_unit: data.amount_unit });
+        }
+      })
+      .catch(console.error);
+  }, []);
 
   // Patient Search State
   const [searchTerm, setSearchTerm] = useState('');
@@ -49,25 +63,26 @@ export function AnalyseForm() {
   
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
-      if (searchTerm.length > 2) {
+      if (searchTerm.length >= 2) { // Changed from 3 to 2
         searchPatients();
       } else {
         setSearchResults([]);
       }
-    }, 500);
+    }, 400); // Slightly faster debounce
     return () => clearTimeout(delayDebounceFn);
   }, [searchTerm]);
 
   const searchPatients = async () => {
+    if (!searchTerm.trim()) return;
     setIsSearching(true);
     try {
-      const res = await fetch(`/api/patients?query=${searchTerm}`);
+      const res = await fetch(`/api/patients?query=${encodeURIComponent(searchTerm.trim())}`);
       if (res.ok) {
         const data = await res.json();
         setSearchResults(data);
       }
     } catch (e) {
-      console.error(e);
+      console.error('Error searching patients:', e);
     } finally {
       setIsSearching(false);
     }
@@ -207,8 +222,8 @@ export function AnalyseForm() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          patientId: dailyId,
-          selectedPatientId,
+          patientId: selectedPatientId, // FIXED: Send the Patient.id or null
+          dailyId,                      // Send the paillasse number
           ...patient,
           receiptNumber,
           provenance,
@@ -341,7 +356,11 @@ export function AnalyseForm() {
             <div className="relative z-50">
               <div className="relative flex items-center gap-2 w-full sm:max-w-xs group bg-slate-50 border border-slate-200 focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all input-premium">
             
-                  <Search className="w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+                  {isSearching ? (
+                    <Loader2 className="w-4 h-4 text-indigo-500 animate-spin" />
+                  ) : (
+                    <Search className="w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+                  )}
                   <input
                      placeholder="Chercher un patient existant ..."
                      value={searchTerm}
@@ -562,34 +581,49 @@ export function AnalyseForm() {
       <div className="fixed bottom-0 lg:bottom-6 left-0 right-0 lg:left-[280px] z-50 px-4 lg:px-8 pointer-events-none shadow-lg">
          <div className="max-w-4xl mx-auto flex justify-end">
             <div className="bento-panel py-3 px-4 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] flex items-center gap-6 pointer-events-auto w-full sm:w-auto border border-slate-200/50 bg-white/90 backdrop-blur-xl">
-               <div className="hidden sm:flex flex-col">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tests Sélectionnés</span>
-                  <span className="text-lg font-black text-indigo-600">{selectedTests.length}</span>
-               </div>
-               <div>
-                  <span className={`status-pill ${isUrgent ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-500'}`}>
-                     {isUrgent ? 'Urgent' : 'Routine'}
-                  </span>
+               <div className="flex flex-col sm:flex-row items-center gap-6">
+                  <div className="flex flex-col">
+                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sélection</span>
+                     <span className="text-sm font-black text-slate-900">{selectedTests.length} examen(s)</span>
+                  </div>
+                  <div className="hidden sm:block w-px h-8 bg-slate-100" />
+                  <div className="flex flex-col">
+                     <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">Total à payer</span>
+                     <span className="text-xl font-black text-indigo-600 tracking-tighter">
+                        {tests
+                          .filter(t => selectedTests.includes(t.id))
+                          .reduce((sum, t) => sum + (t.price || 0), 0)
+                          .toLocaleString()} <span className="text-[10px]">{labSettings.amount_unit}</span>
+                     </span>
+                  </div>
+                  <div className="hidden sm:block w-px h-8 bg-slate-100" />
+                  <div>
+                    <span className={`status-pill ${isUrgent ? 'bg-rose-50 text-rose-600 border-rose-100' : 'bg-slate-50 text-slate-500 border-slate-100'}`}>
+                      {isUrgent ? 'Urgent' : 'Routine'}
+                    </span>
+                  </div>
                </div>
                
-               <button 
-                  onClick={() => router.back()} 
-                  className="btn-secondary h-12"
-               >
-                  Annuler
-               </button>
-               
-               <button 
-                  onClick={handleSubmit}
-                  disabled={submitting} 
-                  className="btn-primary h-12 shadow-indigo-500/30 shadow-lg flex-1 sm:flex-none"
-               >
-                  {submitting ? (
-                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : (
-                     <><Save size={18} /> <span className="hidden sm:inline">Créer</span> Dossier</>
-                  )}
-               </button>
+               <div className="flex items-center gap-3 w-full sm:w-auto">
+                  <button 
+                     onClick={() => router.back()} 
+                     className="btn-secondary h-12"
+                  >
+                     Annuler
+                  </button>
+                  
+                  <button 
+                     onClick={handleSubmit}
+                     disabled={submitting || selectedTests.length === 0} 
+                     className="btn-primary h-12 shadow-indigo-500/30 shadow-lg flex-1 sm:flex-none px-8"
+                  >
+                     {submitting ? (
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                     ) : (
+                        <><Save size={18} /> <span className="inline">Valider & Créer</span></>
+                     )}
+                  </button>
+               </div>
             </div>
          </div>
       </div>

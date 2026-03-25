@@ -110,6 +110,7 @@ export async function POST(request: NextRequest) {
     };
 
     const { 
+      dailyId,
       patientId, 
       selectedPatientId,
       patientFirstName, 
@@ -128,8 +129,9 @@ export async function POST(request: NextRequest) {
       testsIds 
     } = body;
 
-    // Determine Patient UUID
-    let finalPatientId = selectedPatientId;
+    // Determine Patient UUID and Daily ID (handling naming inconsistencies)
+    let finalPatientId = selectedPatientId || (typeof patientId === 'string' && patientId.includes('-') ? patientId : null);
+    const finalDailyId = dailyId || (typeof patientId === 'string' && !patientId.includes('-') ? patientId : patientId);
 
     // If no existing patient selected, create one
     const parseDate = (d: string | null | undefined) => {
@@ -159,11 +161,19 @@ export async function POST(request: NextRequest) {
     
     const resolvedTestsIds = await resolveTests(testsIds);
     
+    // Calculate total price based on resolved tests
+    const testsData = await prisma.test.findMany({
+      where: { id: { in: resolvedTestsIds } },
+      select: { price: true }
+    });
+    const totalPrice = testsData.reduce((sum, t) => sum + (t.price || 0), 0);
+    
     const analysis = await prisma.analysis.create({
       data: {
         orderNumber,
-        dailyId: patientId,
+        dailyId: String(finalDailyId),
         patientId: finalPatientId,
+        totalPrice: totalPrice,
         patientFirstName,
         patientLastName,
         patientAge: calculatedAge,

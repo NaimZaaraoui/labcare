@@ -68,6 +68,14 @@ export default function SettingsPage() {
           bgColor: "bg-amber-50",
           href: "/dashboard/settings/print"
         },
+        {
+          title: "Configuration Métier",
+          description: "Types d'échantillons et paramètres financiers",
+          icon: Beaker,
+          color: "text-indigo-600",
+          bgColor: "bg-indigo-50",
+          href: "/dashboard/settings/lab"
+        },
       ]
     },
     {

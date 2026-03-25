@@ -41,6 +41,8 @@ model Test {
   options     String?
   isGroup     Boolean   @default(false)
   parentId    String?
+  sampleType  String?
+  price       Float     @default(0)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   results     Result[]
@@ -70,6 +72,7 @@ model Analysis {
   status              String?   @default("pending")
   printedAt           DateTime?
   histogramData       String?
+  totalPrice          Float     @default(0)
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
   globalNote          String?
@@ -108,6 +111,7 @@ model Bilan {
   id        String   @id @default(uuid())
   name      String
   code      String?
+  price     Float    @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   tests     Test[]   @relation("BilanToTest")

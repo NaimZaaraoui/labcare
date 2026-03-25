@@ -15,7 +15,7 @@ services:
       - RESEND_API_KEY=${RESEND_API_KEY}
       - CHROMIUM_PATH=/usr/bin/chromium
       - AUTH_SECRET=${AUTH_SECRET}
-      - NEXTAUTH_URL=http://localhost
+      - NEXTAUTH_URL=http://labcare.localhost
       - AUTH_TRUST_HOST=${AUTH_TRUST_HOST}
     volumes:
       - labcare-db:/app/data

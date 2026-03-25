@@ -24,6 +24,8 @@ export async function GET(request: Request) {
       orderBy: { createdAt: 'desc' },
     });
 
+    console.log(`[API] Patient search for "${query}" returned ${patients.length} results`);
+
     return NextResponse.json(patients);
   } catch (error) {
     return NextResponse.json(

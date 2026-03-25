@@ -39,6 +39,7 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
     };
 
 
+
     const patientName = `${analysis.patientFirstName || ''} ${analysis.patientLastName || ''}`.trim() || 'PATIENT SANS NOM';
     const dateEdition = format(new Date(), 'dd MMMM yyyy', { locale: fr });
     const datePrelevement = format(new Date(analysis.creationDate), 'dd MMMM yyyy', { locale: fr });
@@ -172,6 +173,7 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
                       {analysis.receiptNumber && (
                         <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest print:text-black">Quittance: {analysis.receiptNumber}</p>
                       )}
+                      
                     </div>
                   </div>
               </div>

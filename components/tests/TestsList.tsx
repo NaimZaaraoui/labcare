@@ -52,11 +52,29 @@ export function TestsList() {
   });
 
   const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null);
+  const [labSettings, setLabSettings] = useState<Record<string, string>>({
+    sample_types: 'Sang total, Sérum, Plasma, Urine, LCR, Plèvre, Ascite',
+    amount_unit: 'DA'
+  });
 
   const showNotification = (type: 'success' | 'error', message: string) => {
     setNotification({ type, message });
     setTimeout(() => setNotification(null), 3000);
   };
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(res => res.json())
+      .then(data => {
+        if (data && typeof data === 'object') {
+          setLabSettings({
+            sample_types: data.sample_types || 'Sang total, Sérum, Plasma, Urine, LCR, Plèvre, Ascite',
+            amount_unit: data.amount_unit || 'DA'
+          });
+        }
+      })
+      .catch(console.error);
+  }, []);
   
   const [newTest, setNewTest] = useState<{
     code: string;
@@ -74,6 +92,8 @@ export function TestsList() {
     parentId: string;
     options: string;
     isGroup: boolean;
+    sampleType: string;
+    price: string;
   }>({
     code: '',
     name: '',
@@ -89,7 +109,9 @@ export function TestsList() {
     category: '',
     parentId: '',
     options: '',
-    isGroup: false
+    isGroup: false,
+    sampleType: '',
+    price: '0'
   });
 
   const CATEGORIES = ['Hématologie', 'Biochimie', 'Sérologie', 'Urologie', 'Microbiologie', 'Hormonologie', 'NFS', 'Divers'];
@@ -132,7 +154,9 @@ export function TestsList() {
       category: test.category || '',
       parentId: test.parentId || '',
       options: test.options || '',
-      isGroup: test.isGroup
+      isGroup: test.isGroup,
+      sampleType: test.sampleType || '',
+      price: test.price?.toString() || '0'
     });
     setIsSexBased(!!(test.minValueM || test.maxValueM || test.minValueF || test.maxValueF));
     setShowForm(true);
@@ -142,7 +166,7 @@ export function TestsList() {
     setShowForm(false);
     setEditingTestId(null);
     setIsSexBased(false);
-    setNewTest({ code: '', name: '', unit: '', minValue: '', maxValue: '', minValueM: '', maxValueM: '', minValueF: '', maxValueF: '', decimals: '1', resultType: 'numeric', category: '', parentId: '', options: '', isGroup: false });
+    setNewTest({ code: '', name: '', unit: '', minValue: '', maxValue: '', minValueM: '', maxValueM: '', minValueF: '', maxValueF: '', decimals: '1', resultType: 'numeric', category: '', parentId: '', options: '', isGroup: false, sampleType: '', price: '0' });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -302,56 +326,114 @@ export function TestsList() {
                    <div className="flex-1 h-[1px] bg-slate-100" />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {categoryTests.map(test => (
-                    <div key={test.id} className="bento-panel p-8 group relative overflow-hidden flex flex-col gap-6 bg-white border-slate-100 hover:shadow-2xl hover:border-indigo-100 transition-all">
-                      <div className="flex justify-between items-center flex-wrap">
-                         <div className="space-y-1">
-                            <span className="text-[10px] font-black text-indigo-600 tracking-[0.2em] uppercase">{test.code}</span>
-                            <h3 className="text-xl font-black text-slate-900 group-hover:text-indigo-600 transition-colors uppercase leading-tight">{test.name}</h3>
-                         </div>
-                         <div className="flex gap-1">
-                           <button onClick={() => handleEdit(test)} className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl"><Pencil size={18} /></button>
-                           <button onClick={() => handleDelete(test)} className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl"><Trash2 size={18} /></button>
-                         </div>
-                      </div>
-                      <div className="pt-6 border-t border-slate-50 flex items-end justify-between">
-                         <div className="space-y-2">
-                            <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest block">Référence</span>
-                            <div className="flex items-baseline gap-1">
-                               {test.isGroup ? (
-                                  <span className="text-sm font-black text-indigo-500 uppercase flex items-center gap-2">Panel ({tests.filter(t => t.parentId === test.id).length})</span>
-                               ) : test.resultType === 'numeric' ? (
-                                  <>
-                                      { (test.minValueM !== null || test.maxValueM !== null || test.minValueF !== null || test.maxValueF !== null) ? (
-                                        <div className="space-y-0.5">
-                                          <div className="flex items-center gap-2">
-                                            <span className="text-[10px] font-black text-indigo-400 uppercase w-4 text-center">H</span>
-                                            <span className="text-sm font-black text-slate-900 tracking-tighter">{test.minValueM ?? '0'} — {test.maxValueM ?? '∞'}</span>
-                                          </div>
-                                          <div className="flex items-center gap-2">
-                                            <span className="text-[10px] font-black text-rose-400 uppercase w-4 text-center">F</span>
-                                            <span className="text-sm font-black text-slate-900 tracking-tighter">{test.minValueF ?? '0'} — {test.maxValueF ?? '∞'}</span>
-                                          </div>
-                                        </div>
-                                      ) : (
-                                        <span className="text-lg font-black text-slate-900 tracking-tighter">{test.minValue ?? '0'} — {test.maxValue ?? '∞'}</span>
-                                      )}
-                                    <span className="text-xs font-bold text-indigo-500 truncate" dangerouslySetInnerHTML={{ __html: test.unit || '—' }} />
-                                  </>
-                               ) : (
-                                  <span className="text-sm font-black text-amber-500 uppercase flex items-center gap-2"> {test.resultType === 'dropdown' ? 'Liste' : 'Texte'}</span>
-                               )}
-                            </div>
-                         </div>
-                         <button onClick={() => handleEdit(test)} className="w-10 h-10 rounded-full bg-slate-50 text-slate-200 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-all transform group-hover:scale-110">
-                            <ChevronRight size={20} />
-                         </button>
-                      </div>
-                      <div className="absolute -bottom-10 -right-10 w-32 h-32 rounded-full bg-slate-100 opacity-0 group-hover:opacity-30 transition-opacity blur-3xl pointer-events-none" />
-                    </div>
-                  ))}
-                </div>
+                 <div className="bento-panel overflow-hidden">
+                   <div className="overflow-x-auto">
+                     <table className="w-full text-left border-collapse">
+                       <thead>
+                         <tr className="bg-slate-50/50 border-b border-slate-100">
+                           <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-24">Code</th>
+                           <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Analyse</th>
+                           <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Échantillon</th>
+                           <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Type</th>
+                           <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Référence</th>
+                           <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Montant</th>
+                           <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right w-24">Actions</th>
+                         </tr>
+                       </thead>
+                       <tbody className="divide-y divide-slate-50">
+                         {categoryTests.map((test) => {
+                           const isChild = !!test.parentId;
+                           return (
+                             <tr 
+                               key={test.id} 
+                               className={`group transition-colors hover:bg-slate-50/80 ${isChild ? 'bg-slate-50/30' : ''}`}
+                             >
+                               <td className="px-6 py-4 align-middle">
+                                 <span className="text-[10px] font-black text-indigo-600 tracking-wider uppercase">
+                                   {test.code}
+                                 </span>
+                               </td>
+                               <td className="px-6 py-4 align-middle">
+                                 <div className="flex flex-col">
+                                   <span className={`text-sm font-bold text-slate-900 ${isChild ? 'pl-4 border-l-2 border-slate-200 ml-1' : ''}`}>
+                                     {test.name}
+                                   </span>
+                                   {test.isGroup && (
+                                     <span className="text-[10px] font-medium text-indigo-400 uppercase mt-0.5 tracking-tighter">
+                                       Panel ({tests.filter(t => t.parentId === test.id).length} paramètres)
+                                     </span>
+                                   )}
+                                 </div>
+                               </td>
+                               <td className="px-6 py-4 align-middle text-center">
+                                 <span className="text-[10px] font-bold text-slate-500 uppercase">
+                                   {test.sampleType || '—'}
+                                 </span>
+                               </td>
+                               <td className="px-6 py-4 align-middle text-center">
+                                 <span className={`status-pill ${
+                                   test.isGroup ? 'bg-indigo-50 text-indigo-600' : 
+                                   test.resultType === 'numeric' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'
+                                 }`}>
+                                   {test.isGroup ? 'Panel' : test.resultType === 'numeric' ? 'Num' : 'Texte'}
+                                 </span>
+                               </td>
+                               <td className="px-6 py-4 align-middle text-center">
+                                 {test.isGroup ? (
+                                   <Layers size={14} className="mx-auto text-indigo-300" />
+                                 ) : test.resultType === 'numeric' ? (
+                                   <div className="flex flex-col items-center justify-center gap-1">
+                                     {test.minValueM !== null || test.maxValueM !== null || test.minValueF !== null || test.maxValueF !== null ? (
+                                       <div className="flex gap-4 text-[11px] font-bold">
+                                         <div className="flex items-center gap-1.5">
+                                           <span className="w-3 h-3 rounded-[3px] bg-indigo-100 flex items-center justify-center text-[8px] text-indigo-600">H</span>
+                                           <span className="text-slate-700">{test.minValueM ?? '0'} — {test.maxValueM ?? '∞'}</span>
+                                         </div>
+                                         <div className="flex items-center gap-1.5">
+                                           <span className="w-3 h-3 rounded-[3px] bg-rose-100 flex items-center justify-center text-[8px] text-rose-600">F</span>
+                                           <span className="text-slate-700">{test.minValueF ?? '0'} — {test.maxValueF ?? '∞'}</span>
+                                         </div>
+                                       </div>
+                                     ) : (
+                                       <span className="text-sm font-bold text-slate-700">
+                                         {test.minValue ?? '0'} — {test.maxValue ?? '∞'}
+                                       </span>
+                                     )}
+                                   </div>
+                                 ) : (
+                                   <span className="text-slate-300">—</span>
+                                 )}
+                               </td>
+                               <td className="px-6 py-4 align-middle text-center">
+                                 <span className="text-sm font-black text-indigo-600">
+                                   {test.price?.toLocaleString()} <span className="text-[10px] font-bold text-indigo-400">{labSettings.amount_unit}</span>
+                                 </span>
+                               </td>
+                               <td className="px-6 py-4 align-middle text-right">
+                                 <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                   <button 
+                                     onClick={() => handleEdit(test)} 
+                                     className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-lg transition-all shadow-sm border border-transparent hover:border-indigo-100"
+                                     title="Modifier"
+                                   >
+                                     <Pencil size={14} />
+                                   </button>
+                                   <button 
+                                     onClick={() => handleDelete(test)} 
+                                     className="p-2 text-slate-400 hover:text-rose-600 hover:bg-white rounded-lg transition-all shadow-sm border border-transparent hover:border-rose-100"
+                                     title="Supprimer"
+                                   >
+                                     <Trash2 size={14} />
+                                   </button>
+                                 </div>
+                               </td>
+                             </tr>
+                           );
+                         })}
+                       </tbody>
+                     </table>
+                   </div>
+                 </div>
               </div>
             );
           })
@@ -434,6 +516,30 @@ export function TestsList() {
                     placeholder="Ex: Hémoglobine Glyquée"
                     className="input-premium h-14 bg-white shadow-sm font-black"
                     required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Échantillon</label>
+                  <select
+                    value={newTest.sampleType}
+                    onChange={(e) => setNewTest({...newTest, sampleType: e.target.value})}
+                    className="input-premium h-14 bg-white shadow-sm font-black"
+                  >
+                    <option value="">Sélectionner...</option>
+                    {labSettings.sample_types.split(',').map(s => {
+                      const val = s.trim();
+                      return <option key={val} value={val}>{val}</option>;
+                    })}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Montant ({labSettings.amount_unit})</label>
+                  <input
+                    type="number"
+                    value={newTest.price}
+                    onChange={(e) => setNewTest({...newTest, price: e.target.value})}
+                    placeholder="0"
+                    className="input-premium h-14 bg-white shadow-sm font-black text-indigo-600"
                   />
                 </div>
               </div>

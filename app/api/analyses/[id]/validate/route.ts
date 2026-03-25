@@ -103,9 +103,9 @@ export async function PATCH(
 
     // Notifications
     try {
-      const adminIds = await getUserIdsByRoles(['ADMIN'], session.user.id);
+      const receptionistAndAdminIds = await getUserIdsByRoles(['RECEPTIONNISTE', 'ADMIN'], session.user.id);
       await notifyUsers({
-        userIds: adminIds,
+        userIds: receptionistAndAdminIds,
         type: 'validated_bio',
         title: 'Résultats validés — prêts à imprimer',
         message: `Le rapport de ${updated.patientLastName} ${updated.patientFirstName} (ORD-${updated.orderNumber}) a été validé biologiquement et est prêt pour impression.`,

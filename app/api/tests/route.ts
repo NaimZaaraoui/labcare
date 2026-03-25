@@ -42,6 +42,8 @@ export async function POST(request: NextRequest) {
           parentId: body.parentId || null,
           options: body.options || null,
           isGroup: !!body.isGroup,
+          sampleType: body.sampleType || null,
+          price: body.price ? parseFloat(body.price) : 0,
         }
 
     });
@@ -94,6 +96,8 @@ export async function PUT(request: NextRequest) {
           parentId: data.parentId || null,
           options: data.options || null,
           isGroup: !!data.isGroup,
+          sampleType: data.sampleType || null,
+          price: data.price ? parseFloat(data.price) : 0,
         }
 
     });

@@ -7,6 +7,7 @@ const ALLOWED_KEYS = [
   'lab_address_1', 'lab_address_2', 'lab_phone', 'lab_email',
   'lab_bio_name', 'lab_bio_title', 'lab_bio_onmpt',
   'lab_footer_text', 'lab_stamp_image', 'lab_bio_signature', 'tat_warn', 'tat_alert',
+  'sample_types', 'amount_unit',
 ];
 
 export async function GET() {

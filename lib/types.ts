@@ -25,6 +25,8 @@ export interface Test {
     category?: string | null; // deprecated
     options: string | null;
     isGroup: boolean;
+    sampleType: string | null;
+    price: number | null;
     rank: number;
     categoryRel?: Category;
     parentId: string | null;
@@ -44,6 +46,7 @@ export interface Analysis {
   medecinPrescripteur: string | null;
   globalNote: string | null;
   globalNotePlacement: 'all' | 'first' | 'last' | null;
+  totalPrice: number | null;
   validatedTechAt?: string | Date;
   validatedTechBy?: string;
   validatedTechName?: string;
@@ -97,6 +100,7 @@ export interface Bilan {
   id: string;
   name: string;
   code: string | null;
+  price: number | null;
   tests?: Test[];
   createdAt: Date;
   updatedAt: Date;
