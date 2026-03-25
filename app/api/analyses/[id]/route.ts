@@ -2,6 +2,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { auth } from '@/lib/auth';
+import { notifyUsers, getUserIdsByRoles } from '@/lib/notifications';
 
 export async function GET(
   request: NextRequest,
@@ -211,6 +213,26 @@ export async function PATCH(
       }
     });
     
+    // Notifications
+    try {
+      if (body.status === 'in_progress' && existing.status === 'pending') {
+        const session = await auth();
+        const medecinAdminIds = await getUserIdsByRoles(
+          ['MEDECIN', 'ADMIN'],
+          session?.user?.id
+        );
+        await notifyUsers({
+          userIds: medecinAdminIds,
+          type: 'results_entered',
+          title: 'Résultats en cours de saisie',
+          message: `Les résultats pour ${analysis.patientLastName} ${analysis.patientFirstName} (ORD-${analysis.orderNumber}) sont en cours de saisie.`,
+          analysisId: id,
+        });
+      }
+    } catch (e) {
+      console.error('Error in status update notifications:', e);
+    }
+
     return NextResponse.json(analysis);
   } catch (error) {
     console.error('Erreur PATCH /api/analyses/[id]:', error);

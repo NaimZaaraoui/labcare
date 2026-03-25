@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
+import { notifyUsers, getUserIdsByRoles } from '@/lib/notifications';
 
 export async function PATCH(
   request: NextRequest,
@@ -55,6 +56,23 @@ export async function PATCH(
         }
       });
 
+      // Notifications
+      try {
+        const medecinAdminIds = await getUserIdsByRoles(
+          ['MEDECIN', 'ADMIN'],
+          session.user.id
+        );
+        await notifyUsers({
+          userIds: medecinAdminIds,
+          type: 'validated_tech',
+          title: 'Validation technique effectuée',
+          message: `${updated.patientLastName} ${updated.patientFirstName} (ORD-${updated.orderNumber}) est prêt pour la validation biologique.`,
+          analysisId: id,
+        });
+      } catch (e) {
+        console.error('Error in tech validation notification:', e);
+      }
+
       return NextResponse.json(updated);
     }
 
@@ -82,6 +100,20 @@ export async function PATCH(
         patient: true
       }
     });
+
+    // Notifications
+    try {
+      const adminIds = await getUserIdsByRoles(['ADMIN'], session.user.id);
+      await notifyUsers({
+        userIds: adminIds,
+        type: 'validated_bio',
+        title: 'Résultats validés — prêts à imprimer',
+        message: `Le rapport de ${updated.patientLastName} ${updated.patientFirstName} (ORD-${updated.orderNumber}) a été validé biologiquement et est prêt pour impression.`,
+        analysisId: id,
+      });
+    } catch (e) {
+      console.error('Error in bio validation notification:', e);
+    }
 
     return NextResponse.json(updated);
   } catch (error) {

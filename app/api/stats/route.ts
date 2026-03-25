@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { notifyUsers, getUserIdsByRoles } from '@/lib/notifications';
 
 export async function GET() {
   try {
@@ -102,7 +103,7 @@ export async function GET() {
       trendData.push(rawTrendMap.get(mKey) || 0);
     }
 
-    return NextResponse.json({
+    const stats = {
       total,
       totalToday,
       pending,        // Total pending
@@ -116,7 +117,46 @@ export async function GET() {
         data: trendData
       },
       revenue: 0 
-    });
+    };
+
+    // --- TAT Breach Check ---
+    try {
+      const TAT_ALERT_MINUTES = 60;
+      const breachThreshold = new Date(Date.now() - TAT_ALERT_MINUTES * 60 * 1000);
+      
+      const breachedAnalyses = await prisma.analysis.findMany({
+        where: {
+          status: 'in_progress',
+          creationDate: { lt: breachThreshold },
+          notifications: {
+            none: { type: 'tat_breach' }
+          }
+        },
+        select: { 
+          id: true, 
+          orderNumber: true, 
+          patientFirstName: true, 
+          patientLastName: true 
+        }
+      });
+
+      if (breachedAnalyses.length > 0) {
+        const adminIds = await getUserIdsByRoles(['ADMIN']);
+        for (const a of breachedAnalyses) {
+          await notifyUsers({
+            userIds: adminIds,
+            type: 'tat_breach',
+            title: 'Délai dépassé',
+            message: `L'analyse de ${a.patientLastName} ${a.patientFirstName} (ORD-${a.orderNumber}) dépasse ${TAT_ALERT_MINUTES} minutes.`,
+            analysisId: a.id,
+          });
+        }
+      }
+    } catch (e) {
+      console.error('Error in TAT breach check:', e);
+    }
+
+    return NextResponse.json(stats);
 
 
   } catch (error) {

@@ -2,6 +2,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import {prisma} from '@/lib/prisma';
+import { auth } from '@/lib/auth';
+import { notifyUsers, getUserIdsByRoles } from '@/lib/notifications';
 
 export async function GET(request: NextRequest) {
   try {
@@ -188,6 +190,43 @@ export async function POST(request: NextRequest) {
       }
     });
     
+    // Notifications
+    try {
+      const session = await auth();
+      const creatorId = session?.user?.id || '';
+
+      // Notify all technicians and admins (excluding the creator)
+      const techAdminIds = await getUserIdsByRoles(
+        ['TECHNICIEN', 'ADMIN'], 
+        creatorId
+      );
+
+      await notifyUsers({
+        userIds: techAdminIds,
+        type: 'new_analysis',
+        title: 'Nouvelle analyse',
+        message: `Nouvelle analyse pour ${analysis.patientLastName} ${analysis.patientFirstName} — ORD-${analysis.orderNumber}`,
+        analysisId: analysis.id,
+      });
+
+      // If urgent: notify ALL active users immediately
+      if (analysis.isUrgent) {
+        const allUserIds = await getUserIdsByRoles(
+          ['ADMIN', 'TECHNICIEN', 'MEDECIN', 'RECEPTIONNISTE'],
+          creatorId
+        );
+        await notifyUsers({
+          userIds: allUserIds,
+          type: 'urgent',
+          title: 'URGENT — Analyse prioritaire',
+          message: `Analyse urgente créée pour ${analysis.patientLastName} ${analysis.patientFirstName} — ORD-${analysis.orderNumber}`,
+          analysisId: analysis.id,
+        });
+      }
+    } catch (e) {
+      console.error('Error in analysis notifications:', e);
+    }
+
     return NextResponse.json(analysis, { status: 201 });
   } catch (error: any) {
     console.error('Erreur POST /api/analyses:', error);

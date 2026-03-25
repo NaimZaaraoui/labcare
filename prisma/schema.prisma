@@ -82,6 +82,7 @@ model Analysis {
   validatedTechName   String?
   patient             Patient?  @relation(fields: [patientId], references: [id])
   results             Result[]
+  notifications       Notification[]
 
   @@map("analyses")
 }
@@ -140,6 +141,7 @@ model User {
   mustChangePassword Boolean  @default(true)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
+  notifications      Notification[]
 
   @@map("users")
 }
@@ -152,4 +154,19 @@ model Setting {
   updatedBy String?
 
   @@map("settings")
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String
+  title       String
+  message     String
+  analysisId  String?
+  analysis    Analysis? @relation(fields: [analysisId], references: [id], onDelete: SetNull)
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@map("notifications")
 }

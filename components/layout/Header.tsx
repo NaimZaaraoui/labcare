@@ -20,6 +20,7 @@ interface Notification {
   message: string;
   type: 'success' | 'warning' | 'error' | 'info';
   isRead: boolean;
+  analysisId?: string;
   createdAt: Date;
 }
 
@@ -109,6 +110,7 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
         const data = await res.json();
         setNotifications(data);
         setUnreadCount(data.filter((n: Notification) => !n.isRead).length);
+        console.log(data);
       }
     } catch (e) {
       console.error(e);
@@ -123,9 +125,15 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
 
   const handleNotificationClick = async (notificationId: string) => {
     try {
+      const notif = notifications.find(n => n.id === notificationId);
       await fetch(`/api/notifications/${notificationId}/read`, { method: 'POST' });
       setNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n));
       setUnreadCount(prev => Math.max(0, prev - 1));
+      
+      if (notif?.analysisId) {
+        router.push(`/analyses/${notif.analysisId}`);
+        setShowNotifications(false);
+      }
     } catch (e) {
       console.error(e);
     }
@@ -228,7 +236,9 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
             >
               <Bell className="w-5 h-5 text-slate-500 group-hover:text-indigo-500 transition-colors" />
               {unreadCount > 0 && (
-                <span className="absolute top-0 right-0 w-2 h-2 bg-rose-500 rounded-full animate-pulse" />
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 border-2 border-white">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
               )}
             </button>
 
@@ -236,11 +246,25 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
               <div className="absolute right-0 top-full mt-2 w-96 bg-white border border-slate-200 rounded-lg shadow-lg z-50">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
                   <h3 className="text-sm font-bold text-slate-900">Notifications</h3>
-                  {unreadCount > 0 && (
-                    <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full">
-                      {unreadCount} nouveau
-                    </span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {unreadCount > 0 && (
+                      <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full">
+                        {unreadCount} nouveau{unreadCount > 1 ? 'x' : ''}
+                      </span>
+                    )}
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={async () => {
+                          await fetch('/api/notifications/read-all', { method: 'POST' });
+                          setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+                          setUnreadCount(0);
+                        }}
+                        className="text-xs text-slate-400 hover:text-indigo-600 transition-colors font-medium"
+                      >
+                        Tout lu
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div className="max-h-[420px] overflow-y-auto divide-y divide-slate-100">
                   {notifications.length > 0 ? (
