@@ -1,6 +1,6 @@
 import { 
   Activity, Users, Settings, FileText, FlaskConical, 
-  LayoutDashboard, ShieldCheck, Package, BarChart3 
+  LayoutDashboard, ShieldCheck, Package, BarChart3, DownloadCloud
 } from "lucide-react";
 
 export const ROLE_LABELS: Record<string, string> = {
@@ -62,6 +62,7 @@ export const NAVIGATION_GROUPS = [
     links: [
       { name: 'Contrôle Qualité', href: '/dashboard/qc', icon: BarChart3 },
       { name: 'Inventaire', href: '/dashboard/inventory', icon: Package },
+      { name: 'Exports Excel', href: '/dashboard/exports', icon: DownloadCloud },
     ]
   },
   {

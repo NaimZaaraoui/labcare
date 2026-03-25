@@ -3,11 +3,33 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const category = searchParams.get('category');
+    const includeGrouped = searchParams.get('includeGrouped') !== 'false';
+    
+    const whereClause: any = {};
+    
+    if (!includeGrouped) {
+      whereClause.isGroup = false;
+    }
+    
+    if (category) {
+      whereClause.category = category;
+    }
+
     const tests = await (prisma.test as any).findMany({
-      orderBy: { name: 'asc' },
-      include: { children: true }
+      where: whereClause,
+      orderBy: [
+        { category: 'asc' },
+        { rank: 'asc' },
+        { name: 'asc' }
+      ],
+      include: { 
+        children: includeGrouped,
+        categoryRel: true 
+      }
     });
     
     return NextResponse.json(tests);

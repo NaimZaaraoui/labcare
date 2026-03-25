@@ -6,16 +6,32 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('query');
+    const start = searchParams.get('start');
+    const end = searchParams.get('end');
     const skip = parseInt(searchParams.get('skip') || '0', 10);
     const limit = parseInt(searchParams.get('limit') || '50', 10);
 
-    const whereClause = query ? {
-      OR: [
+    const whereClause: any = {};
+
+    if (query) {
+      whereClause.OR = [
         { firstName: { contains: query, mode: 'insensitive' } },
         { lastName: { contains: query, mode: 'insensitive' } },
         { phoneNumber: { contains: query, mode: 'insensitive' } },
-      ],
-    } : {};
+      ];
+    }
+
+    if (start || end) {
+      whereClause.createdAt = {};
+      if (start) {
+        whereClause.createdAt.gte = new Date(start);
+      }
+      if (end) {
+        const endDate = new Date(end);
+        endDate.setHours(23, 59, 59, 999);
+        whereClause.createdAt.lte = endDate;
+      }
+    }
 
     const patients = await prisma.patient.findMany({
       where: whereClause,

@@ -143,7 +143,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
     if (selectedIds.length === totalCount) {
       setSelectedIds([]);
     } else {
-      setSelectedIds(analysis?.results.filter(r => !r.test?.isGroup).map(r => r.id) || []);
+      setSelectedIds(analysis?.results.filter((r: Result) => !r.test?.isGroup).map((r: Result) => r.id) || []);
     }
   };
 
@@ -243,14 +243,14 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
       const updatedResults = { ...currentResults };
       
       const getVal = (code: string) => {
-        const res = analysis.results.find(r => r.test?.code === code);
+        const res = analysis.results.find((r: Result) => r.test?.code === code);
         if (!res) return null;
         const val = updatedResults[res.id];
         return val ? parseFloat(val.replace(',', '.')) : null;
       };
 
       const setVal = (code: string, value: number) => {
-        const res = analysis.results.find(r => r.test?.code === code);
+        const res = analysis.results.find((r: Result) => r.test?.code === code);
         if (res) {
           const decimals = res.test?.decimals ?? 1;
           updatedResults[res.id] = value.toFixed(decimals).replace('.', ',');
@@ -442,8 +442,8 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
   const handleValidation = async (type: 'tech' | 'bio') => {
     if (!analysis) return;
     if (type === 'tech') {
-      const tc = analysis.results.filter(r => !r.test?.isGroup).length;
-      const cc = analysis.results.filter(r => !r.test?.isGroup && results[r.id] && results[r.id] !== '').length;
+      const tc = analysis.results.filter((r: Result) => !r.test?.isGroup).length;
+      const cc = analysis.results.filter((r: Result) => !r.test?.isGroup && (results[r.id] as any) && (results[r.id] as any) !== '').length;
       if (tc === 0 || cc < tc) {
         setValidationError('Saisissez tous les résultats et sauvegardez avant la validation technique.');
         showNotification('error', 'Saisissez tous les résultats et sauvegardez avant la validation technique.');
@@ -598,11 +598,11 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
     );
   }
 
-  const totalCount = analysis.results.filter(r => !r.test?.isGroup).length;
-  const completedCount = analysis.results.filter(r => {
-    return !r.test?.isGroup && results[r.id] && results[r.id] !== '';
+  const totalCount = analysis.results.filter((r: Result) => !r.test?.isGroup).length;
+  const completedCount = analysis.results.filter((r: Result) => {
+    return !r.test?.isGroup && (results[r.id] as any) && (results[r.id] as any) !== '';
   }).length;
-  const abnormalCount = analysis.results.filter(r => {
+  const abnormalCount = analysis.results.filter((r: Result) => {
     const val = results[r.id];
     const test = r.test;
     if (!test || test.isGroup) return false;
@@ -613,7 +613,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
   const role = (session?.data?.user as any)?.role || '';
   const canTech = ['TECHNICIEN', 'ADMIN'].includes(role);
   const canBio = ['MEDECIN', 'ADMIN'].includes(role);
-  const hasNFS = analysis.results.some(r => r.test && NFS_SORT_ORDER.includes(r.test.code));
+  const hasNFS = analysis.results.some((r: Result) => r.test && NFS_SORT_ORDER.includes(r.test.code));
 
     const sortResults = (results: Result[]) => {
       const sorted: (Result & { renderCategory?: string })[] = [];
@@ -1003,7 +1003,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                                   <Activity size={12} /> Interprétations Diagnostiques
                                 </h4>
                                 <div className="flex flex-wrap gap-2">
-                                  {interpretations.map(flag => (
+                                  {interpretations.map((flag: string) => (
                                     <span key={flag} className="status-pill bg-white border border-indigo-200 text-indigo-700 shadow-sm">
                                       {flag}
                                     </span>
@@ -1122,7 +1122,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                                              className={`h-10 w-full max-w-[200px] px-4 rounded-xl border text-sm font-bold transition-all outline-none focus:ring-4 focus:ring-indigo-500/10 ${results[result.id] ? 'text-indigo-700 border-indigo-200 bg-indigo-50/50' : 'text-slate-600 border-slate-200 bg-slate-50 hover:bg-white'}`}
                                            >
                                               <option value="">-- Sélectionner --</option>
-                                              {test.options?.split(',').map(opt => (
+                                              {test.options?.split(',').map((opt: string) => (
                                                  <option key={opt.trim()} value={opt.trim()}>{opt.trim()}</option>
                                               ))}
                                            </select>
@@ -1292,7 +1292,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
       )}
 
       {/* Diatron Selection Dialog */}
-      <Dialog open={!!diatronPreview} onOpenChange={(open) => !open && setDiatronPreview(null)}>
+      <Dialog open={!!diatronPreview} onOpenChange={(open: boolean) => !open && setDiatronPreview(null)}>
         <DialogContent className="sm:max-w-2xl bg-white border-slate-200 shadow-2xl p-0 overflow-hidden flex flex-col max-h-[85vh]">
           <DialogHeader className="p-6 pb-4 border-b border-slate-100">
             <div className="flex items-center gap-3">

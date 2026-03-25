@@ -9,18 +9,59 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const patientId = searchParams.get('patientId');
+    const start = searchParams.get('start');
+    const end = searchParams.get('end');
+    const status = searchParams.get('status');
+    const includeResults = searchParams.get('includeResults') === 'true';
+    const category = searchParams.get('category');
     
-    const where = patientId ? { patientId } : {};
-    
+    const where: any = {};
+
+    if (patientId) {
+      where.patientId = patientId;
+    }
+
+    if (start || end) {
+      where.creationDate = {};
+      if (start) {
+        where.creationDate.gte = new Date(start);
+      }
+      if (end) {
+        const endDate = new Date(end);
+        endDate.setHours(23, 59, 59, 999);
+        where.creationDate.lte = endDate;
+      }
+    }
+
+    if (status) {
+      where.status = status;
+    }
+
+    if (category) {
+      where.results = {
+        some: {
+          test: {
+            category: category
+          }
+        }
+      };
+    }
+
     const analyses = await prisma.analysis.findMany({
       where,
       include: {
         patient: true,
-        results: {
-          include: {
-            test: true
+        ...(includeResults && {
+          results: {
+            include: {
+              test: {
+                include: {
+                  categoryRel: true
+                }
+              }
+            }
           }
-        }
+        })
       },
       orderBy: { creationDate: 'desc' }
     });

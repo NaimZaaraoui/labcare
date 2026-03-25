@@ -12,8 +12,6 @@ import { Fragment } from 'react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useSession } from 'next-auth/react';
 
-const BLOCKED_MEDECIN = ['/analyses/nouvelle']; // Specifically for this button
-
 
 const tatC = (d: string | Date) => {
   const m = differenceInMinutes(new Date(), new Date(d));
@@ -36,7 +34,6 @@ const STATUS_MAP: Record<string, { label: string; classes: string }> = {
 export function AnalysesList() {
   const { data: session } = useSession();
   const role = (session?.user as any)?.role || 'TECHNICIEN';
-  const router = useRouter();
 
   const searchParams = useSearchParams();
   const [analyses, setAnalyses] = useState<Analysis[]>([]);
@@ -296,6 +293,7 @@ export function AnalysesList() {
               <Plus size={18} /> Nouvelle Analyse
             </Link>
           )}
+          
 
         </div>
       </div>
@@ -327,7 +325,7 @@ export function AnalysesList() {
 
             <div className="divide-y divide-slate-50">
               {paginatedAnalyses.map((analysis) => {
-                const topLevelResults = analysis.results.filter(r => !r.test?.parentId || r.test?.isGroup);
+                const topLevelResults = (analysis.results || []).filter(r => !r.test?.parentId || r.test?.isGroup);
                 const isReleased = analysis.status === 'completed' || analysis.status === 'validated_bio';
                 const s = STATUS_MAP[analysis.status || ''] ?? { label: analysis.status || '—', classes: 'bg-slate-50 text-slate-500' };
 
@@ -440,6 +438,7 @@ export function AnalysesList() {
         confirmLabel="Supprimer quand même"
         variant="destructive"
       />
+
     </div>
   );
 }

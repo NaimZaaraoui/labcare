@@ -86,7 +86,7 @@ export default function Dashboard() {
           <ActionCard label="Nouvelle Analyse" icon={Plus} href="/analyses/nouvelle" primary />
         )}
         <ActionCard label="Ajouter Patient" icon={Users} href="/dashboard/patients" />
-        <ActionCard label="Feuille de paillasse" icon={Layers} href="/analyses" />
+        <ActionCard label="Liste des analyses" icon={Layers} href="/analyses" />
       </div>
 
 
