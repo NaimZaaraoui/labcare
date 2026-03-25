@@ -16,7 +16,9 @@ import { jsPDF } from 'jspdf';
 import { getTestReferenceValues, formatReferenceRange } from '@/lib/utils';
 import { useReactToPrint } from 'react-to-print';
 import { RapportImpression } from '@/components/print/RapportImpression';
+import { FactureImpression } from '@/components/print/FactureImpression';
 import { Analysis, Result } from '@/lib/types';
+import { ReceiptText } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { NotificationToast } from '@/components/ui/notification-toast';
@@ -47,14 +49,17 @@ const NFS_SORT_ORDER = [
   'HT', 'HCT', 'VGM', 'CCMH', 'TCMH', 'IDR', 'RDW', 'PLT'
 ];
 
-const HGPO75_SORT_ORDER = ['T0', 'T1H', 'T2H'];
-
 
 export function ResultatsForm({ analysisId }: ResultatsFormProps) {
   const router = useRouter();
   const session = useSession();
   const printRef = useRef<HTMLDivElement>(null);
+  const invoicePrintRef = useRef<HTMLDivElement>(null);
   const inputsRef = useRef<Record<string, HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null>>({});
+  
+  const handlePrintInvoice = useReactToPrint({
+    contentRef: invoicePrintRef,
+  });
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -789,6 +794,9 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                 </div>
 
                 <div className="flex gap-2 ml-auto">
+                  <button onClick={handlePrintInvoice} className="btn-secondary h-10 px-4">
+                    <ReceiptText size={16} /> Facture
+                  </button>
                   <button onClick={handleSave} disabled={saving} className="btn-secondary h-10 px-4">
                     <Save size={16} /> {saving ? '...' : 'Sauvegarder'}
                   </button>
@@ -814,6 +822,9 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                   </div>
 
                   <div className="flex gap-2 ml-auto">
+                    <button onClick={handlePrintInvoice} className="btn-secondary h-10 px-4">
+                      <ReceiptText size={16} /> Facture
+                    </button>
                     <button onClick={handleWhatsApp} className="btn-secondary h-10">
                       <MessageCircle size={16} /> WhatsApp
                     </button>
@@ -827,6 +838,16 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                  </>
                )}
           </div>
+        </div>
+
+        {/* Hidden components for printing */}
+        <div className="hidden">
+           <div ref={printRef}>
+              <RapportImpression analysis={analysis} results={results} selectedResultIds={selectedIds} settings={reportSettings}  />
+           </div>
+           <div ref={invoicePrintRef}>
+              <FactureImpression analysis={analysis} settings={reportSettings} />
+           </div>
         </div>
 
         {/* Metadata Row */}
@@ -1258,6 +1279,9 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
             selectedResultIds={selectedIds}
             settings={reportSettings}
           />
+        </div>
+        <div ref={invoicePrintRef}>
+          <FactureImpression analysis={analysis} settings={reportSettings} />
         </div>
       </div>
 
