@@ -9,7 +9,8 @@ const ALLOWED_KEYS = [
   'lab_address_1', 'lab_address_2', 'lab_phone', 'lab_email',
   'lab_bio_name', 'lab_bio_title', 'lab_bio_onmpt',
   'lab_footer_text', 'lab_stamp_image', 'lab_bio_signature', 'tat_warn', 'tat_alert',
-  'sample_types', 'amount_unit', 'qc_range_basis',
+  'sample_types', 'amount_unit', 'qc_range_basis', 'maintenance_mode', 'maintenance_message',
+  'database_backup_retention_count',
 ];
 
 type SettingRow = { key: string; value: string };
@@ -77,6 +78,16 @@ export async function PATCH(request: Request) {
     if (warn >= alert) {
       return NextResponse.json(
         { error: 'Le seuil avertissement doit être inférieur au seuil dépassement.' },
+        { status: 400 }
+      );
+    }
+  }
+
+  if ('database_backup_retention_count' in settings) {
+    const retentionCount = parseInt(settings.database_backup_retention_count ?? '0', 10);
+    if (isNaN(retentionCount) || retentionCount < 0 || retentionCount > 200) {
+      return NextResponse.json(
+        { error: 'La retention des sauvegardes doit etre comprise entre 0 et 200.' },
         { status: 400 }
       );
     }

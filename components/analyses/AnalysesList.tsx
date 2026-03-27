@@ -48,6 +48,12 @@ const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
 
 const ITEMS_PER_PAGE_OPTIONS = [10, 20, 50, 100] as const;
 
+const PAYMENT_STATUS_MAP: Record<string, { label: string; classes: string }> = {
+  UNPAID: { label: 'Non payé', classes: 'bg-rose-50 text-rose-700 border border-rose-200/70' },
+  PARTIAL: { label: 'Partiel', classes: 'bg-amber-50 text-amber-700 border border-amber-200/70' },
+  PAID: { label: 'Payé', classes: 'bg-emerald-50 text-emerald-700 border border-emerald-200/70' },
+};
+
 const getTatClass = (creationDate: string | Date) => {
   const minutes = differenceInMinutes(new Date(), new Date(creationDate));
   if (minutes >= 60) return 'text-[var(--color-critical)] font-semibold';
@@ -277,8 +283,10 @@ export function AnalysesList() {
                   label: analysis.status || 'Inconnu',
                   classes: 'bg-slate-50 text-slate-700 border border-slate-200/70',
                 };
+                const payment = PAYMENT_STATUS_MAP[analysis.paymentStatus || 'UNPAID'] ?? PAYMENT_STATUS_MAP.UNPAID;
                 const isReleased = analysis.status === 'completed' || analysis.status === 'validated_bio';
                 const patientName = `${analysis.patientLastName || 'ANONYME'} ${analysis.patientFirstName || ''}`.trim();
+                const remaining = Math.max(0, (analysis.totalPrice || 0) - (analysis.amountPaid || 0));
 
                 return (
                   <Link
@@ -303,6 +311,14 @@ export function AnalysesList() {
                       </div>
                       <div className="mt-1 text-xs text-[var(--color-text-soft)]">
                         {testsCount} analyse{testsCount > 1 ? 's' : ''}
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${payment.classes}`}>
+                          {payment.label}
+                        </span>
+                        <span className="inline-flex rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-[var(--color-text-secondary)]">
+                          Reste: {remaining.toFixed(2)} DA
+                        </span>
                       </div>
                     </div>
 

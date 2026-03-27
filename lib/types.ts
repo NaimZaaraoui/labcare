@@ -46,6 +46,10 @@ export interface Analysis {
   globalNote: string | null;
   globalNotePlacement: 'all' | 'first' | 'last' | null;
   totalPrice: number | null;
+  amountPaid: number | null;
+  paymentStatus: 'UNPAID' | 'PARTIAL' | 'PAID' | null;
+  paymentMethod?: string | null;
+  paidAt?: string | Date | null;
   validatedTechAt?: string | Date;
   validatedTechBy?: string;
   validatedTechName?: string;

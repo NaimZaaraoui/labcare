@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
       const modulePrefixes: Record<string, string[]> = {
         qc: ['qc.'],
         inventory: ['inventory.'],
+        database: ['database.'],
         analyses: ['analysis.', 'result.'],
         users: ['user.'],
         settings: ['settings.', 'audit.'],

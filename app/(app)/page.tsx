@@ -52,6 +52,12 @@ interface QcTodaySummary {
   fail: number;
 }
 
+interface BackupAlertSummary {
+  hasBackups: boolean;
+  latestCreatedAt: string | null;
+  isStale: boolean;
+}
+
 interface KpiCardProps {
   title: string;
   value: number;
@@ -96,16 +102,23 @@ export default function DashboardPage() {
   });
   const [inventoryAlerts, setInventoryAlerts] = useState<InventoryAlertItem[]>([]);
   const [qcToday, setQcToday] = useState<QcTodaySummary | null>(null);
+  const [backupAlert, setBackupAlert] = useState<BackupAlertSummary | null>(null);
 
   const loadDashboard = useCallback(async () => {
     setLoading(true);
     try {
-      const [analysesRes, statsRes, inventoryRes, qcRes] = await Promise.all([
+      const requests: Promise<Response>[] = [
         fetch('/api/analyses', { cache: 'no-store' }),
         fetch('/api/stats', { cache: 'no-store' }),
         fetch('/api/inventory', { cache: 'no-store' }),
         fetch('/api/qc/today', { cache: 'no-store' }),
-      ]);
+      ];
+
+      if (session?.user?.role === 'ADMIN') {
+        requests.push(fetch('/api/database/backups', { cache: 'no-store' }));
+      }
+
+      const [analysesRes, statsRes, inventoryRes, qcRes, backupsRes] = await Promise.all(requests);
       const [analyses, stats] = await Promise.all([analysesRes.json(), statsRes.json()]);
       setState({ analyses, stats });
 
@@ -120,12 +133,27 @@ export default function DashboardPage() {
         const qcData = await qcRes.json();
         setQcToday(qcData);
       }
+
+      if (session?.user?.role === 'ADMIN' && backupsRes?.ok) {
+        const backupsData = await backupsRes.json();
+        const latestCreatedAt = backupsData.items?.[0]?.createdAt ?? null;
+        const latestDate = latestCreatedAt ? new Date(latestCreatedAt) : null;
+        const daysSinceLatest = latestDate ? differenceInMinutes(new Date(), latestDate) / (60 * 24) : null;
+
+        setBackupAlert({
+          hasBackups: Boolean(backupsData.items?.length),
+          latestCreatedAt,
+          isStale: !latestDate || (daysSinceLatest ?? 999) >= 7,
+        });
+      } else {
+        setBackupAlert(null);
+      }
     } catch (error) {
       console.error(error);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [session?.user?.role]);
 
   useEffect(() => {
     loadDashboard();
@@ -222,6 +250,27 @@ export default function DashboardPage() {
                 </span>
               </div>
             ))}
+          </div>
+        </section>
+      )}
+
+      {role === 'ADMIN' && backupAlert && (backupAlert.isStale || !backupAlert.hasBackups) && (
+        <section className="rounded-3xl border border-rose-200/70 bg-rose-50/85 px-5 py-4 shadow-[0_8px_22px_rgba(190,50,70,0.08)]">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-rose-800">
+                Sauvegarde a verifier
+              </h2>
+              <p className="mt-1 text-sm text-rose-900">
+                {!backupAlert.hasBackups
+                  ? 'Aucune sauvegarde systeme n’a encore ete creee.'
+                  : `La derniere sauvegarde date du ${new Date(backupAlert.latestCreatedAt as string).toLocaleString('fr-FR')}. Pensez a en creer une nouvelle.`}
+              </p>
+            </div>
+            <Link href="/dashboard/settings/database" className="btn-secondary">
+              Ouvrir la maintenance
+              <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
         </section>
       )}

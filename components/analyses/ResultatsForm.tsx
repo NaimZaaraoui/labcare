@@ -98,6 +98,9 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
   const [selectedTestIds, setSelectedTestIds] = useState<string[]>([]);
   const [savingMeta, setSavingMeta] = useState(false);
   const [saveGlobalNoteBusy, setSaveGlobalNoteBusy] = useState(false);
+  const [paymentAmountInput, setPaymentAmountInput] = useState('0');
+  const [paymentMethod, setPaymentMethod] = useState('cash');
+  const [savingPayment, setSavingPayment] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [globalNote, setGlobalNote] = useState('');
   const [globalNotePlacement, setGlobalNotePlacement] = useState<'all' | 'first' | 'last'>('all');
@@ -208,6 +211,8 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
       setNotes(initialNotes);
       setGlobalNote(data.globalNote || '');
       setGlobalNotePlacement(data.globalNotePlacement || 'all');
+      setPaymentAmountInput(String(data.amountPaid ?? 0));
+      setPaymentMethod(data.paymentMethod || 'cash');
       setEditForm({
         dailyId: data.dailyId || '',
         receiptNumber: data.receiptNumber || '',
@@ -570,6 +575,38 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
     }
   };
 
+  const handleSavePayment = async () => {
+    if (!analysis) return;
+    const parsed = Number(paymentAmountInput);
+    if (!Number.isFinite(parsed) || parsed < 0) {
+      showNotification('error', 'Montant payé invalide');
+      return;
+    }
+
+    setSavingPayment(true);
+    try {
+      const response = await fetch(`/api/analyses/${analysisId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amountPaid: parsed,
+          paymentMethod,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Erreur lors de la mise à jour du paiement');
+      }
+      await loadAnalysis();
+      showNotification('success', 'Paiement mis à jour');
+    } catch (error: unknown) {
+      console.error(error);
+      showNotification('error', getErrorMessage(error));
+    } finally {
+      setSavingPayment(false);
+    }
+  };
+
 
   const handleDiatronFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -725,6 +762,21 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
 
   const progressPct = Math.round((completedCount / totalCount) * 100);
   const hasQcBlockers = Boolean(qcReadiness && !qcReadiness.ready && qcReadiness.blockers.length > 0);
+  const paymentTotal = analysis.totalPrice ?? 0;
+  const paymentPaid = analysis.amountPaid ?? 0;
+  const paymentRemaining = Math.max(0, paymentTotal - paymentPaid);
+  const paymentStatusLabel =
+    analysis.paymentStatus === 'PAID'
+      ? 'Payé'
+      : analysis.paymentStatus === 'PARTIAL'
+        ? 'Partiellement payé'
+        : 'Non payé';
+  const paymentStatusClasses =
+    analysis.paymentStatus === 'PAID'
+      ? 'status-pill status-pill-success'
+      : analysis.paymentStatus === 'PARTIAL'
+        ? 'status-pill status-pill-warning'
+        : 'status-pill status-pill-error';
 
   return (
     <>
@@ -804,6 +856,75 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
               )}
             </div>
           )}
+
+          <div className="w-full rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="section-label">Paiement</span>
+                  <span className={paymentStatusClasses}>{paymentStatusLabel}</span>
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                  <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 font-medium text-[var(--color-text-secondary)]">
+                    Total: {paymentTotal.toFixed(2)} DA
+                  </span>
+                  <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 font-medium text-[var(--color-text-secondary)]">
+                    Payé: {paymentPaid.toFixed(2)} DA
+                  </span>
+                  <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 font-medium text-[var(--color-text-secondary)]">
+                    Reste: {paymentRemaining.toFixed(2)} DA
+                  </span>
+                  {analysis.paidAt && (
+                    <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 font-medium text-[var(--color-text-secondary)]">
+                      Soldé le {format(new Date(analysis.paidAt), 'dd/MM/yyyy HH:mm', { locale: fr })}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {role !== 'MEDECIN' && (
+                <div className="grid gap-3 sm:grid-cols-[160px_160px_auto]">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={paymentAmountInput}
+                    onChange={(e) => setPaymentAmountInput(e.target.value)}
+                    className="input-premium h-11"
+                    placeholder="Montant payé"
+                  />
+                  <select
+                    value={paymentMethod}
+                    onChange={(e) => setPaymentMethod(e.target.value)}
+                    className="input-premium h-11"
+                  >
+                    <option value="cash">Espèces</option>
+                    <option value="card">Carte</option>
+                    <option value="transfer">Virement</option>
+                    <option value="check">Chèque</option>
+                    <option value="other">Autre</option>
+                  </select>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setPaymentAmountInput(String(paymentTotal))}
+                      className="btn-secondary-sm"
+                    >
+                      Tout payer
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSavePayment}
+                      disabled={savingPayment}
+                      className="btn-primary-md"
+                    >
+                      {savingPayment ? '...' : 'Enregistrer paiement'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
 
           <div className="flex flex-wrap items-center gap-3">
             {!isFinalValidated ? (

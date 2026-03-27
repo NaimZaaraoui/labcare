@@ -212,6 +212,7 @@ export default function AuditLogsPage() {
               <option value="">Tous</option>
               <option value="qc">QC</option>
               <option value="inventory">Inventaire</option>
+              <option value="database">Base de données</option>
               <option value="analyses">Analyses</option>
               <option value="patients">Patients</option>
               <option value="tests">Tests</option>

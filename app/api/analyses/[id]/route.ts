@@ -20,7 +20,7 @@ export async function GET(
 
     const { id } = await params;
     
-    const analysis = await (prisma.analysis as any).findUnique({
+    const analysis = await prisma.analysis.findUnique({
       where: { id },
       include: {
         patient: true,
@@ -65,7 +65,7 @@ export async function GET(
 
     const previousResultsMap: Record<string, string> = {};
     if (previousAnalysis) {
-      previousAnalysis.results.forEach((r: any) => {
+      previousAnalysis.results.forEach((r) => {
         if (r.value) {
           previousResultsMap[r.testId] = r.value;
         }
@@ -155,6 +155,7 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await request.json();
+    const meta = getRequestMeta({ headers: request.headers });
     
     const parseGender = (value: unknown) => {
       if (value !== 'M' && value !== 'F') return undefined;
@@ -170,7 +171,17 @@ export async function PATCH(
 
     const existing = await prisma.analysis.findUnique({
       where: { id },
-      select: { status: true }
+      select: {
+        status: true,
+        totalPrice: true,
+        amountPaid: true,
+        paymentStatus: true,
+        paymentMethod: true,
+        paidAt: true,
+        orderNumber: true,
+        patientFirstName: true,
+        patientLastName: true,
+      }
     });
 
     if (!existing) {
@@ -193,14 +204,53 @@ export async function PATCH(
       body.medecinPrescripteur === undefined &&
       body.isUrgent === undefined &&
       body.globalNote === undefined &&
+      body.globalNotePlacement === undefined &&
+      body.amountPaid === undefined &&
+      body.paymentMethod === undefined;
+
+    const isPaymentOnlyUpdate =
+      (body.amountPaid !== undefined || body.paymentMethod !== undefined) &&
+      body.status === undefined &&
+      body.printedAt === undefined &&
+      body.dailyId === undefined &&
+      body.receiptNumber === undefined &&
+      body.patientFirstName === undefined &&
+      body.patientLastName === undefined &&
+      body.patientAge === undefined &&
+      body.patientGender === undefined &&
+      body.provenance === undefined &&
+      body.medecinPrescripteur === undefined &&
+      body.isUrgent === undefined &&
+      body.globalNote === undefined &&
       body.globalNotePlacement === undefined;
 
-    if ((existing.status === 'completed' || existing.status === 'validated_bio') && !isPrintOnlyUpdate) {
+    if ((existing.status === 'completed' || existing.status === 'validated_bio') && !isPrintOnlyUpdate && !isPaymentOnlyUpdate) {
       return NextResponse.json(
         { error: 'Analyse validée: modification interdite' },
         { status: 409 }
       );
     }
+
+    const parsedAmountPaid = parseNumber(body.amountPaid);
+    const nextAmountPaid =
+      parsedAmountPaid !== undefined
+        ? Math.max(0, Number(parsedAmountPaid ?? 0))
+        : existing.amountPaid ?? 0;
+    const totalPrice = existing.totalPrice ?? 0;
+    const nextPaymentStatus =
+      nextAmountPaid <= 0
+        ? 'UNPAID'
+        : nextAmountPaid >= totalPrice
+          ? 'PAID'
+          : 'PARTIAL';
+    const nextPaymentMethod =
+      body.paymentMethod !== undefined ? (body.paymentMethod || null) : existing.paymentMethod;
+    const nextPaidAt =
+      parsedAmountPaid !== undefined
+        ? nextPaymentStatus === 'PAID'
+          ? existing.paidAt || new Date()
+          : null
+        : undefined;
 
     const analysis = await prisma.analysis.update({
       where: { id },
@@ -219,7 +269,11 @@ export async function PATCH(
         globalNote: body.globalNote !== undefined ? (body.globalNote?.trim() || null) : undefined,
         globalNotePlacement: body.globalNotePlacement !== undefined && ['all', 'first', 'last'].includes(body.globalNotePlacement)
           ? body.globalNotePlacement
-          : undefined
+          : undefined,
+        amountPaid: parsedAmountPaid !== undefined ? nextAmountPaid : undefined,
+        paymentStatus: parsedAmountPaid !== undefined ? nextPaymentStatus : undefined,
+        paymentMethod: body.paymentMethod !== undefined ? nextPaymentMethod : undefined,
+        paidAt: nextPaidAt
       },
       include: {
         results: {
@@ -229,6 +283,25 @@ export async function PATCH(
         }
       }
     });
+
+    if (parsedAmountPaid !== undefined || body.paymentMethod !== undefined) {
+      await createAuditLog({
+        action: 'analysis.payment_update',
+        severity: 'WARN',
+        entity: 'analysis',
+        entityId: id,
+        details: {
+          orderNumber: existing.orderNumber,
+          patient: `${existing.patientLastName || ''} ${existing.patientFirstName || ''}`.trim(),
+          previousAmountPaid: existing.amountPaid ?? 0,
+          nextAmountPaid,
+          paymentStatus: nextPaymentStatus,
+          paymentMethod: nextPaymentMethod,
+        },
+        ipAddress: meta.ipAddress,
+        userAgent: meta.userAgent,
+      });
+    }
     
     // Notifications
     try {
