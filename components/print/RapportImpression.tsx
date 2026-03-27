@@ -1,6 +1,6 @@
 
 import React, { forwardRef } from 'react';
-import { Analysis } from '@/lib/types';
+import { Analysis, Result, Test } from '@/lib/types';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { LucideMicroscope } from 'lucide-react';
@@ -20,14 +20,14 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
 
     const LAB_NAME     = settings?.lab_name     || 'Laboratoire';
     const LAB_SUBTITLE = settings?.lab_subtitle || 'Service de Laboratoire';
-    const LAB_PARENT   = settings?.lab_parent   || '';
     const LAB_ADDRESS  = [settings?.lab_address_1, settings?.lab_address_2].filter(Boolean).join(', ');
     const LAB_PHONE    = settings?.lab_phone    || '';
     const BIO_TITLE    = settings?.lab_bio_title || 'Docteur';
     const BIO_NAME     = settings?.lab_bio_name  || '';
     const BIO_ONMPT    = settings?.lab_bio_onmpt || '';
     const FOOTER_TEXT  = settings?.lab_footer_text || '';
-    const isAbnormal = (value: string, test: any): 'H' | 'L' | null => {
+    const isAbnormal = (value: string, test?: Test): 'H' | 'L' | null => {
+      if (!test) return null;
       const val = parseFloat(value.replace(',', '.'));
       if (isNaN(val)) return null;
       const refVals = getTestReferenceValues(test, analysis.patientGender);
@@ -47,8 +47,8 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
     const globalNote = analysis.globalNote?.trim();
     const globalNotePlacement = analysis.globalNotePlacement || 'all';
 
-    const sortResults = (results: any[]) => {
-      const sorted: any[] = [];
+    const sortResults = (results: Result[]) => {
+      const sorted: Result[] = [];
       const visited = new Set<string>();
 
       const addTestAndChildren = (testId: string) => {
@@ -65,12 +65,12 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
       };
 
       // Group results by category
-      const categoryGroups: Record<string, any[]> = {};
+      const categoryGroups: Record<string, Result[]> = {};
       const categoriesMeta: Record<string, { rank: number, name: string }> = {};
 
       results.forEach(res => {
         const catRel = res.test?.categoryRel;
-        const catName = catRel?.name || res.test?.category || "Divers";
+        const catName = catRel?.name || "Divers";
         const catRank = catRel?.rank ?? 999;
         
         if (!categoryGroups[catName]) {
@@ -125,26 +125,22 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
       return hasSelectedDescendant(res.testId);
     }) || [];
 
-    const categoryGroups: Record<string, any[]> = {};
+    const categoryGroups: Record<string, Result[]> = {};
+    const categoryMeta: Record<string, { rank: number; name: string }> = {};
     filteredResults.forEach(res => {
-      const cat = res.test?.category || "Divers";
+      const cat = res.test?.categoryRel?.name || "Divers";
+      const rank = res.test?.categoryRel?.rank ?? 999;
       if (!categoryGroups[cat]) categoryGroups[cat] = [];
+      if (!categoryMeta[cat]) categoryMeta[cat] = { rank, name: cat };
       categoryGroups[cat].push(res);
     });
 
-     const allOrderedCategories: string[] = [];
-    
-    // Ordre préférentiel : Biochimie, puis NFS, puis Hématologie, puis le reste
-    if (categoryGroups['Biochimie']) allOrderedCategories.push('Biochimie');
-    if (categoryGroups['NFS']) allOrderedCategories.push('NFS');
-    if (categoryGroups['Hématologie']) allOrderedCategories.push('Hématologie');
-    
-    const handled = ['Biochimie', 'NFS', 'Hématologie'];
-    const remaining = Object.keys(categoryGroups)
-      .filter(cat => !handled.includes(cat))
-      .sort((a, b) => a.localeCompare(b));
-    
-    allOrderedCategories.push(...remaining);
+    const allOrderedCategories = Object.keys(categoryGroups).sort((a, b) => {
+      const metaA = categoryMeta[a];
+      const metaB = categoryMeta[b];
+      if (metaA.rank !== metaB.rank) return metaA.rank - metaB.rank;
+      return metaA.name.localeCompare(metaB.name);
+    });
 
     const renderHeader = () => (
       <thead className="display-table-header-group">
@@ -167,7 +163,7 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
                     </div>
                 
                   <div className="text-right border-r-4 border-indigo-600 pr-6 print:border-black">
-                    <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight mb-1 print:text-black">RAPPORT D'ANALYSE</h2>
+                    <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight mb-1 print:text-black">RAPPORT D&apos;ANALYSE</h2>
                     <div className="flex flex-col items-end">
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest print:text-black/60">Référence: {analysis.orderNumber}</p>
                       {analysis.receiptNumber && (
@@ -460,7 +456,7 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
       </tfoot>
     );
 
-    const renderTableContent = (categories: string[], isNFSLayout: boolean = false) => (
+    const renderTableContent = (categories: string[]) => (
       <tbody className="display-table-row-group">
         <tr>
           <td>
@@ -611,7 +607,7 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
             )}
           <table className="w-full border-collapse border-none mb-4 relative z-10">
             {renderHeader()}
-            {renderTableContent([cat], cat === 'NFS')}
+            {renderTableContent([cat])}
             <tbody><tr><td>{renderGlobalNote(index)}</td></tr></tbody>
             {isNFS ? renderFooter(false) : renderFooter(true)}
           </table>
@@ -664,7 +660,7 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
                                               </div>
                                           </>
                                         );
-                                    } catch (e) {
+                                    } catch {
                                         return null;
                                     }
                                 })()}
@@ -676,7 +672,7 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
                                     const interpretations = getHematologyInterpretations(analysis, results);
                                     if (interpretations.length === 0) return (
                                         
-                                            <p className="my-8 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Conclusion Morphologique : Absence d'anomalies majeures détectables</p>
+                                            <p className="my-8 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Conclusion Morphologique : Absence d&apos;anomalies majeures détectables</p>
                                         
                                     );
                                     
@@ -692,7 +688,7 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
                                             </div>
                                             </div>
                                     );
-                                } catch (e) { return null; }
+                                } catch { return null; }
                             })()}
                         </td>
                     </tr>
@@ -719,8 +715,6 @@ export const RapportImpression = forwardRef<HTMLDivElement, RapportImpressionPro
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
                 counter-reset: page;
-                margin: 0 !important;
-                padding: 0 !important;
               }
               thead { 
                 display: table-header-group;

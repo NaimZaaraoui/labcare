@@ -1,67 +1,110 @@
 import puppeteer from 'puppeteer-core';
+import fs from 'node:fs';
 
-export async function generateAnalysisPDF(analysisId: string, origin?: string) {
-  let browser;
-  try {
-    const executablePath = process.env.CHROMIUM_PATH || '/usr/bin/chromium';
-    
-  browser = await puppeteer.launch({
-  executablePath,
-  args: [
+function resolveChromiumPath() {
+  const candidates = [
+    process.env.CHROMIUM_PATH,
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+    '/snap/bin/chromium',
+    '/usr/bin/google-chrome',
+    '/usr/bin/google-chrome-stable',
+  ].filter(Boolean) as string[];
+
+  const existing = candidates.find((path) => fs.existsSync(path));
+  return { existing, candidates };
+}
+
+export async function generateAnalysisPDF(analysisId: string, origin?: string, printToken?: string) {
+  const { existing: executablePath, candidates } = resolveChromiumPath();
+  if (!executablePath) {
+    throw new Error(
+      `Chromium introuvable. Définissez CHROMIUM_PATH. Chemins testés: ${candidates.join(', ')}`
+    );
+  }
+
+  const port = process.env.PORT || 3000;
+  const baseUrl = origin ? `${origin}/analyses/${analysisId}/export` : `http://127.0.0.1:${port}/analyses/${analysisId}/export`;
+  const url = printToken
+    ? `${baseUrl}?printToken=${encodeURIComponent(printToken)}`
+    : baseUrl;
+
+  const launchArgs = [
     '--no-sandbox',
     '--disable-setuid-sandbox',
     '--disable-dev-shm-usage',
     '--disable-gpu',
-    '--no-zygote',
-    '--single-process',
     '--disable-extensions',
     '--disable-crash-reporter',
     '--crash-dumps-dir=/tmp',
-  ],
-  headless: 'shell',
-});
+  ];
 
-    const page = await browser.newPage();
-    
-    const port = process.env.PORT || 3000;
-    const url = origin ? `${origin}/analyses/${analysisId}/export` : `http://127.0.0.1:${port}/analyses/${analysisId}/export`;
-    
-    console.log(`Puppeteer visiting: ${url}`);
-    
-    page.on('console', (msg) => console.log('PAGE LOG:', msg.text()));
-    page.on('pageerror', (err: any) => console.log('PAGE ERROR:', err.message));
-    page.on('response', (response) => console.log('PAGE RESPONSE:', response.url(), response.status()));
-    page.on('requestfailed', request => console.log('PAGE REQUEST FAILED:', request.url(), request.failure()?.errorText));
+  const maxAttempts = 2;
+  let lastError: unknown = null;
 
-    await page.goto(url, {
-  waitUntil: 'networkidle0',  // ← change from networkidle2 to networkidle0
-  timeout: 30000,
-});
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    let browser: Awaited<ReturnType<typeof puppeteer.launch>> | null = null;
+    try {
+      browser = await puppeteer.launch({
+        executablePath,
+        args: launchArgs,
+        headless: true,
+      });
 
-// Wait for render-complete signal
-await page.waitForSelector('#render-complete', { timeout: 15000 });
+      const page = await browser.newPage();
+      page.setDefaultTimeout(30000);
+      page.setDefaultNavigationTimeout(30000);
+      await page.setViewport({ width: 1240, height: 1754 });
 
-// Add extra wait for fonts and dynamic content to fully render
-await new Promise(resolve => setTimeout(resolve, 2000)); // ← add this
+      console.log(`Puppeteer visiting (attempt ${attempt}/${maxAttempts}): ${url}`);
 
-    const pdfBuffer = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-      margin: {
-        top: '10mm',
-        right: '10mm',
-        bottom: '10mm',
-        left: '10mm',
-      },
-    });
+      page.on('console', (msg) => console.log('PAGE LOG:', msg.text()));
+      page.on('pageerror', (err: unknown) => console.log('PAGE ERROR:', err instanceof Error ? err.message : String(err)));
+      page.on('response', (response) => console.log('PAGE RESPONSE:', response.url(), response.status()));
+      page.on('requestfailed', (request) => console.log('PAGE REQUEST FAILED:', request.url(), request.failure()?.errorText));
 
-    return pdfBuffer;
-  } catch (error) {
-    console.error('Error generating PDF with Puppeteer:', error);
-    throw error;
-  } finally {
-    if (browser) {
-      await browser.close();
+      await page.goto(url, {
+        waitUntil: 'domcontentloaded',
+        timeout: 30000,
+      });
+
+      await page.waitForSelector('#render-complete', { timeout: 20000 });
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+
+      const pdfBuffer = await page.pdf({
+        format: 'A4',
+        printBackground: true,
+        margin: {
+          top: '10mm',
+          right: '10mm',
+          bottom: '10mm',
+          left: '10mm',
+        },
+      });
+
+      return pdfBuffer;
+    } catch (error) {
+      lastError = error;
+      const message = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+      const shouldRetry =
+        attempt < maxAttempts &&
+        (message.includes('navigating frame was detached') ||
+          message.includes('lifecyclewatcher disposed') ||
+          message.includes('target closed'));
+
+      console.error(`Error generating PDF with Puppeteer (attempt ${attempt}/${maxAttempts}):`, error);
+      if (!shouldRetry) {
+        break;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    } finally {
+      if (browser) {
+        await browser.close();
+      }
     }
   }
+
+  throw lastError instanceof Error
+    ? lastError
+    : new Error('Erreur inconnue lors de la génération du PDF');
 }

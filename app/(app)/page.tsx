@@ -1,9 +1,16 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
-import { 
-  CheckCircle2, AlertCircle, Activity, Clock, RefreshCw, BarChart3,
-  FlaskConical, ArrowRight, Layers, Plus, ChevronRight, Hash, Users, ClipboardList
+import { type ComponentType, useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  AlertCircle,
+  ArrowRight,
+  CheckCircle2,
+  ClipboardList,
+  Clock,
+  Plus,
+  RefreshCw,
+  TestTube,
+  Users,
 } from 'lucide-react';
 import Link from 'next/link';
 import { differenceInMinutes } from 'date-fns';
@@ -11,202 +18,409 @@ import { useSession } from 'next-auth/react';
 import { Analysis as SharedAnalysis } from '@/lib/types';
 
 type Analysis = SharedAnalysis & { isUrgent?: boolean };
-interface Stats { total: number; totalToday?: number; pending: number; inProgress: number; completed: number; urgent: number; }
 
-const tatC = (d: string | Date) => {
-  const m = differenceInMinutes(new Date(), new Date(d));
-  return m >= 60 ? 'text-rose-500 font-bold' : m >= 45 ? 'text-amber-500 font-bold' : 'text-slate-400 font-medium';
-};
+interface Stats {
+  total: number;
+  totalToday?: number;
+  pending: number;
+  inProgress: number;
+  completed: number;
+  urgent: number;
+  purePending?: number;
+  tat?: number;
+}
 
-const fmtD = (d: string | Date) => {
-  const m = differenceInMinutes(new Date(), new Date(d));
-  return m < 60 ? `${m}m` : `${Math.floor(m/60)}h ${m%60}min`;
-};
+interface DashboardData {
+  analyses: Analysis[];
+  stats: Stats;
+}
+
+interface InventoryAlertItem {
+  id: string;
+  name: string;
+  status: 'ok' | 'low' | 'critical' | 'expired';
+  currentStock: number;
+  minThreshold: number;
+  unit: string;
+  daysUntilExpiry: number | null;
+}
+
+interface QcTodaySummary {
+  allPass: boolean;
+  missing: number;
+  warn: number;
+  fail: number;
+}
+
+interface KpiCardProps {
+  title: string;
+  value: number;
+  tone: 'default' | 'warning' | 'critical' | 'success';
+  icon: ComponentType<{ className?: string }>;
+}
+
+interface ActionCardProps {
+  label: string;
+  href: string;
+  icon: ComponentType<{ className?: string }>;
+  primary?: boolean;
+}
 
 const STATUS_MAP: Record<string, { label: string; classes: string }> = {
-  pending: { label: 'En attente', classes: 'bg-amber-50 text-amber-600' },
-  in_progress: { label: 'En cours', classes: 'bg-indigo-50 text-indigo-600' },
-  validated_tech: { label: 'Valid. Tech.', classes: 'bg-indigo-50 text-indigo-600' },
-  validated_bio: { label: 'Validé ✓', classes: 'bg-emerald-50 text-emerald-600' },
-  completed: { label: 'Validé ✓', classes: 'bg-emerald-50 text-emerald-600' },
+  pending: { label: 'En attente', classes: 'bg-amber-50 text-amber-700 border border-amber-200/70' },
+  in_progress: { label: 'En cours', classes: 'bg-blue-50 text-blue-700 border border-blue-200/70' },
+  validated_tech: { label: 'Validé Tech', classes: 'bg-cyan-50 text-cyan-700 border border-cyan-200/70' },
+  validated_bio: { label: 'Validé', classes: 'bg-emerald-50 text-emerald-700 border border-emerald-200/70' },
+  completed: { label: 'Validé', classes: 'bg-emerald-50 text-emerald-700 border border-emerald-200/70' },
 };
 
-export default function Dashboard() {
-  const { data: session } = useSession();
-  const [state, setState] = useState<{ analyses: Analysis[], stats: Stats }>({ 
-    analyses: [], 
-    stats: { total: 0, pending: 0, inProgress: 0, completed: 0, urgent: 0 } 
-  });
-  const [loading, setLoading] = useState(true);
+const getTatClasses = (date: string | Date) => {
+  const minutes = differenceInMinutes(new Date(), new Date(date));
+  if (minutes >= 60) return 'text-[var(--color-critical)] font-semibold';
+  if (minutes >= 45) return 'text-[var(--color-warning)] font-semibold';
+  return 'text-[var(--color-text-soft)]';
+};
 
-  const sync = useCallback(async () => {
+const formatTat = (date: string | Date) => {
+  const minutes = differenceInMinutes(new Date(), new Date(date));
+  if (minutes < 60) return `${minutes} min`;
+  return `${Math.floor(minutes / 60)} h ${minutes % 60} min`;
+};
+
+export default function DashboardPage() {
+  const { data: session } = useSession();
+  const [loading, setLoading] = useState(true);
+  const [state, setState] = useState<DashboardData>({
+    analyses: [],
+    stats: { total: 0, pending: 0, inProgress: 0, completed: 0, urgent: 0 },
+  });
+  const [inventoryAlerts, setInventoryAlerts] = useState<InventoryAlertItem[]>([]);
+  const [qcToday, setQcToday] = useState<QcTodaySummary | null>(null);
+
+  const loadDashboard = useCallback(async () => {
     setLoading(true);
     try {
-      const [a, s] = await Promise.all([
-        fetch('/api/analyses', { cache: 'no-store' }), 
-        fetch('/api/stats', { cache: 'no-store' })
+      const [analysesRes, statsRes, inventoryRes, qcRes] = await Promise.all([
+        fetch('/api/analyses', { cache: 'no-store' }),
+        fetch('/api/stats', { cache: 'no-store' }),
+        fetch('/api/inventory', { cache: 'no-store' }),
+        fetch('/api/qc/today', { cache: 'no-store' }),
       ]);
-      setState({ analyses: await a.json(), stats: await s.json() });
-    } catch (e) { console.error(e); } finally { setLoading(false); }
+      const [analyses, stats] = await Promise.all([analysesRes.json(), statsRes.json()]);
+      setState({ analyses, stats });
+
+      if (inventoryRes.ok) {
+        const inventory = await inventoryRes.json();
+        if (Array.isArray(inventory)) {
+          setInventoryAlerts(inventory.filter((item) => item.status && item.status !== 'ok'));
+        }
+      }
+
+      if (qcRes.ok) {
+        const qcData = await qcRes.json();
+        setQcToday(qcData);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  useEffect(() => { sync(); }, [sync]);
+  useEffect(() => {
+    loadDashboard();
+  }, [loadDashboard]);
 
-  const active = state.analyses
-    .filter(a => a.status !== 'completed' && a.status !== 'validated_bio')
-    .slice(0, 8);
+  const activeAnalyses = useMemo(
+    () => state.analyses.filter((analysis) => !['completed', 'validated_bio'].includes(analysis.status ?? '')).slice(0, 10),
+    [state.analyses],
+  );
 
-  const role = (session?.user as any)?.role || 'TECHNICIEN';
+  const role = session?.user?.role ?? 'TECHNICIEN';
+  const totalToday = state.stats.totalToday ?? state.stats.total;
 
   return (
-    <div className="flex flex-col gap-8 pb-10">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Bonjour, {session?.user?.name || 'Utilisateur'}</h1>
-          <p className="text-sm text-slate-500 mt-1 font-medium">Voici l'état de la paillasse aujourd'hui.</p>
+    <div className="space-y-5 pb-8">
+      <section className="rounded-3xl border bg-white px-5 py-4 shadow-[0_8px_28px_rgba(15,31,51,0.06)]">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h1 className="text-xl font-semibold text-[var(--color-text)]">
+              Tableau de bord laboratoire
+            </h1>
+            <p className="mt-1 text-sm text-[var(--color-text-soft)]">
+              Bonjour {session?.user?.name || 'Utilisateur'}, suivi opérationnel de la paillasse en temps réel.
+            </p>
+          </div>
+          <button onClick={loadDashboard} className="btn-secondary">
+            <RefreshCw className={loading ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />
+            Actualiser
+          </button>
         </div>
-        <button onClick={sync} className="btn-secondary group">
-          <RefreshCw size={16} className={loading ? 'animate-spin text-indigo-500' : 'text-slate-400 group-hover:text-indigo-500'} /> 
-          <span>Actualiser</span>
-        </button>
-      </div>
+      </section>
 
-      {/* Bento KPI Row - Hybrid Density */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-        <KpiCard title="Total du jour" count={state.stats.totalToday ?? state.stats.total} icon={Hash} iconColor="bg-indigo-100 text-indigo-600" />
-        <KpiCard title="En attente" count={state.stats.pending} icon={Clock} iconColor="bg-orange-100 text-orange-600" active />
-        <KpiCard title="Anormales (À vérifier)" count={state.stats.urgent} icon={AlertCircle} iconColor="bg-rose-100 text-rose-600" />
-        <KpiCard title="Validées" count={state.stats.completed} icon={CheckCircle2} iconColor="bg-emerald-100 text-emerald-600" />
-      </div>
+      <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <KpiCard title="Dossiers du jour" value={totalToday} icon={ClipboardList} tone="default" />
+        <KpiCard title="En attente" value={state.stats.pending} icon={Clock} tone="warning" />
+        <KpiCard title="Résultats anormaux" value={state.stats.urgent} icon={AlertCircle} tone="critical" />
+        <KpiCard title="Validés" value={state.stats.completed} icon={CheckCircle2} tone="success" />
+      </section>
 
-      {/* Action Cards Row directly under KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
+      {qcToday && (qcToday.fail > 0 || qcToday.missing > 0) && (
+        <section className={`rounded-3xl px-5 py-4 shadow-[0_8px_22px_rgba(180,120,20,0.08)] ${
+          qcToday.fail > 0
+            ? 'border border-rose-200/70 bg-rose-50/85'
+            : 'border border-amber-200/70 bg-amber-50/85'
+        }`}>
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h2 className={`text-sm font-semibold uppercase tracking-[0.12em] ${
+                qcToday.fail > 0 ? 'text-rose-800' : 'text-amber-800'
+              }`}>
+                Contrôle qualité prioritaire
+              </h2>
+              <p className={`mt-1 text-sm ${
+                qcToday.fail > 0 ? 'text-rose-900' : 'text-amber-900'
+              }`}>
+                {qcToday.fail > 0
+                  ? `${qcToday.fail} contrôle(s) qualité en échec — vérifiez l'analyseur avant tout résultat patient.`
+                  : `${qcToday.missing} contrôle(s) qualité non effectué(s) aujourd'hui.`}
+              </p>
+            </div>
+            <Link href="/dashboard/qc" className="btn-secondary">
+              Voir le QC
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </section>
+      )}
+
+      {inventoryAlerts.length > 0 && (
+        <section className="rounded-3xl border border-amber-200/70 bg-amber-50/80 px-5 py-4 shadow-[0_8px_22px_rgba(180,120,20,0.08)]">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-amber-800">
+                Inventaire à surveiller
+              </h2>
+              <p className="mt-1 text-sm text-amber-900">
+                {inventoryAlerts.length} article{inventoryAlerts.length > 1 ? 's' : ''} nécessitent votre attention.
+              </p>
+            </div>
+            <Link href="/dashboard/inventory" className="btn-secondary">
+              Voir l&apos;inventaire
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+          <div className="mt-4 grid gap-2">
+            {inventoryAlerts.slice(0, 3).map((item) => (
+              <div
+                key={item.id}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-amber-200/60 bg-white/80 px-3 py-2"
+              >
+                <span className="text-sm font-medium text-[var(--color-text)]">{item.name}</span>
+                <span className="text-xs text-[var(--color-text-soft)]">
+                  {formatInventoryAlertReason(item)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {role !== 'MEDECIN' && (
-          <ActionCard label="Nouvelle Analyse" icon={Plus} href="/analyses/nouvelle" primary />
+          <ActionCard href="/analyses/nouvelle" label="Nouvelle analyse" icon={Plus} primary />
         )}
-        <ActionCard label="Ajouter Patient" icon={Users} href="/dashboard/patients" />
-        <ActionCard label="Liste des analyses" icon={Layers} href="/analyses" />
-      </div>
+        <ActionCard href="/dashboard/patients" label="Ajouter patient" icon={Users} />
+        <ActionCard href="/analyses" label="Voir les analyses" icon={TestTube} />
+      </section>
 
-
-      {/* Main Content Areas */}
-      <div className="grid grid-cols-1 gap-8 mt-2">
-        
-        {/* Dossiers Table inside a Bento Panel */}
-        <div className="flex flex-col gap-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-              <ClipboardList className="text-indigo-500" size={20} /> Dossiers Récents
+      <section className="grid grid-cols-1 gap-4 2xl:grid-cols-[1fr_340px]">
+        <div className="overflow-hidden rounded-3xl border bg-white shadow-[0_10px_30px_rgba(15,31,51,0.06)]">
+          <div className="flex items-center justify-between border-b px-5 py-4">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-[var(--color-text-secondary)]">
+              Dossiers récents
             </h2>
-            <Link href="/analyses" className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 hover:underline flex items-center gap-1 group">
-              Voir tout <ChevronRight size={16} className="transition-transform group-hover:translate-x-1" />
+            <Link href="/analyses" className="inline-flex items-center gap-1 text-sm font-medium text-[var(--color-accent)]">
+              Voir tout
+              <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
 
-          <div className="bento-panel flex flex-col overflow-hidden">
-            {/* Table Header */}
-            <div className="grid grid-cols-12 bg-slate-50 border-b border-slate-100 px-6 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-              <div className="col-span-1 text-center">ID</div>
-              <div className="col-span-6 pl-4">Patient</div>
-              <div className="col-span-2 text-center">N° Commande</div>
-              <div className="col-span-3 text-right pr-2">Statut</div>
-            </div>
+          <div className="grid grid-cols-12 border-b bg-[var(--color-surface-muted)] px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--color-text-soft)]">
+            <div className="col-span-1 text-center">#</div>
+            <div className="col-span-5">Patient</div>
+            <div className="col-span-2 text-center">Commande</div>
+            <div className="col-span-2 text-center">TAT</div>
+            <div className="col-span-2 text-right">Statut</div>
+          </div>
 
-            <div className="divide-y divide-slate-50 flex-1">
-              {loading ? <LoadingRegistry /> : active.length > 0 ? active.map((a, idx) => (
-                <Link key={a.id} href={`/analyses/${a.id}`} className="grid grid-cols-12 px-6 py-3.5 hover:bg-slate-50/50 transition-colors items-center group">
-                  <div className="col-span-1 text-center text-xs font-semibold text-slate-400 group-hover:text-indigo-500 transition-colors">
-                    #{idx + 1}
-                  </div>
-                  <div className="col-span-6 flex items-center gap-3 pl-4">
-                    <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${a.isUrgent ? 'bg-rose-100 text-rose-600' : 'bg-slate-100 text-slate-600'}`}>
-                      {a.patientFirstName?.[0]}{a.patientLastName?.[0]}
+          <div className="divide-y">
+            {loading && <LoadingRows />}
+            {!loading && activeAnalyses.length === 0 && (
+              <div className="px-5 py-12 text-center">
+                <p className="text-sm font-medium text-[var(--color-text-secondary)]">Aucune analyse active</p>
+                <p className="mt-1 text-xs text-[var(--color-text-soft)]">Toutes les analyses sont validées.</p>
+              </div>
+            )}
+            {!loading &&
+              activeAnalyses.map((analysis, index) => {
+                const status = STATUS_MAP[analysis.status ?? ''] ?? {
+                  label: analysis.status ?? 'Inconnu',
+                  classes: 'bg-slate-50 text-slate-700 border border-slate-200/70',
+                };
+
+                return (
+                  <Link
+                    key={analysis.id}
+                    href={`/analyses/${analysis.id}`}
+                    className="grid grid-cols-12 items-center px-5 py-3 transition-colors hover:bg-[var(--color-surface-muted)]"
+                  >
+                    <div className="col-span-1 text-center text-xs font-medium text-[var(--color-text-soft)]">{index + 1}</div>
+                    <div className="col-span-5 min-w-0">
+                      <div className="truncate text-sm font-medium text-[var(--color-text)]">
+                        {analysis.patientFirstName} {analysis.patientLastName}
+                      </div>
+                      <div className="text-xs text-[var(--color-text-soft)]">ID: {analysis.dailyId || 'N/A'}</div>
                     </div>
-                    <div>
-                      <div className="font-bold text-sm text-slate-800">{a.patientFirstName} {a.patientLastName}</div>
-                      <div className="text-[11px] text-slate-400 font-medium">TAT : <span className={tatC(a.creationDate)}>{fmtD(a.creationDate)}</span></div>
+                    <div className="col-span-2 text-center font-mono text-xs font-medium text-[var(--color-text-secondary)]">
+                      {analysis.orderNumber}
                     </div>
-                  </div>
-                  <div className="col-span-2 text-center font-mono text-xs font-medium text-slate-500 bg-slate-50 py-1 px-2 rounded-lg w-fit mx-auto">
-                    {a.orderNumber}
-                  </div>
-                  <div className="col-span-3 flex justify-end">
-                    {(() => {
-                      const s = STATUS_MAP[a.status || ''] ?? { label: a.status || '—', classes: 'bg-slate-50 text-slate-500' };
-                      return <span className={`status-pill ${s.classes}`}>{s.label}</span>;
-                    })()}
-                  </div>
-                </Link>
-              )) : (
-                <div className="p-12 text-center flex flex-col items-center justify-center">
-                  <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
-                    <ClipboardList className="text-slate-300 w-8 h-8" />
-                  </div>
-                  <h3 className="text-slate-700 font-bold mb-1">Aucune analyse</h3>
-                  <p className="text-sm text-slate-400">Toutes les analyses ont été validées.</p>
-                </div>
-              )}
-            </div>
+                    <div className={`col-span-2 text-center text-xs ${getTatClasses(analysis.creationDate)}`}>
+                      {formatTat(analysis.creationDate)}
+                    </div>
+                    <div className="col-span-2 flex justify-end">
+                      <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${status.classes}`}>
+                        {status.label}
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
           </div>
         </div>
-      </div>
+
+        <aside className="space-y-4">
+          <div className="rounded-3xl border bg-white p-5 shadow-[0_10px_30px_rgba(15,31,51,0.06)]">
+            <h3 className="text-sm font-semibold text-[var(--color-text)]">Flux opérationnel</h3>
+            <div className="mt-4 space-y-3 text-sm">
+              <StatRow label="Total en attente" value={state.stats.pending} />
+              <StatRow label="Démarrés" value={state.stats.inProgress} />
+              <StatRow label="Non commencés" value={state.stats.purePending ?? state.stats.pending} />
+              <StatRow label="TAT moyen du jour" value={state.stats.tat ? `${state.stats.tat} min` : 'N/A'} />
+            </div>
+          </div>
+
+          <div className="rounded-3xl border bg-white p-5 shadow-[0_10px_30px_rgba(15,31,51,0.06)]">
+            <h3 className="text-sm font-semibold text-[var(--color-text)]">Actions rapides</h3>
+            <div className="mt-4 space-y-2">
+              <QuickLink href="/dashboard/patients">Rechercher patient</QuickLink>
+              <QuickLink href="/dashboard/exports">Exporter statistiques</QuickLink>
+              <QuickLink href="/dashboard/settings/lab">Paramètres laboratoire</QuickLink>
+            </div>
+          </div>
+        </aside>
+      </section>
     </div>
   );
 }
 
-// Small abstracted UI components inside the page for isolation
-const KpiCard = ({ title, count, icon: Icon, iconColor, active }: any) => (
-  <div className={`bento-panel p-6 transition-all duration-300 flex items-center justify-between ${active ? 'shadow-lg shadow-indigo-500/10 ring-2 ring-indigo-500 ring-offset-2' : 'hover:-translate-y-1 hover:shadow-lg'}`}>
-    <div>
-      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">{title}</div>
-      <div className="text-4xl font-black text-slate-800 tracking-tight">{count}</div>
-    </div>
-    <div className={`w-14 h-14 rounded-full flex items-center justify-center shrink-0 ${iconColor}`}>
-      <Icon size={28} strokeWidth={2.5} />
-    </div>
-  </div>
-);
+function formatInventoryAlertReason(item: InventoryAlertItem) {
+  if (item.status === 'expired') {
+    return 'Lot expiré détecté';
+  }
+  if (item.status === 'critical') {
+    return `Stock critique: ${item.currentStock} ${item.unit}`;
+  }
+  if (item.status === 'low') {
+    return `Sous seuil: ${item.currentStock} / ${item.minThreshold} ${item.unit}`;
+  }
+  return 'Conforme';
+}
 
-const InsightRow = ({ label, value, trend, good }: any) => (
-  <div className="flex items-center justify-between">
-    <div className="text-sm font-semibold text-slate-500">{label}</div>
-    <div className="flex items-center gap-3">
-      <span className="font-bold text-slate-800">{value}</span>
-      {trend && (
-        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${trend === 'stable' ? 'bg-slate-100 text-slate-500' : good ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}>
-          {trend}
-        </span>
-      )}
-    </div>
-  </div>
-);
+function KpiCard({ title, value, icon: Icon, tone }: KpiCardProps) {
+  const toneClasses: Record<KpiCardProps['tone'], string> = {
+    default: 'bg-blue-50 text-blue-700',
+    warning: 'bg-amber-50 text-amber-700',
+    critical: 'bg-rose-50 text-rose-700',
+    success: 'bg-emerald-50 text-emerald-700',
+  };
 
-const ActionCard = ({ label, icon: Icon, href, primary }: any) => (
-  <Link href={href} className={`rounded-3xl p-5 flex items-center justify-between group transition-all duration-300 hover:-translate-y-1 ${primary ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-lg'}`}>
-    <div className="flex items-center gap-4">
-      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${primary ? 'bg-white/20' : 'bg-slate-100 group-hover:bg-indigo-50 transition-colors'}`}>
-        <Icon size={20} className={primary ? 'text-white' : 'text-slate-500 group-hover:text-indigo-500 transition-colors'} />
-      </div>
-      <span className={`font-bold ${primary ? 'text-white' : 'text-slate-700'}`}>{label}</span>
-    </div>
-    <ArrowRight size={18} className={`${primary ? 'text-white/70 group-hover:text-white' : 'text-slate-300 group-hover:text-indigo-500'} group-hover:translate-x-1 transition-all`} />
-  </Link>
-);
-
-const LoadingRegistry = () => (
-  Array.from({ length: 4 }).map((_, i) => (
-    <div key={i} className="px-6 py-4 animate-pulse grid grid-cols-12 gap-6 border-b border-slate-50 last:border-0">
-      <div className="col-span-1 h-4 bg-slate-100 rounded-full mx-auto w-6" />
-      <div className="col-span-6 flex gap-3 items-center">
-        <div className="w-9 h-9 bg-slate-100 rounded-full shrink-0" />
-        <div className="space-y-2 flex-1">
-          <div className="h-4 bg-slate-100 rounded w-1/2" />
-          <div className="h-3 bg-slate-100 rounded w-1/4" />
+  return (
+    <article className="rounded-3xl border bg-white p-5 shadow-[0_8px_26px_rgba(15,31,51,0.05)]">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--color-text-soft)]">{title}</p>
+          <p className="mt-2 text-3xl font-semibold tracking-tight text-[var(--color-text)]">{value}</p>
+        </div>
+        <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${toneClasses[tone]}`}>
+          <Icon className="h-5 w-5" />
         </div>
       </div>
-      <div className="col-span-2 h-6 bg-slate-100 rounded" />
-      <div className="col-span-3 h-6 bg-slate-100 rounded-full w-20 ml-auto" />
+    </article>
+  );
+}
+
+function ActionCard({ label, href, icon: Icon, primary = false }: ActionCardProps) {
+  return (
+    <Link
+      href={href}
+      className={`group flex items-center justify-between rounded-3xl border px-4 py-3.5 transition-colors ${
+        primary
+          ? 'border-blue-700/20 bg-[var(--color-accent)] text-white'
+          : 'bg-white text-[var(--color-text)] hover:bg-[var(--color-surface-muted)]'
+      }`}
+    >
+      <span className="inline-flex items-center gap-2.5 text-sm font-medium">
+        <span
+          className={`flex h-8 w-8 items-center justify-center rounded-xl ${
+            primary ? 'bg-white/20' : 'bg-[var(--color-surface-muted)]'
+          }`}
+        >
+          <Icon className="h-4 w-4" />
+        </span>
+        {label}
+      </span>
+      <ArrowRight className={`h-4 w-4 transition-transform group-hover:translate-x-0.5 ${primary ? 'text-white/90' : 'text-[var(--color-text-soft)]'}`} />
+    </Link>
+  );
+}
+
+function StatRow({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="flex items-center justify-between rounded-xl border bg-[var(--color-surface-muted)] px-3 py-2">
+      <span className="text-[13px] text-[var(--color-text-secondary)]">{label}</span>
+      <span className="text-sm font-semibold text-[var(--color-text)]">{value}</span>
     </div>
-  ))
-);
+  );
+}
+
+function QuickLink({ href, children }: { href: string; children: string }) {
+  return (
+    <Link
+      href={href}
+      className="flex items-center justify-between rounded-xl border bg-[var(--color-surface-muted)] px-3 py-2 text-[13px] font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-slate-100"
+    >
+      {children}
+      <ArrowRight className="h-4 w-4 text-[var(--color-text-soft)]" />
+    </Link>
+  );
+}
+
+function LoadingRows() {
+  return (
+    <>
+      {Array.from({ length: 6 }).map((_, index) => (
+        <div key={index} className="grid grid-cols-12 items-center px-5 py-3">
+          <div className="col-span-1 mx-auto h-3 w-4 animate-pulse rounded bg-slate-100" />
+          <div className="col-span-5 space-y-1">
+            <div className="h-3.5 w-2/5 animate-pulse rounded bg-slate-100" />
+            <div className="h-3 w-1/4 animate-pulse rounded bg-slate-100" />
+          </div>
+          <div className="col-span-2 mx-auto h-3 w-14 animate-pulse rounded bg-slate-100" />
+          <div className="col-span-2 mx-auto h-3 w-12 animate-pulse rounded bg-slate-100" />
+          <div className="col-span-2 ml-auto h-5 w-16 animate-pulse rounded-full bg-slate-100" />
+        </div>
+      ))}
+    </>
+  );
+}

@@ -2,12 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { resend } from '@/lib/resend';
 import { generateAnalysisPDF } from '@/lib/pdf-server';
+import { getInternalPrintToken, requireAnyRole } from '@/lib/authz';
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const guard = await requireAnyRole(['ADMIN', 'TECHNICIEN', 'MEDECIN', 'RECEPTIONNISTE']);
+    if (!guard.ok) return guard.error;
+
     const { id } = await params;
     const body = await request.json();
     const { recipientEmail } = body;
@@ -40,7 +44,8 @@ export async function POST(
 
     console.log(`Generating PDF for analysis ${id}...`);
     const origin = request.nextUrl.origin;
-    const pdfBuffer = await generateAnalysisPDF(id, origin);
+    const printToken = getInternalPrintToken();
+    const pdfBuffer = await generateAnalysisPDF(id, origin, printToken);
 
     const patientName = `${analysis.patientLastName} ${analysis.patientFirstName}`.trim();
     const formattedDate = new Date(analysis.creationDate).toLocaleDateString('fr-FR', {
@@ -212,10 +217,10 @@ export async function POST(
     }
 
     return NextResponse.json({ success: true, messageId: data?.id });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error sending email:', error);
     return NextResponse.json(
-      { error: error.message || 'Erreur lors de l\'envoi de l\'email' },
+      { error: error instanceof Error ? error.message : 'Erreur lors de l\'envoi de l\'email' },
       { status: 500 }
     );
   }

@@ -11,7 +11,7 @@ export default async function AnalysisDetailPage({
   
   return (
     <div className="min-h-[calc(100vh-3.5rem)]">
-      <div className="max-w-[1600px] mx-auto">
+      <div className="mx-auto w-full max-w-[1640px]">
         <ResultatsForm analysisId={id} />
       </div>
     </div>

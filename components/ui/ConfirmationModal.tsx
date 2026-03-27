@@ -27,7 +27,6 @@ export function ConfirmationModal({
   type = 'info',
   icon = 'warning'
 }: ConfirmationModalProps) {
-  
   const getIcon = () => {
     switch (icon) {
       case 'logout': return <LogOut className="w-6 h-6 text-rose-600" />;
@@ -40,9 +39,9 @@ export function ConfirmationModal({
 
   const getButtonClass = () => {
     switch (type) {
-      case 'danger': return 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-100';
-      case 'warning': return 'bg-amber-500 hover:bg-amber-600 text-white shadow-amber-100';
-      default: return 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-100';
+      case 'danger': return 'bg-rose-600 hover:bg-rose-700 text-white';
+      case 'warning': return 'bg-amber-500 hover:bg-amber-600 text-white';
+      default: return 'bg-[var(--color-accent)] hover:brightness-95 text-white';
     }
   };
 
@@ -66,7 +65,7 @@ export function ConfirmationModal({
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" />
+          <div className="fixed inset-0 bg-slate-900/35 backdrop-blur-sm" />
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-y-auto">
@@ -80,14 +79,14 @@ export function ConfirmationModal({
               leaveFrom="opacity-100 scale-100 translate-y-0"
               leaveTo="opacity-0 scale-95 translate-y-4"
             >
-              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-[2.5rem] bg-white p-8 text-left align-middle shadow-2xl transition-all border border-slate-100">
+              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-3xl border border-[var(--color-border)] bg-white p-6 text-left align-middle shadow-[0_18px_50px_rgba(15,31,51,0.18)] transition-all sm:p-7">
                 <div className="flex items-start justify-between mb-6">
-                  <div className={`w-14 h-14 rounded-2xl ${getIconBg()} flex items-center justify-center`}>
+                  <div className={`w-12 h-12 rounded-2xl ${getIconBg()} flex items-center justify-center`}>
                     {getIcon()}
                   </div>
                   <button
                     onClick={onClose}
-                    className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all"
+                    className="p-2 text-[var(--color-text-soft)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-muted)] rounded-xl transition-all"
                   >
                     <X size={20} />
                   </button>
@@ -95,21 +94,21 @@ export function ConfirmationModal({
 
                 <Dialog.Title
                   as="h3"
-                  className="text-2xl font-black text-slate-900 leading-tight mb-2"
+                  className="text-xl sm:text-2xl font-semibold text-[var(--color-text)] leading-tight mb-2"
                 >
                   {title}
                 </Dialog.Title>
                 
                 <div className="mt-2">
-                  <p className="text-slate-500 font-medium leading-relaxed">
+                  <p className="text-[var(--color-text-secondary)] leading-relaxed">
                     {message}
                   </p>
                 </div>
 
-                <div className="mt-10 flex flex-col sm:flex-row-reverse gap-3">
+                <div className="mt-8 flex flex-col sm:flex-row-reverse gap-3">
                   <button
                     type="button"
-                    className={`inline-flex justify-center items-center px-6 py-4 text-sm font-black rounded-2xl border-none transition-all shadow-lg active:scale-95 flex-1 ${getButtonClass()}`}
+                    className={`inline-flex justify-center items-center h-11 px-5 text-sm font-medium rounded-2xl transition-all active:scale-[0.99] flex-1 ${getButtonClass()}`}
                     onClick={() => {
                       onConfirm();
                       onClose();
@@ -119,7 +118,7 @@ export function ConfirmationModal({
                   </button>
                   <button
                     type="button"
-                    className="inline-flex justify-center items-center px-6 py-4 text-sm font-bold text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-2xl border-none transition-all active:scale-95 flex-1"
+                    className="inline-flex justify-center items-center h-11 px-5 text-sm font-medium text-[var(--color-text-secondary)] bg-[var(--color-surface-muted)] hover:bg-slate-100 rounded-2xl border border-[var(--color-border)] transition-all active:scale-[0.99] flex-1"
                     onClick={onClose}
                   >
                     {cancelText}

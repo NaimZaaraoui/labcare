@@ -1,18 +1,36 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { hasValidInternalPrintToken } from '@/lib/authz';
+import { createAuditLog, getRequestMeta } from '@/lib/audit';
 
 const ALLOWED_KEYS = [
   'lab_name', 'lab_subtitle', 'lab_parent',
   'lab_address_1', 'lab_address_2', 'lab_phone', 'lab_email',
   'lab_bio_name', 'lab_bio_title', 'lab_bio_onmpt',
   'lab_footer_text', 'lab_stamp_image', 'lab_bio_signature', 'tat_warn', 'tat_alert',
-  'sample_types', 'amount_unit',
+  'sample_types', 'amount_unit', 'qc_range_basis',
 ];
 
-export async function GET() {
+type SettingRow = { key: string; value: string };
+
+function normalizeSettings(rows: SettingRow[]) {
+  return Object.fromEntries(
+    ALLOWED_KEYS.map((key) => [key, rows.find((row) => row.key === key)?.value ?? ''])
+  ) as Record<string, string>;
+}
+
+export async function GET(request: Request) {
+  if (hasValidInternalPrintToken(request)) {
+    const rows = await prisma.setting.findMany({
+      where: { key: { in: ALLOWED_KEYS } },
+      select: { key: true, value: true },
+    });
+    return NextResponse.json(normalizeSettings(rows));
+  }
+
   const session = await auth();
-  const role = (session?.user as any)?.role;
+  const role = session?.user?.role;
   if (role !== 'ADMIN') {
     return NextResponse.json({ error: 'Accès refusé.' }, { status: 403 });
   }
@@ -22,22 +40,19 @@ export async function GET() {
     select: { key: true, value: true },
   });
 
-  const result: Record<string, string> = Object.fromEntries(
-    ALLOWED_KEYS.map(k => [k, rows.find((r: any) => r.key === k)?.value ?? ''])
-  );
-
-  return NextResponse.json(result);
+  return NextResponse.json(normalizeSettings(rows));
 }
 
 export async function PATCH(request: Request) {
   const session = await auth();
-  const user = session?.user as any;
+  const user = session?.user;
   if (user?.role !== 'ADMIN') {
     return NextResponse.json({ error: 'Accès refusé.' }, { status: 403 });
   }
 
   const body = await request.json();
   const { settings } = body as { settings: Record<string, string> };
+  const meta = getRequestMeta({ headers: request.headers });
 
   if (!settings || typeof settings !== 'object') {
     return NextResponse.json({ error: 'Corps de requête invalide.' }, { status: 400 });
@@ -79,14 +94,21 @@ export async function PATCH(request: Request) {
     )
   );
 
+  await createAuditLog({
+    action: 'settings.update',
+    severity: 'WARN',
+    entity: 'setting',
+    details: {
+      keys: Object.keys(settings),
+    },
+    ipAddress: meta.ipAddress,
+    userAgent: meta.userAgent,
+  });
+
   // Return updated settings
   const rows = await prisma.setting.findMany({
     where: { key: { in: ALLOWED_KEYS } },
     select: { key: true, value: true },
   });
-  const result: Record<string, string> = Object.fromEntries(
-    ALLOWED_KEYS.map(k => [k, rows.find((r: any) => r.key === k)?.value ?? ''])
-  );
-
-  return NextResponse.json(result);
+  return NextResponse.json(normalizeSettings(rows));
 }

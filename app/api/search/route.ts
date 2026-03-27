@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { requireAuthUser } from '@/lib/authz';
 
 export async function GET(req: NextRequest) {
   try {
+    const guard = await requireAuthUser();
+    if (!guard.ok) return guard.error;
+
     const { searchParams } = new URL(req.url);
     const query = searchParams.get('q');
 
@@ -41,6 +45,7 @@ export async function GET(req: NextRequest) {
           ],
         },
         take: 5,
+        include: { categoryRel: true },
       }),
     ]);
 
@@ -61,7 +66,7 @@ export async function GET(req: NextRequest) {
         id: t.id,
         title: `${t.name} (${t.code})`,
         type: 'result' as const,
-        description: `Paramètre • ${t.category || 'Test'}`,
+        description: `Paramètre • ${t.categoryRel?.name || 'Test'}`,
       })),
     ];
 

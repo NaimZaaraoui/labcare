@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { notifyUsers, getUserIdsByRoles } from '@/lib/notifications';
+import { requireAuthUser } from '@/lib/authz';
 
 export async function GET() {
   try {
+    const guard = await requireAuthUser();
+    if (!guard.ok) return guard.error;
+
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
 

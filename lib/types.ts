@@ -22,12 +22,11 @@ export interface Test {
     decimals: number | null;
     resultType: string;
     categoryId: string | null;
-    category?: string | null; // deprecated
+    rank: number;
     options: string | null;
     isGroup: boolean;
     sampleType: string | null;
     price: number | null;
-    rank: number;
     categoryRel?: Category;
     parentId: string | null;
     parent?: Test;

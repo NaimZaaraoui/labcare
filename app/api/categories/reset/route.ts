@@ -1,5 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { NextResponse } from 'next/server';
+import { requireAnyRole } from '@/lib/authz';
+import { createAuditLog, getRequestMeta } from '@/lib/audit';
 
 const NFS_SORT_ORDER = [
   'GB', 'WBC', 'PNN', 'NEUT', 'PNNA', 'PNN_ABS', 'NEUTA',
@@ -18,8 +20,12 @@ const DEFAULT_CATEGORY_RANKS: Record<string, number> = {
   'Divers': 100
 };
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
+    const guard = await requireAnyRole(['ADMIN']);
+    if (!guard.ok) return guard.error;
+    const meta = getRequestMeta({ headers: request.headers });
+
     console.log('[API /categories/reset] Starting reset...');
 
     // 1. Réinitialiser les rangs des catégories
@@ -53,6 +59,18 @@ export async function POST() {
     }
 
     console.log(`[API /categories/reset] Reset ${tests.length} test ranks`);
+
+    await createAuditLog({
+      action: 'category.reset_order',
+      severity: 'WARN',
+      entity: 'category',
+      details: {
+        categoriesReset: categories.length,
+        testsReset: tests.length,
+      },
+      ipAddress: meta.ipAddress,
+      userAgent: meta.userAgent,
+    });
 
     return NextResponse.json({
       success: true,

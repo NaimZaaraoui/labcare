@@ -2,6 +2,7 @@ import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { NextResponse } from 'next/server';
+import { createAuditLog, getRequestMeta } from '@/lib/audit';
 
 export async function GET() {
   try {
@@ -88,6 +89,20 @@ export async function POST(request: Request) {
         mustChangePassword: true,
         createdAt: true,
       },
+    });
+
+    const meta = getRequestMeta({ headers: request.headers });
+    await createAuditLog({
+      action: 'user.create',
+      severity: 'INFO',
+      entity: 'user',
+      entityId: user.id,
+      details: {
+        createdUserEmail: user.email,
+        createdUserRole: user.role,
+      },
+      ipAddress: meta.ipAddress,
+      userAgent: meta.userAgent,
     });
 
     return NextResponse.json(user, { status: 201 });

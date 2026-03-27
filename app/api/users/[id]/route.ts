@@ -2,6 +2,7 @@ import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { NextResponse } from 'next/server';
+import { createAuditLog, getRequestMeta } from '@/lib/audit';
 
 export async function PATCH(
   request: Request,
@@ -17,6 +18,7 @@ export async function PATCH(
     }
 
     const { action, name, role } = await request.json();
+    const meta = getRequestMeta({ headers: request.headers });
 
     if (action === 'toggle-active') {
       // Prevent deactivating self
@@ -54,6 +56,20 @@ export async function PATCH(
         data: { isActive: !user.isActive },
       });
 
+      await createAuditLog({
+        action: user.isActive ? 'user.deactivate' : 'user.activate',
+        severity: user.isActive ? 'WARN' : 'INFO',
+        entity: 'user',
+        entityId: id,
+        details: {
+          targetUserEmail: user.email,
+          targetUserRole: user.role,
+          isActiveAfter: !user.isActive,
+        },
+        ipAddress: meta.ipAddress,
+        userAgent: meta.userAgent,
+      });
+
       return NextResponse.json({ message: 'Statut mis à jour.' });
     }
 
@@ -67,6 +83,24 @@ export async function PATCH(
         },
       });
 
+      const targetUser = await prisma.user.findUnique({
+        where: { id },
+        select: { email: true, role: true },
+      });
+
+      await createAuditLog({
+        action: 'user.reset_password',
+        severity: 'WARN',
+        entity: 'user',
+        entityId: id,
+        details: {
+          targetUserEmail: targetUser?.email || null,
+          targetUserRole: targetUser?.role || null,
+        },
+        ipAddress: meta.ipAddress,
+        userAgent: meta.userAgent,
+      });
+
       return NextResponse.json({ message: 'Mot de passe réinitialisé.' });
     }
 
@@ -78,6 +112,16 @@ export async function PATCH(
       await prisma.user.update({
         where: { id },
         data: { name, role },
+      });
+
+      await createAuditLog({
+        action: 'user.update',
+        severity: 'INFO',
+        entity: 'user',
+        entityId: id,
+        details: { name, role },
+        ipAddress: meta.ipAddress,
+        userAgent: meta.userAgent,
       });
 
       return NextResponse.json({ message: 'Informations mises à jour.' });

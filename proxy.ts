@@ -2,20 +2,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 
-const ADMIN_ONLY = ['/dashboard/settings', '/dashboard/users', '/tests'];
+const ADMIN_ONLY = ['/dashboard/settings', '/dashboard/users', '/tests', '/dashboard/qc/config'];
 const BLOCKED_MEDECIN = ['/analyses/nouvelle', '/dashboard/settings', '/dashboard/users', '/tests'];
 const BLOCKED_RECEPTIONNISTE = ['/dashboard/settings', '/dashboard/users', '/tests'];
 
 export async function proxy(req: NextRequest) {
   const { nextUrl } = req;
   const pathname = nextUrl.pathname;
+  const internalPrintToken = process.env.INTERNAL_PRINT_TOKEN || process.env.AUTH_SECRET || '';
+  const isInternalExportRoute = /^\/analyses\/[^/]+\/export\/?$/.test(pathname);
+  const hasValidInternalPrintToken =
+    Boolean(internalPrintToken) &&
+    nextUrl.searchParams.get('printToken') === internalPrintToken;
 
   // 1. Allow public routes
   if (
     pathname.startsWith('/login') ||
     pathname.startsWith('/api/auth') ||
     pathname.startsWith('/api/notifications') ||
-    pathname.includes('/export') ||
+    (isInternalExportRoute && hasValidInternalPrintToken) ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/favicon') ||
     pathname.startsWith('/public') ||

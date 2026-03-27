@@ -73,7 +73,7 @@ export async function PUT(request: NextRequest) {
         minValue: data.resultType === 'numeric' && data.minValue ? parseFloat(data.minValue) : null,
         maxValue: data.resultType === 'numeric' && data.maxValue ? parseFloat(data.maxValue) : null,
         resultType: data.resultType || 'numeric',
-        category: data.category || null,
+        categoryId: data.categoryId || null,
       }
     });
 

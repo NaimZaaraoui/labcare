@@ -4,12 +4,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { notifyUsers, getUserIdsByRoles } from '@/lib/notifications';
+import { hasValidInternalPrintToken, requireAuthUser } from '@/lib/authz';
+import { createAuditLog, getRequestMeta } from '@/lib/audit';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const isInternalPrint = hasValidInternalPrintToken(request);
+    if (!isInternalPrint) {
+      const guard = await requireAuthUser();
+      if (!guard.ok) return guard.error;
+    }
+
     const { id } = await params;
     
     const analysis = await (prisma.analysis as any).findUnique({
@@ -85,6 +93,12 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const isInternalPrint = hasValidInternalPrintToken(request);
+    if (!isInternalPrint) {
+      const guard = await requireAuthUser();
+      if (!guard.ok) return guard.error;
+    }
+
     const { id } = await params;
     const body = await request.json();
 
@@ -136,6 +150,9 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const guard = await requireAuthUser();
+    if (!guard.ok) return guard.error;
+
     const { id } = await params;
     const body = await request.json();
     
@@ -248,6 +265,10 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const guard = await requireAuthUser();
+    if (!guard.ok) return guard.error;
+    const meta = getRequestMeta({ headers: request.headers });
+
     const { id } = await params;
     
     // Vérifier que l'analyse existe
@@ -277,6 +298,18 @@ export async function DELETE(
     // Supprimer l'analyse
     await prisma.analysis.delete({
       where: { id }
+    });
+
+    await createAuditLog({
+      action: 'analysis.delete',
+      severity: 'CRITICAL',
+      entity: 'analysis',
+      entityId: id,
+      details: {
+        orderNumber: analysis.orderNumber,
+      },
+      ipAddress: meta.ipAddress,
+      userAgent: meta.userAgent,
     });
     
     return NextResponse.json(

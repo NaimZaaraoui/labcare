@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { requireAnyRole } from '@/lib/authz';
+import { createAuditLog, getRequestMeta } from '@/lib/audit';
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const guard = await requireAnyRole(['ADMIN', 'TECHNICIEN', 'MEDECIN']);
+    if (!guard.ok) return guard.error;
+    const meta = getRequestMeta({ headers: request.headers });
+
     const { id } = await params;
     const body = await request.json();
     const { results, notes } = body; // results: Record<resultId, value>, notes: Record<resultId, text>
@@ -60,6 +66,19 @@ export async function PUT(
       }
     });
 
+    await createAuditLog({
+      action: 'analysis.results_save',
+      severity: 'INFO',
+      entity: 'analysis',
+      entityId: id,
+      details: {
+        updatedResults: Object.keys(results).length,
+        hadNotes: Boolean(notes),
+      },
+      ipAddress: meta.ipAddress,
+      userAgent: meta.userAgent,
+    });
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Erreur PUT results:', error);
@@ -76,6 +95,10 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const guard = await requireAnyRole(['ADMIN', 'TECHNICIEN', 'MEDECIN']);
+    if (!guard.ok) return guard.error;
+    const meta = getRequestMeta({ headers: request.headers });
+
     const { id } = await params;
     const body = await request.json();
     const { testsIds } = body;
@@ -143,6 +166,19 @@ export async function PATCH(
         data: { updatedAt: new Date() }
       })
     ]);
+
+    await createAuditLog({
+      action: 'analysis.tests_update',
+      severity: 'WARN',
+      entity: 'analysis',
+      entityId: id,
+      details: {
+        added: toCreate.length,
+        removed: toDelete.length,
+      },
+      ipAddress: meta.ipAddress,
+      userAgent: meta.userAgent,
+    });
 
     return NextResponse.json({ success: true, added: toCreate.length, removed: toDelete.length });
   } catch (error) {

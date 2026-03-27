@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { notifyUsers, getUserIdsByRoles } from '@/lib/notifications';
+import { createAuditLog, getRequestMeta } from '@/lib/audit';
+import { applyAutomaticConsumptionForAnalysis } from '@/lib/inventory';
+import { getAnalysisQcReadiness } from '@/lib/qc-readiness';
 
 export async function PATCH(
   request: NextRequest,
@@ -16,6 +19,7 @@ export async function PATCH(
     const { id } = await params;
     const body = await request.json();
     const type = body?.type as 'tech' | 'bio' | undefined;
+    const meta = getRequestMeta({ headers: request.headers });
 
     if (!type || (type !== 'tech' && type !== 'bio')) {
       return NextResponse.json({ error: 'Type de validation invalide' }, { status: 400 });
@@ -26,8 +30,8 @@ export async function PATCH(
       return NextResponse.json({ error: 'Analyse non trouvée' }, { status: 404 });
     }
 
-    const role = (session?.user as any)?.role || '';
-    const userId = (session?.user as any)?.id || null;
+    const role = session.user.role || '';
+    const userId = session.user.id || null;
     const userName = session?.user?.name || 'Utilisateur';
 
     if (type === 'tech') {
@@ -38,6 +42,39 @@ export async function PATCH(
         return NextResponse.json(
           { error: 'Validation technique impossible: saisissez et sauvegardez d’abord les résultats (statut "En analyse").' },
           { status: 400 }
+        );
+      }
+
+      const qcReadiness = await getAnalysisQcReadiness(id);
+      if (!qcReadiness.ready) {
+        const details = qcReadiness.blockers
+          .map((lot) => {
+            const statusLabel = lot.status === 'fail' ? 'QC en échec' : 'QC manquant aujourd’hui';
+            return `${lot.materialName} / lot ${lot.lotNumber} (${lot.tests.join(', ')}) : ${statusLabel}`;
+          })
+          .join(' ; ');
+
+        return NextResponse.json(
+          {
+            error: `Validation technique bloquée: certains QC requis ne sont pas conformes. ${details}`,
+          },
+          { status: 409 }
+        );
+      }
+
+      try {
+        await applyAutomaticConsumptionForAnalysis({
+          analysisId: id,
+          performedBy: userName,
+        });
+      } catch (consumptionError) {
+        const message =
+          consumptionError instanceof Error
+            ? consumptionError.message
+            : 'Stock insuffisant pour appliquer la consommation automatique';
+        return NextResponse.json(
+          { error: `Validation bloquée: ${message}` },
+          { status: 409 }
         );
       }
 
@@ -72,6 +109,19 @@ export async function PATCH(
       } catch (e) {
         console.error('Error in tech validation notification:', e);
       }
+
+      await createAuditLog({
+        action: 'analysis.validate_tech',
+        severity: 'INFO',
+        entity: 'analysis',
+        entityId: id,
+        details: {
+          orderNumber: updated.orderNumber,
+          patient: `${updated.patientLastName || ''} ${updated.patientFirstName || ''}`.trim(),
+        },
+        ipAddress: meta.ipAddress,
+        userAgent: meta.userAgent,
+      });
 
       return NextResponse.json(updated);
     }
@@ -114,6 +164,19 @@ export async function PATCH(
     } catch (e) {
       console.error('Error in bio validation notification:', e);
     }
+
+    await createAuditLog({
+      action: 'analysis.validate_bio',
+      severity: 'INFO',
+      entity: 'analysis',
+      entityId: id,
+      details: {
+        orderNumber: updated.orderNumber,
+        patient: `${updated.patientLastName || ''} ${updated.patientFirstName || ''}`.trim(),
+      },
+      ipAddress: meta.ipAddress,
+      userAgent: meta.userAgent,
+    });
 
     return NextResponse.json(updated);
   } catch (error) {

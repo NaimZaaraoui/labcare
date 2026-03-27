@@ -3,12 +3,13 @@ import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import fs from 'fs/promises';
 import path from 'path';
+import { createAuditLog, getRequestMeta } from '@/lib/audit';
 
 const UPLOAD_DIR = path.join(process.cwd(), 'public/uploads/signatures');
 
 export async function POST(request: Request) {
   const session = await auth();
-  const user = session?.user as any;
+  const user = session?.user;
   if (user?.role !== 'ADMIN') {
     return NextResponse.json({ error: 'Accès refusé.' }, { status: 403 });
   }
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
       const oldPath = path.join(process.cwd(), 'public', currentSetting.value);
       try {
         await fs.unlink(oldPath);
-      } catch (e) {
+      } catch {
         // Ignore if file doesn't exist
       }
     }
@@ -65,6 +66,17 @@ export async function POST(request: Request) {
       create: { key: 'lab_bio_signature', value: relativeUrl, updatedBy: user.id },
     });
 
+    const meta = getRequestMeta({ headers: request.headers });
+    await createAuditLog({
+      action: 'settings.signature_upload',
+      severity: 'WARN',
+      entity: 'setting',
+      entityId: 'lab_bio_signature',
+      details: { value: relativeUrl },
+      ipAddress: meta.ipAddress,
+      userAgent: meta.userAgent,
+    });
+
     return NextResponse.json({ url: relativeUrl });
   } catch (error) {
     console.error('Erreur upload signature:', error);
@@ -72,9 +84,9 @@ export async function POST(request: Request) {
   }
 }
 
-export async function DELETE() {
+export async function DELETE(request: Request) {
   const session = await auth();
-  const user = session?.user as any;
+  const user = session?.user;
   if (user?.role !== 'ADMIN') {
     return NextResponse.json({ error: 'Accès refusé.' }, { status: 403 });
   }
@@ -88,7 +100,7 @@ export async function DELETE() {
       const filePath = path.join(process.cwd(), 'public', currentSetting.value);
       try {
         await fs.unlink(filePath);
-      } catch (e) {
+      } catch {
         // Ignore error
       }
     }
@@ -96,6 +108,16 @@ export async function DELETE() {
     await prisma.setting.update({
       where: { key: 'lab_bio_signature' },
       data: { value: '', updatedBy: user.id },
+    });
+
+    const meta = getRequestMeta({ headers: request.headers });
+    await createAuditLog({
+      action: 'settings.signature_delete',
+      severity: 'WARN',
+      entity: 'setting',
+      entityId: 'lab_bio_signature',
+      ipAddress: meta.ipAddress,
+      userAgent: meta.userAgent,
     });
 
     return NextResponse.json({ success: true });

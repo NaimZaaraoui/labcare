@@ -1,6 +1,6 @@
 import { 
-  Activity, Users, Settings, FileText, FlaskConical, 
-  LayoutDashboard, ShieldCheck, Package, BarChart3, DownloadCloud
+  Activity, Users, Settings, Files, FlaskConical, 
+  LayoutDashboard, UserCheck, Package, DownloadCloud, TestTube
 } from "lucide-react";
 
 export const ROLE_LABELS: Record<string, string> = {
@@ -52,15 +52,15 @@ export const NAVIGATION_GROUPS = [
     title: "Activité Principale",
     links: [
       { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-      { name: 'Analyses', href: '/analyses', icon: Activity },
+      { name: 'Analyses', href: '/analyses', icon: TestTube },
       { name: 'Patients', href: '/dashboard/patients', icon: Users },
-      { name: 'Documents', href: '/dashboard/documents', icon: FileText },
+      { name: 'Documents', href: '/dashboard/documents', icon: Files },
     ]
   },
   {
     title: "Gestion Laboratoire",
     links: [
-      { name: 'Contrôle Qualité', href: '/dashboard/qc', icon: BarChart3 },
+      { name: 'Contrôle Qualité', href: '/dashboard/qc', icon: Activity },
       { name: 'Inventaire', href: '/dashboard/inventory', icon: Package },
       { name: 'Exports Excel', href: '/dashboard/exports', icon: DownloadCloud },
     ]
@@ -69,7 +69,7 @@ export const NAVIGATION_GROUPS = [
     title: "Administration",
     links: [
       { name: 'Configuration', href: '/tests', icon: FlaskConical },
-      { name: 'Utilisateurs', href: '/dashboard/users', icon: ShieldCheck },
+      { name: 'Utilisateurs', href: '/dashboard/users', icon: UserCheck },
       { name: 'Paramètres', href: '/dashboard/settings', icon: Settings },
     ]
   }

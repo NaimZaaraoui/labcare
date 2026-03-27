@@ -1,38 +1,64 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   Plus, 
   Trash2, 
   Pencil, 
   Beaker, 
-  Check, 
   X, 
   Search, 
-  Microscope, 
-  Droplets, 
-  FlaskConical, 
-  Hash, 
-  ChevronRight, 
   Layers,
   Filter,
   RefreshCw,
   Settings2,
-  Info,
-  Save
+  Save,
+  Package,
 } from 'lucide-react';
 import { Test } from '@/lib/types';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { NotificationToast } from '@/components/ui/notification-toast';
+import Link from 'next/link';
+import { getCategoryIcon } from '@/lib/category-icons';
 
 export function TestsList() {
-  const [tests, setTests] = useState<Test[]>([]);
+  type CategoryOption = {
+    id: string;
+    name: string;
+    rank: number;
+    icon?: string | null;
+    parentId?: string | null;
+  };
+
+  type TestWithInventory = Test & {
+    _count?: {
+      inventoryRules: number;
+    };
+  };
+
+  type InventoryItemOption = {
+    id: string;
+    name: string;
+    kind: string;
+    unit: string;
+    category: string;
+    currentStock: number;
+  };
+
+  type InventoryRule = {
+    id: string;
+    quantityPerTest: number;
+    isActive: boolean;
+    item: InventoryItemOption & { isActive: boolean };
+  };
+
+  const [tests, setTests] = useState<TestWithInventory[]>([]);
+  const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [showForm, setShowForm] = useState(false);
   const [editingTestId, setEditingTestId] = useState<string | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isSexBased, setIsSexBased] = useState(false);
   
   const [confirmModal, setConfirmModal] = useState<{
@@ -52,15 +78,22 @@ export function TestsList() {
   });
 
   const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null);
+  const [showInventoryModal, setShowInventoryModal] = useState(false);
+  const [inventoryLoading, setInventoryLoading] = useState(false);
+  const [inventoryTest, setInventoryTest] = useState<Test | null>(null);
+  const [inventoryItems, setInventoryItems] = useState<InventoryItemOption[]>([]);
+  const [inventoryRules, setInventoryRules] = useState<InventoryRule[]>([]);
+  const [inventoryForm, setInventoryForm] = useState({ itemId: '', quantityPerTest: '' });
+  const [editingInventoryRuleId, setEditingInventoryRuleId] = useState<string | null>(null);
   const [labSettings, setLabSettings] = useState<Record<string, string>>({
     sample_types: 'Sang total, Sérum, Plasma, Urine, LCR, Plèvre, Ascite',
     amount_unit: 'DA'
   });
 
-  const showNotification = (type: 'success' | 'error', message: string) => {
+  const showNotification = useCallback((type: 'success' | 'error', message: string) => {
     setNotification({ type, message });
     setTimeout(() => setNotification(null), 3000);
-  };
+  }, []);
 
   useEffect(() => {
     fetch('/api/settings')
@@ -88,7 +121,7 @@ export function TestsList() {
     maxValueF: string;
     decimals: string;
     resultType: string;
-    category: string;
+    categoryId: string;
     parentId: string;
     options: string;
     isGroup: boolean;
@@ -106,7 +139,7 @@ export function TestsList() {
     maxValueF: '',
     decimals: '1',
     resultType: 'numeric',
-    category: '',
+    categoryId: '',
     parentId: '',
     options: '',
     isGroup: false,
@@ -114,7 +147,6 @@ export function TestsList() {
     price: '0'
   });
 
-  const CATEGORIES = ['Hématologie', 'Biochimie', 'Sérologie', 'Urologie', 'Microbiologie', 'Hormonologie', 'NFS', 'Divers'];
   const RESULT_TYPES = [
     { value: 'numeric', label: 'Numérique' },
     { value: 'text', label: 'Texte court' },
@@ -122,20 +154,34 @@ export function TestsList() {
     { value: 'dropdown', label: 'Liste' },
   ];
 
-  useEffect(() => { loadTests(); }, []);
-
-  const loadTests = async () => {
+  const loadTests = useCallback(async () => {
     try {
       const response = await fetch('/api/tests');
       if (!response.ok) throw new Error();
       const data = await response.json();
       setTests(data);
-    } catch (error) {
+    } catch {
       showNotification('error', 'Erreur lors du chargement des tests');
     } finally {
       setLoading(false);
     }
-  };
+  }, [showNotification]);
+
+  const loadCategories = useCallback(async () => {
+    try {
+      const response = await fetch('/api/categories', { cache: 'no-store' });
+      if (!response.ok) throw new Error();
+      const data = await response.json();
+      setCategories(Array.isArray(data) ? data : []);
+    } catch {
+      showNotification('error', 'Erreur lors du chargement des catégories');
+    }
+  }, [showNotification]);
+
+  useEffect(() => {
+    loadTests();
+    loadCategories();
+  }, [loadCategories, loadTests]);
 
   const handleEdit = (test: Test) => {
     setEditingTestId(test.id);
@@ -151,7 +197,7 @@ export function TestsList() {
       maxValueF: test.maxValueF?.toString() || '',
       decimals: test.decimals?.toString() || '1',
       resultType: test.resultType || 'numeric',
-      category: test.category || '',
+      categoryId: test.categoryId || '',
       parentId: test.parentId || '',
       options: test.options || '',
       isGroup: test.isGroup,
@@ -166,7 +212,7 @@ export function TestsList() {
     setShowForm(false);
     setEditingTestId(null);
     setIsSexBased(false);
-    setNewTest({ code: '', name: '', unit: '', minValue: '', maxValue: '', minValueM: '', maxValueM: '', minValueF: '', maxValueF: '', decimals: '1', resultType: 'numeric', category: '', parentId: '', options: '', isGroup: false, sampleType: '', price: '0' });
+    setNewTest({ code: '', name: '', unit: '', minValue: '', maxValue: '', minValueM: '', maxValueM: '', minValueF: '', maxValueF: '', decimals: '1', resultType: 'numeric', categoryId: '', parentId: '', options: '', isGroup: false, sampleType: '', price: '0' });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -201,16 +247,15 @@ export function TestsList() {
         return;
       }
 
-      const savedTest = await response.json();
+      await response.json();
+      await loadTests();
       if (editingTestId) {
-        setTests(tests.map(t => t.id === editingTestId ? savedTest : t));
         showNotification('success', 'Test modifié');
       } else {
-        setTests([savedTest, ...tests]);
         showNotification('success', 'Test ajouté');
       }
       handleCloseForm();
-    } catch (error) {
+    } catch {
        showNotification('error', 'Erreur serveur');
     }
   };
@@ -223,7 +268,6 @@ export function TestsList() {
       title: 'Supprimer le test ?',
       message: `Êtes-vous sûr de vouloir supprimer "${test.name}" ? Cette action est irréversible.`,
       action: async () => {
-        setDeletingId(test.id);
         try {
           const res = await fetch(`/api/tests?id=${test.id}`, { method: 'DELETE' });
           if (res.ok) {
@@ -232,22 +276,143 @@ export function TestsList() {
           } else {
             showNotification('error', 'Erreur lors de la suppression');
           }
-        } catch (error) {
+        } catch {
           showNotification('error', 'Erreur lors de la suppression');
-        } finally {
-          setDeletingId(null);
         }
       }
     });
   };
 
+  const openInventoryModal = async (test: Test) => {
+    setInventoryTest(test);
+    setShowInventoryModal(true);
+    setInventoryLoading(true);
+    setEditingInventoryRuleId(null);
+
+    try {
+      const res = await fetch(`/api/tests/${test.id}/inventory`, { cache: 'no-store' });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showNotification('error', data.error || 'Erreur lors du chargement des consommations');
+        return;
+      }
+
+      setInventoryItems(Array.isArray(data.items) ? data.items : []);
+      setInventoryRules(Array.isArray(data.rules) ? data.rules : []);
+      setInventoryForm({
+        itemId: data.items?.[0]?.id || '',
+        quantityPerTest: '',
+      });
+    } catch {
+      showNotification('error', 'Erreur lors du chargement des consommations');
+    } finally {
+      setInventoryLoading(false);
+    }
+  };
+
+  const closeInventoryModal = () => {
+    setShowInventoryModal(false);
+    setInventoryTest(null);
+    setInventoryItems([]);
+    setInventoryRules([]);
+    setInventoryForm({ itemId: '', quantityPerTest: '' });
+    setEditingInventoryRuleId(null);
+    setInventoryLoading(false);
+  };
+
+  const handleInventoryRuleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inventoryTest) return;
+
+    try {
+      const isEditing = Boolean(editingInventoryRuleId);
+      const res = await fetch(
+        isEditing ? `/api/inventory/rules/${editingInventoryRuleId}` : `/api/tests/${inventoryTest.id}/inventory`,
+        {
+        method: isEditing ? 'PATCH' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...(isEditing ? {} : { itemId: inventoryForm.itemId }),
+          quantityPerTest: Number(inventoryForm.quantityPerTest),
+        }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showNotification('error', data.error || 'Erreur lors de la sauvegarde');
+        return;
+      }
+
+      showNotification('success', isEditing ? 'Règle de consommation modifiée' : 'Règle de consommation enregistrée');
+      await openInventoryModal(inventoryTest);
+      setInventoryForm((prev) => ({ ...prev, quantityPerTest: '' }));
+      setEditingInventoryRuleId(null);
+    } catch {
+      showNotification('error', 'Erreur lors de la sauvegarde');
+    }
+  };
+
+  const handleInventoryRuleDelete = async (ruleId: string) => {
+    if (!inventoryTest) return;
+
+    try {
+      const res = await fetch(`/api/inventory/rules/${ruleId}`, { method: 'DELETE' });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showNotification('error', data.error || 'Erreur lors de la suppression');
+        return;
+      }
+
+      showNotification('success', 'Règle supprimée');
+      await openInventoryModal(inventoryTest);
+    } catch {
+      showNotification('error', 'Erreur lors de la suppression');
+    }
+  };
+
+  const handleInventoryRuleEdit = (rule: InventoryRule) => {
+    setEditingInventoryRuleId(rule.id);
+    setInventoryForm({
+      itemId: rule.item.id,
+      quantityPerTest: String(rule.quantityPerTest),
+    });
+  };
+
+  const cancelInventoryRuleEdit = () => {
+    setEditingInventoryRuleId(null);
+    setInventoryForm((prev) => ({
+      ...prev,
+      quantityPerTest: '',
+    }));
+  };
+
   const filteredTests = tests.filter(test =>
     (test.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
      test.name.toLowerCase().includes(searchTerm.toLowerCase())) &&
-    (selectedCategory === 'all' || test.category === selectedCategory)
+    (selectedCategory === 'all' || test.categoryId === selectedCategory)
   );
 
-  const categoriesPresent = Array.from(new Set(filteredTests.map(t => t.category || 'Divers'))).sort();
+  const visibleCategoryMap = new Map<string, { name: string; rank: number; icon?: string | null }>();
+  filteredTests.forEach((test) => {
+    const categoryId = test.categoryId || 'uncategorized';
+    const categoryName = test.categoryRel?.name || 'Divers';
+    const categoryRank = test.categoryRel?.rank ?? 9999;
+    const categoryIcon = test.categoryRel?.icon || null;
+
+    if (!visibleCategoryMap.has(categoryId)) {
+      visibleCategoryMap.set(categoryId, {
+        name: categoryName,
+        rank: categoryRank,
+        icon: categoryIcon,
+      });
+    }
+  });
+
+  const categoriesPresent = Array.from(visibleCategoryMap.entries())
+    .map(([id, data]) => ({ id, ...data }))
+    .sort((a, b) => (a.rank !== b.rank ? a.rank - b.rank : a.name.localeCompare(b.name)));
   
   if (loading) {
     return (
@@ -259,118 +424,133 @@ export function TestsList() {
   }
 
   return (
-    <div className="space-y-12 animate-fade-in pb-20">
+    <div className="space-y-8 pb-20">
       {/* Search and Filters */}
-      <div className="bento-panel p-6 flex flex-col xl:flex-row items-center gap-6 shadow-sm border-slate-100">
-        <div className="relative flex-1 group w-full">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-indigo-500 transition-colors" />
-          <input 
+      <div className="bento-panel p-5 sm:p-6 flex flex-col xl:flex-row items-center gap-4 sm:gap-5">
+        <div className="input-premium h-11 flex flex-1 items-center gap-2 px-3 py-2">
+          <Search className="h-4 w-4 shrink-0 text-[var(--color-text-soft)]" />
+          <input
             placeholder="Rechercher par code ou nom d'analyse..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-50 border-none text-sm font-bold focus:ring-4 focus:ring-indigo-100 outline-none transition-all placeholder:text-slate-300 shadow-inner-sm"
+            aria-label="Rechercher un test"
+            className="h-full w-full border-0 bg-transparent text-sm text-[var(--color-text)] outline-none placeholder:text-[var(--color-text-soft)]"
           />
         </div>
 
-        <div className="flex items-center gap-4 w-full xl:w-auto">
-          <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-xl border border-slate-100 shadow-sm shrink-0">
-             <Filter size={16} className="text-slate-400" />
+        <div className="flex items-center gap-3 w-full xl:w-auto">
+          <div className="flex items-center gap-2 h-11 px-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] shrink-0">
+             <Filter size={15} className="text-[var(--color-text-soft)]" />
              <select 
                value={selectedCategory}
                onChange={(e) => setSelectedCategory(e.target.value)}
-               className="bg-transparent border-none text-xs font-black uppercase tracking-widest text-slate-600 outline-none cursor-pointer"
+               aria-label="Filtrer les tests par catégorie"
+               className="bg-transparent border-none text-sm font-medium text-[var(--color-text)] outline-none cursor-pointer"
              >
                <option value="all">Toutes les catégories</option>
-               {CATEGORIES.map(cat => (
-                 <option key={cat} value={cat}>{cat}</option>
+               {categories.map((category) => (
+                 <option key={category.id} value={category.id}>{category.name}</option>
                ))}
              </select>
           </div>
 
+          <Link
+            href="/tests/ordering"
+            className="inline-flex h-11 items-center gap-2 rounded-2xl border border-[var(--color-border)] bg-white px-4 text-sm font-semibold text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-muted)]"
+          >
+            <Settings2 size={16} />
+            Catégories
+          </Link>
+
           <button 
             onClick={() => setShowForm(true)}
-            className="btn-primary flex items-center gap-2 px-8 py-4 h-14 whitespace-nowrap shadow-xl shadow-indigo-100"
+            className="btn-primary-md whitespace-nowrap"
           >
-            <Plus size={20} />
+            <Plus size={16} />
             <span>Nouveau Test</span>
           </button>
         </div>
       </div>
 
       {/* Categorized Test List */}
-      <div className="space-y-16">
+      <div className="space-y-10">
         {categoriesPresent.length === 0 ? (
-          <div className="bento-panel py-32 text-center flex flex-col items-center opacity-60">
-             <div className="w-20 h-20 bg-slate-50 text-slate-200 rounded-full flex items-center justify-center mb-6">
-                <Beaker size={40} />
+          <div className="bento-panel py-24 text-center flex flex-col items-center opacity-80">
+             <div className="w-16 h-16 bg-[var(--color-surface-muted)] text-slate-300 rounded-2xl flex items-center justify-center mb-4">
+                <Beaker size={28} />
              </div>
-             <h3 className="text-xl font-bold text-slate-900 uppercase tracking-tight">Aucun test trouvé</h3>
+             <h3 className="text-lg font-semibold text-[var(--color-text)]">Aucun test trouvé</h3>
           </div>
         ) : (
-          categoriesPresent.map(categoryName => {
-            const categoryTests = filteredTests.filter(t => (t.category || 'Divers') === categoryName);
+          categoriesPresent.map(category => {
+            const categoryTests = filteredTests.filter(
+              (test) => (test.categoryId || 'uncategorized') === category.id
+            );
             if (categoryTests.length === 0) return null;
 
+            const CategoryIcon = getCategoryIcon(category.icon);
+
             return (
-              <div key={categoryName} className="space-y-6">
-                <div className="flex items-center gap-4 px-2">
-                   <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-lg">
-                      {categoryName === 'Hématologie' ? <Droplets size={20}/> : categoryName === 'Biochimie' ? <Microscope size={20}/> : <FlaskConical size={20}/>}
+              <div key={category.id} className="space-y-6">
+                <div className="flex items-center gap-3 px-1">
+                   <div className="w-10 h-10 rounded-2xl bg-[var(--color-accent-soft)] text-[var(--color-accent)] flex items-center justify-center">
+                      <CategoryIcon size={18} />
                    </div>
                    <div>
-                      <h2 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-3 uppercase">
-                         {categoryName}
-                         <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg tracking-normal">{categoryTests.length}</span>
+                      <h2 className="text-lg font-semibold text-[var(--color-text)] tracking-tight flex items-center gap-2">
+                         {category.name}
+                         <span className="text-xs font-semibold text-[var(--color-accent)] bg-[var(--color-accent-soft)] px-2 py-0.5 rounded-full tracking-normal">{categoryTests.length}</span>
                       </h2>
                    </div>
-                   <div className="flex-1 h-[1px] bg-slate-100" />
+                   <div className="flex-1 h-px bg-[var(--color-border)]" />
                 </div>
 
                  <div className="bento-panel overflow-hidden">
                    <div className="overflow-x-auto">
                      <table className="w-full text-left border-collapse">
                        <thead>
-                         <tr className="bg-slate-50/50 border-b border-slate-100">
-                           <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-24">Code</th>
-                           <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Analyse</th>
-                           <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Échantillon</th>
-                           <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Type</th>
-                           <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Référence</th>
-                           <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Montant</th>
-                           <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right w-24">Actions</th>
+                         <tr className="bg-[var(--color-surface-muted)] border-b border-[var(--color-border)]">
+                           <th className="px-5 py-3 text-[11px] font-semibold text-[var(--color-text-soft)] uppercase tracking-wide w-24">Code</th>
+                           <th className="px-5 py-3 text-[11px] font-semibold text-[var(--color-text-soft)] uppercase tracking-wide">Analyse</th>
+                           <th className="px-5 py-3 text-[11px] font-semibold text-[var(--color-text-soft)] uppercase tracking-wide text-center">Échantillon</th>
+                           <th className="px-5 py-3 text-[11px] font-semibold text-[var(--color-text-soft)] uppercase tracking-wide text-center">Type</th>
+                           <th className="px-5 py-3 text-[11px] font-semibold text-[var(--color-text-soft)] uppercase tracking-wide text-center">Référence</th>
+                           <th className="px-5 py-3 text-[11px] font-semibold text-[var(--color-text-soft)] uppercase tracking-wide text-center">Montant</th>
+                           <th className="px-5 py-3 text-[11px] font-semibold text-[var(--color-text-soft)] uppercase tracking-wide text-center">Conso</th>
+                           <th className="px-5 py-3 text-[11px] font-semibold text-[var(--color-text-soft)] uppercase tracking-wide text-right w-24">Actions</th>
                          </tr>
                        </thead>
-                       <tbody className="divide-y divide-slate-50">
+                       <tbody className="divide-y divide-[var(--color-border)]/60">
                          {categoryTests.map((test) => {
                            const isChild = !!test.parentId;
                            return (
                              <tr 
                                key={test.id} 
-                               className={`group transition-colors hover:bg-slate-50/80 ${isChild ? 'bg-slate-50/30' : ''}`}
+                               className={`group transition-colors hover:bg-[var(--color-surface-muted)]/80 ${isChild ? 'bg-[var(--color-surface-muted)]/40' : ''}`}
                              >
-                               <td className="px-6 py-4 align-middle">
-                                 <span className="text-[10px] font-black text-indigo-600 tracking-wider uppercase">
+                               <td className="px-5 py-3.5 align-middle">
+                                 <span className="text-[11px] font-semibold text-[var(--color-accent)] tracking-wide uppercase">
                                    {test.code}
                                  </span>
                                </td>
-                               <td className="px-6 py-4 align-middle">
+                               <td className="px-5 py-3.5 align-middle">
                                  <div className="flex flex-col">
-                                   <span className={`text-sm font-bold text-slate-900 ${isChild ? 'pl-4 border-l-2 border-slate-200 ml-1' : ''}`}>
+                                   <span className={`text-sm font-medium text-[var(--color-text)] ${isChild ? 'pl-3 border-l-2 border-[var(--color-border)] ml-1' : ''}`}>
                                      {test.name}
                                    </span>
                                    {test.isGroup && (
-                                     <span className="text-[10px] font-medium text-indigo-400 uppercase mt-0.5 tracking-tighter">
+                                     <span className="text-[11px] font-medium text-[var(--color-text-soft)] mt-0.5">
                                        Panel ({tests.filter(t => t.parentId === test.id).length} paramètres)
                                      </span>
                                    )}
                                  </div>
                                </td>
-                               <td className="px-6 py-4 align-middle text-center">
-                                 <span className="text-[10px] font-bold text-slate-500 uppercase">
+                               <td className="px-5 py-3.5 align-middle text-center">
+                                 <span className="text-xs font-medium text-[var(--color-text-secondary)] uppercase">
                                    {test.sampleType || '—'}
                                  </span>
                                </td>
-                               <td className="px-6 py-4 align-middle text-center">
+                               <td className="px-5 py-3.5 align-middle text-center">
                                  <span className={`status-pill ${
                                    test.isGroup ? 'bg-indigo-50 text-indigo-600' : 
                                    test.resultType === 'numeric' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'
@@ -378,7 +558,7 @@ export function TestsList() {
                                    {test.isGroup ? 'Panel' : test.resultType === 'numeric' ? 'Num' : 'Texte'}
                                  </span>
                                </td>
-                               <td className="px-6 py-4 align-middle text-center">
+                               <td className="px-5 py-3.5 align-middle text-center">
                                  {test.isGroup ? (
                                    <Layers size={14} className="mx-auto text-indigo-300" />
                                  ) : test.resultType === 'numeric' ? (
@@ -404,13 +584,31 @@ export function TestsList() {
                                    <span className="text-slate-300">—</span>
                                  )}
                                </td>
-                               <td className="px-6 py-4 align-middle text-center">
-                                 <span className="text-sm font-black text-indigo-600">
-                                   {test.price?.toLocaleString()} <span className="text-[10px] font-bold text-indigo-400">{labSettings.amount_unit}</span>
+                               <td className="px-5 py-3.5 align-middle text-center">
+                                 <span className="text-sm font-semibold text-[var(--color-accent)]">
+                                   {test.price?.toLocaleString()} <span className="text-[11px] font-medium text-[var(--color-text-soft)]">{labSettings.amount_unit}</span>
                                  </span>
                                </td>
-                               <td className="px-6 py-4 align-middle text-right">
-                                 <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                               <td className="px-5 py-3.5 align-middle text-center">
+                                 <div className="flex items-center justify-center">
+                                   {(test._count?.inventoryRules || 0) > 0 ? (
+                                     <span className="status-pill status-pill-info">
+                                       {test._count?.inventoryRules} règle{(test._count?.inventoryRules || 0) > 1 ? 's' : ''}
+                                     </span>
+                                   ) : (
+                                     <span className="text-xs font-medium text-[var(--color-text-soft)]">Aucune</span>
+                                   )}
+                                 </div>
+                               </td>
+                               <td className="px-5 py-3.5 align-middle text-right">
+                                 <div className="flex items-center justify-end gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                 <button 
+                                     onClick={() => openInventoryModal(test)}
+                                     className="p-2 text-slate-400 hover:text-[var(--color-accent)] hover:bg-white rounded-lg transition-all shadow-sm border border-transparent hover:border-blue-100"
+                                     title="Configurer consommation"
+                                   >
+                                     <Package size={14} />
+                                   </button>
                                    <button 
                                      onClick={() => handleEdit(test)} 
                                      className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-lg transition-all shadow-sm border border-transparent hover:border-indigo-100"
@@ -442,33 +640,33 @@ export function TestsList() {
 
       {/* Optimized Form Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[60] flex items-center justify-center p-4 animate-in fade-in duration-300">
+        <div className="modal-overlay z-[60] animate-in fade-in duration-300">
           <div 
-            className="bg-white rounded-[2.5rem] w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 overflow-hidden border border-slate-100"
+            className="modal-shell flex w-full max-w-2xl max-h-[90vh] flex-col overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header consistent with ConfirmationModal */}
-            <div className="p-10 pb-6 flex items-start justify-between">
-              <div className="flex items-start gap-6">
-                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg shrink-0 ${editingTestId ? 'bg-indigo-600' : 'bg-slate-900'} text-white shadow-indigo-200`}>
-                  {editingTestId ? <Settings2 size={32} /> : <Plus size={32} />}
+            <div className="flex items-start justify-between border-b border-[var(--color-border)] p-6">
+              <div className="flex items-start gap-4">
+                <div className={`flex h-12 w-12 items-center justify-center rounded-2xl shrink-0 ${editingTestId ? 'bg-[var(--color-accent-soft)] text-[var(--color-accent)]' : 'bg-[var(--color-surface-muted)] text-[var(--color-text-secondary)]'}`}>
+                  {editingTestId ? <Settings2 size={22} /> : <Plus size={22} />}
                 </div>
                 <div>
-                  <h3 className="text-3xl font-black text-slate-900 tracking-tight">
-                    {editingTestId ? 'Modifier' : 'Ajouter'} <span className="text-indigo-600">Test</span>
+                  <h3 className="text-xl sm:text-2xl font-semibold text-[var(--color-text)] tracking-tight">
+                    {editingTestId ? 'Modifier' : 'Ajouter'} <span className="text-[var(--color-accent)]">test</span>
                   </h3>
-                  <p className="text-slate-500 font-medium mt-1">Configurez les paramètres de l'analyse biologique.</p>
+                  <p className="mt-1 text-sm text-[var(--color-text-secondary)]">Configurez les paramètres de l&apos;analyse biologique.</p>
                 </div>
               </div>
               <button 
                 onClick={handleCloseForm} 
-                className="p-3 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-2xl transition-all"
+                className="rounded-xl p-2 text-[var(--color-text-soft)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)] transition-all"
               >
-                <X size={24} />
+                <X size={20} />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="px-10 py-6 space-y-8 overflow-y-auto custom-scrollbar flex-1 bg-white">
+            <form onSubmit={handleSubmit} className="custom-scrollbar flex-1 space-y-6 overflow-y-auto bg-white p-6">
               <div className="grid grid-cols-2 gap-4">
                 <button
                   type="button"
@@ -486,44 +684,88 @@ export function TestsList() {
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-slate-50 rounded-2xl border border-slate-100 shadow-inner-sm">
+              <div className="grid grid-cols-1 gap-5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-5 md:grid-cols-2">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Code</label>
+                  <label className="ml-1 text-[11px] font-medium uppercase tracking-wide text-[var(--color-text-soft)]">Code</label>
                   <input
                     value={newTest.code}
                     onChange={(e) => setNewTest({...newTest, code: e.target.value.toUpperCase()})}
                     placeholder="Ex: HEMO"
-                    className="input-premium h-14 bg-white shadow-sm font-black uppercase"
+                    className="input-premium h-11 bg-white uppercase"
+                    required
+                  />
+                </div>
+                 <div className="space-y-2">
+                  <label className="ml-1 text-[11px] font-medium uppercase tracking-wide text-[var(--color-text-soft)]">Nom complet</label>
+                  <input
+                    value={newTest.name}
+                    onChange={(e) => setNewTest({...newTest, name: e.target.value})}
+                    placeholder="Ex: Hémoglobine Glyquée"
+                    className="input-premium h-11 bg-white"
                     required
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Catégorie</label>
                   <select
-                    value={newTest.category}
-                    onChange={(e) => setNewTest({...newTest, category: e.target.value})}
-                    className="input-premium h-14 bg-white shadow-sm font-black"
+                    value={newTest.categoryId}
+                    onChange={(e) => setNewTest({...newTest, categoryId: e.target.value})}
+                    className="input-premium h-11 bg-white"
                   >
                     <option value="">Sélectionner...</option>
-                    {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>{category.name}</option>
+                    ))}
                   </select>
                 </div>
-                <div className="md:col-span-2 space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nom Complet</label>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Panel Parent</label>
+                  <select
+                    value={newTest.parentId}
+                    onChange={(e) => setNewTest({...newTest, parentId: e.target.value})}
+                    className="input-premium h-11 bg-white"
+                  >
+                    <option value="">-- Racine (Catalogue principal) --</option>
+                    {tests.filter(t => t.isGroup).map(panel => (
+                      <option key={panel.id} value={panel.id}>
+                        {panel.code} - {panel.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {!newTest.isGroup && (
+                  <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Type de Résultat</label>
+                  <select
+                    value={newTest.resultType}
+                    onChange={(e) => setNewTest({...newTest, resultType: e.target.value})}
+                    className="input-premium h-11 bg-white"
+                  >
+                    {RESULT_TYPES.map(rt => (
+                      <option key={rt.value} value={rt.value}>{rt.label}</option>
+                    ))}
+                  </select>
+                </div>
+                 )}
+                 {newTest.resultType === 'dropdown' && !newTest.isGroup && (
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Options (séparées par virgule)</label>
                   <input
-                    value={newTest.name}
-                    onChange={(e) => setNewTest({...newTest, name: e.target.value})}
-                    placeholder="Ex: Hémoglobine Glyquée"
-                    className="input-premium h-14 bg-white shadow-sm font-black"
-                    required
+                    value={newTest.options}
+                    onChange={(e) => setNewTest({...newTest, options: e.target.value})}
+                    placeholder="Ex: Positif, Négatif"
+                    className="input-premium h-11 bg-white"
                   />
                 </div>
+              )}
+                  
+               
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Échantillon</label>
                   <select
                     value={newTest.sampleType}
                     onChange={(e) => setNewTest({...newTest, sampleType: e.target.value})}
-                    className="input-premium h-14 bg-white shadow-sm font-black"
+                    className="input-premium h-11 bg-white"
                   >
                     <option value="">Sélectionner...</option>
                     {labSettings.sample_types.split(',').map(s => {
@@ -539,19 +781,19 @@ export function TestsList() {
                     value={newTest.price}
                     onChange={(e) => setNewTest({...newTest, price: e.target.value})}
                     placeholder="0"
-                    className="input-premium h-14 bg-white shadow-sm font-black text-indigo-600"
+                    className="input-premium h-11 bg-white text-[var(--color-accent)]"
                   />
                 </div>
               </div>
 
-              {!newTest.isGroup && (
+              {!newTest.isGroup && newTest.resultType === 'numeric' && (
                 <div className="space-y-6">
                   <div className="flex items-center justify-between px-4">
                     <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Paramètres Physico-chimiques</h4>
                     <button 
                       type="button"
                       onClick={() => setIsSexBased(!isSexBased)}
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[10px] font-black uppercase tracking-wider transition-all ${isSexBased ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-100' : 'bg-white border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-200'}`}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[10px] font-semibold uppercase tracking-wide transition-all ${isSexBased ? 'bg-[var(--color-accent)] border-[var(--color-accent)] text-white shadow-md' : 'bg-white border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-200'}`}
                     >
                       <Layers size={12} />
                       Plages par sexe
@@ -602,27 +844,172 @@ export function TestsList() {
                 </div>
               )}
 
-              {newTest.parentId === '' && (
-                 <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-100 opacity-60">
-                    <Info size={16} className="text-slate-400" />
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-tight italic">Test de niveau racine (Catalogue principal)</p>
-                 </div>
-              )}
+      
             </form>
 
-            <div className="p-10 flex justify-end gap-3 bg-white border-t border-slate-50 mt-auto shadow-inner-white">
+            <div className="mt-auto flex justify-end gap-3 border-t border-[var(--color-border)] bg-white p-6">
               <button 
                 onClick={handleCloseForm}
-                className="px-8 py-4 rounded-2xl font-black text-slate-500 hover:text-slate-700 hover:bg-slate-50 transition-all uppercase text-[10px] tracking-widest"
+                className="btn-secondary-md"
               >
                 Annuler
               </button>
               <button 
                 onClick={handleSubmit}
-                className="px-10 py-4 rounded-2xl bg-indigo-600 text-white font-black hover:bg-indigo-700 shadow-xl shadow-indigo-100 transition-all flex items-center gap-2 uppercase text-[10px] tracking-widest active:scale-95 min-w-[160px] justify-center"
+                className="btn-primary-md min-w-[160px] justify-center"
               >
-                <Save size={18} /> <span>Enregistrer</span>
+                <Save size={16} /> <span>Enregistrer</span>
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showInventoryModal && (
+        <div className="modal-overlay z-[70] animate-in fade-in duration-300" onClick={closeInventoryModal}>
+          <div
+            className="modal-shell flex w-full max-w-3xl max-h-[90vh] flex-col overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between border-b border-[var(--color-border)] p-6">
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--color-accent-soft)] text-[var(--color-accent)] shrink-0">
+                  <Package size={22} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-[var(--color-text)] tracking-tight">
+                    Consommation liée au test
+                  </h3>
+                  <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+                    {inventoryTest ? `${inventoryTest.code} · ${inventoryTest.name}` : 'Chargement...'}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={closeInventoryModal}
+                className="rounded-xl p-2 text-[var(--color-text-soft)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)] transition-all"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="custom-scrollbar flex-1 space-y-6 overflow-y-auto bg-white p-6">
+              <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-5">
+                <div className="mb-4">
+                  <h4 className="text-sm font-semibold text-[var(--color-text)]">
+                    {editingInventoryRuleId ? 'Modifier la règle sélectionnée' : 'Ajouter ou mettre à jour une règle'}
+                  </h4>
+                  <p className="mt-1 text-xs text-[var(--color-text-soft)]">
+                    Cette quantité sera déduite automatiquement lors de la validation technique.
+                  </p>
+                </div>
+
+                <form onSubmit={handleInventoryRuleSubmit} className="grid gap-4 md:grid-cols-[1.2fr_0.8fr_auto] md:items-end">
+                  <label className="space-y-2">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Article inventaire</span>
+                    <select
+                      value={inventoryForm.itemId}
+                      onChange={(e) => setInventoryForm((prev) => ({ ...prev, itemId: e.target.value }))}
+                      className="input-premium h-11 bg-white"
+                      disabled={Boolean(editingInventoryRuleId)}
+                    >
+                      {inventoryItems.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.name} · {item.kind === 'CONSUMABLE' ? 'Consommable' : 'Réactif'} · {item.currentStock} {item.unit}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="space-y-2">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Quantité par analyse</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={inventoryForm.quantityPerTest}
+                      onChange={(e) => setInventoryForm((prev) => ({ ...prev, quantityPerTest: e.target.value }))}
+                      className="input-premium h-11 bg-white"
+                      placeholder="0.5"
+                      required
+                    />
+                  </label>
+
+                  <button type="submit" className="btn-primary-md min-w-[140px] justify-center">
+                    <Save size={16} />
+                    {editingInventoryRuleId ? 'Mettre à jour' : 'Enregistrer'}
+                  </button>
+                </form>
+                {editingInventoryRuleId && (
+                  <div className="mt-3 flex justify-end">
+                    <button onClick={cancelInventoryRuleEdit} type="button" className="btn-secondary-sm">
+                      Annuler l’édition
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold uppercase tracking-[0.12em] text-[var(--color-text-secondary)]">
+                    Règles actives
+                  </h4>
+                  <span className="text-xs text-[var(--color-text-soft)]">{inventoryRules.length} règle(s)</span>
+                </div>
+
+                {inventoryLoading ? (
+                  <div className="space-y-3">
+                    {Array.from({ length: 3 }).map((_, index) => (
+                      <div key={index} className="h-16 rounded-2xl border bg-[var(--color-surface-muted)] animate-pulse" />
+                    ))}
+                  </div>
+                ) : inventoryRules.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface-muted)] px-5 py-10 text-center">
+                    <div className="text-sm font-medium text-[var(--color-text)]">Aucune consommation configurée</div>
+                    <div className="mt-1 text-xs text-[var(--color-text-soft)]">
+                      Liez ici les réactifs ou consommables utilisés par ce test.
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {inventoryRules.map((rule) => (
+                      <div key={rule.id} className="rounded-2xl border bg-white px-4 py-4 shadow-[0_8px_22px_rgba(15,31,51,0.04)]">
+                        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                          <div>
+                            <div className="text-sm font-semibold text-[var(--color-text)]">{rule.item.name}</div>
+                            <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-[var(--color-text-soft)]">
+                              <span className="status-pill status-pill-info">
+                                {rule.item.kind === 'CONSUMABLE' ? 'Consommable' : 'Réactif'}
+                              </span>
+                              <span>{rule.item.category}</span>
+                              <span>Stock: {rule.item.currentStock} {rule.item.unit}</span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm font-semibold text-[var(--color-accent)]">
+                              {rule.quantityPerTest} {rule.item.unit} / analyse
+                            </span>
+                            <button
+                              onClick={() => handleInventoryRuleEdit(rule)}
+                              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-blue-200 bg-blue-50 text-[var(--color-accent)] transition-colors hover:bg-blue-100"
+                              title="Modifier"
+                            >
+                              <Pencil size={15} />
+                            </button>
+                            <button
+                              onClick={() => handleInventoryRuleDelete(rule.id)}
+                              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-rose-200 bg-rose-50 text-rose-700 transition-colors hover:bg-rose-100"
+                              title="Supprimer"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Bell, Menu, Check, X, Clock, Loader2, Users, FileText, Beaker } from 'lucide-react';
+import { Search, Bell, Menu, Check, X, Clock, Loader2, Users, FileText, Beaker, ShieldCheck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -36,7 +36,7 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
   const { toggle } = useMobileMenu();
 
   const user = session?.user;
-  const role = (user as any)?.role || 'TECHNICIEN';
+  const role = user?.role || 'TECHNICIEN';
   const roleLabel = ROLE_LABELS[role] || role;
   const initials = user?.name ? user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) : '??';
 
@@ -48,6 +48,7 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [qcSummary, setQcSummary] = useState<{ allPass: boolean; missing: number; warn: number; fail: number } | null>(null);
 
   const searchRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
@@ -112,7 +113,6 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
         const data = await res.json();
         setNotifications(data);
         setUnreadCount(data.filter((n: Notification) => !n.isRead).length);
-        console.log(data);
       }
     } catch (e) {
       console.error(e);
@@ -122,6 +122,24 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
   useEffect(() => {
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 10000); // Poll every 10 seconds
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const loadQcStatus = async () => {
+      try {
+        const res = await fetch('/api/qc/today');
+        if (res.ok) {
+          const data = await res.json();
+          setQcSummary(data);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    loadQcStatus();
+    const interval = setInterval(loadQcStatus, 300000);
     return () => clearInterval(interval);
   }, []);
 
@@ -161,26 +179,25 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-40 h-24 bg-[#F4F7FB]/90 backdrop-blur-xl border-none">
-      <div className="h-full px-4 lg:px-8 flex items-center justify-between gap-4">
-        {/* Left - Menu + Search */}
-        <div className="flex items-center gap-4 flex-1 min-w-0">
+    <header className="sticky top-0 z-40 border-b border-[var(--color-border)] bg-[var(--color-page)]/95 backdrop-blur-xl">
+      <div className="flex h-20 items-center justify-between gap-4 px-4 lg:px-6 xl:px-8">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
           <button
             onClick={() => {
               toggle();
               onMobileMenuToggle?.();
             }}
-            className="lg:hidden p-2 hover:bg-slate-100 rounded-lg transition-colors"
+            className="rounded-xl border bg-white p-2 text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-surface-muted)] lg:hidden"
           >
             <Menu className="w-5 h-5 text-slate-600" />
           </button>
 
-          <div className="flex-1 relative max-w-md" ref={searchRef}>
+          <div className="relative max-w-xl flex-1" ref={searchRef}>
             <div className="relative group">
               {isSearching ? (
-                <Loader2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-indigo-500 animate-spin" />
+                <Loader2 className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-[var(--color-accent)]" />
               ) : (
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+                <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-soft)] transition-colors group-focus-within:text-[var(--color-accent)]" />
               )}
               <input
                 ref={searchInputRef}
@@ -189,12 +206,12 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => searchQuery.length >= 2 && setShowSearchResults(true)}
                 placeholder="Rechercher patient, analyse (Ctrl+K)..."
-                className="w-full h-12 pl-12 pr-4 bg-white border-none rounded-full shadow-[0_2px_10px_rgb(0,0,0,0.02)] text-sm font-medium placeholder:text-slate-400 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none"
+                className="h-11 w-full rounded-2xl border bg-white pl-11 pr-4 text-sm font-medium text-[var(--color-text)] outline-none transition-all placeholder:text-[var(--color-text-soft)] focus:border-[var(--color-accent)] focus:ring-4 focus:ring-blue-500/10"
               />
             </div>
 
             {showSearchResults && searchResults.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-lg shadow-lg z-50">
+              <div className="absolute left-0 right-0 top-full z-50 mt-2 rounded-2xl border bg-white shadow-xl">
                 <div className="max-h-[420px] overflow-y-auto">
                   {searchResults.map((result) => (
                     <button
@@ -206,17 +223,17 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
                         setShowSearchResults(false);
                         setSearchQuery('');
                       }}
-                      className="w-full px-4 py-3 text-left hover:bg-indigo-50 border-b border-slate-100 last:border-b-0 transition-colors flex items-start gap-3"
+                      className="flex w-full items-start gap-3 border-b px-4 py-3 text-left transition-colors last:border-b-0 hover:bg-[var(--color-accent-soft)]/50"
                     >
-                      <div className="flex-shrink-0 text-slate-400 mt-0.5">
+                      <div className="mt-0.5 flex-shrink-0 text-[var(--color-text-soft)]">
                         {getIconByType(result.type)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-slate-900 truncate">
+                        <div className="truncate text-sm font-medium text-[var(--color-text)]">
                           {result.title}
                         </div>
                         {result.description && (
-                          <div className="text-xs text-slate-500 truncate">
+                          <div className="truncate text-xs text-[var(--color-text-soft)]">
                             {result.description}
                           </div>
                         )}
@@ -229,28 +246,62 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
           </div>
         </div>
 
-        {/* Right - Notifications and User */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={() => router.push('/dashboard/qc')}
+            title={
+              !qcSummary
+                ? 'Chargement du contrôle qualité'
+                : qcSummary.allPass && qcSummary.missing === 0
+                  ? 'Tous les contrôles sont conformes'
+                  : qcSummary.fail > 0
+                    ? `${qcSummary.fail} contrôle(s) en échec`
+                    : qcSummary.missing > 0
+                      ? `${qcSummary.missing} contrôle(s) non effectué(s) aujourd'hui`
+                      : `${qcSummary.warn} contrôle(s) en avertissement`
+            }
+            className={`hidden rounded-2xl border px-3 py-2 text-sm font-semibold transition-colors md:inline-flex md:items-center md:gap-2 ${
+              !qcSummary || (qcSummary.allPass && qcSummary.missing === 0)
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                : qcSummary.fail > 0
+                  ? 'bg-rose-50 text-rose-700 border-rose-200'
+                  : 'bg-amber-50 text-amber-700 border-amber-200'
+            }`}
+          >
+            <ShieldCheck className="h-4 w-4" />
+            <span>
+              {!qcSummary
+                ? 'QC...'
+                : qcSummary.fail > 0
+                  ? `QC ${qcSummary.fail} échec(s)`
+                  : qcSummary.missing > 0
+                    ? `QC ${qcSummary.missing} manquant(s)`
+                    : qcSummary.warn > 0
+                      ? `QC ${qcSummary.warn} avert.`
+                      : 'QC conforme'}
+            </span>
+          </button>
+
           <div className="relative" ref={notifRef}>
             <button
               onClick={() => setShowNotifications(!showNotifications)}
-              className="relative p-3 bg-white rounded-full shadow-[0_2px_10px_rgb(0,0,0,0.02)] hover:shadow-md transition-all group"
+              className="group relative rounded-2xl border bg-white p-2.5 transition-colors hover:bg-[var(--color-surface-muted)]"
             >
-              <Bell className="w-5 h-5 text-slate-500 group-hover:text-indigo-500 transition-colors" />
+              <Bell className="h-[18px] w-[18px] text-[var(--color-text-soft)] transition-colors group-hover:text-[var(--color-accent)]" />
               {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 border-2 border-white">
+                <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-white bg-rose-500 px-1 text-[10px] font-bold text-white">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
             </button>
 
             {showNotifications && (
-              <div className="absolute right-0 top-full mt-2 w-96 bg-white border border-slate-200 rounded-lg shadow-lg z-50">
-                <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-                  <h3 className="text-sm font-bold text-slate-900">Notifications</h3>
+              <div className="absolute right-0 top-full z-50 mt-2 w-96 rounded-2xl border bg-white shadow-xl">
+                <div className="flex items-center justify-between border-b px-4 py-3">
+                  <h3 className="text-sm font-semibold text-[var(--color-text)]">Notifications</h3>
                   <div className="flex items-center gap-2">
                     {unreadCount > 0 && (
-                      <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full">
+                      <span className="rounded-full bg-[var(--color-accent-soft)] px-2.5 py-1 text-xs font-medium text-[var(--color-accent)]">
                         {unreadCount} nouveau{unreadCount > 1 ? 'x' : ''}
                       </span>
                     )}
@@ -261,45 +312,45 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
                           setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
                           setUnreadCount(0);
                         }}
-                        className="text-xs text-slate-400 hover:text-indigo-600 transition-colors font-medium"
+                        className="text-xs font-medium text-[var(--color-text-soft)] transition-colors hover:text-[var(--color-accent)]"
                       >
                         Tout lu
                       </button>
                     )}
                   </div>
                 </div>
-                <div className="max-h-[420px] overflow-y-auto divide-y divide-slate-100">
+                <div className="max-h-[420px] divide-y overflow-y-auto">
                   {notifications.length > 0 ? (
                     notifications.map((notif) => (
                       <button
                         key={notif.id}
                         onClick={() => handleNotificationClick(notif.id)}
-                        className={`w-full px-4 py-3 text-left hover:bg-slate-50 transition-colors flex items-start gap-3 ${
-                          !notif.isRead ? 'bg-indigo-50/30' : ''
+                        className={`flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-[var(--color-surface-muted)] ${
+                          !notif.isRead ? 'bg-[var(--color-accent-soft)]/35' : ''
                         }`}
                       >
                         <div className="flex-shrink-0 mt-0.5">
                           {getNotificationIcon(notif.type)}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium text-slate-900">
+                          <div className="text-sm font-medium text-[var(--color-text)]">
                             {notif.title}
                           </div>
-                          <div className="text-xs text-slate-500">
+                          <div className="text-xs text-[var(--color-text-secondary)]">
                             {notif.message}
                           </div>
-                          <div className="text-[10px] text-slate-400 mt-1 flex items-center gap-1">
+                          <div className="mt-1 flex items-center gap-1 text-[10px] text-[var(--color-text-soft)]">
                             <Clock className="w-3 h-3" />
                             {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true, locale: fr })}
                           </div>
                         </div>
                         {!notif.isRead && (
-                          <div className="flex-shrink-0 w-2 h-2 bg-indigo-600 rounded-full mt-2" />
+                          <div className="mt-2 h-2 w-2 flex-shrink-0 rounded-full bg-[var(--color-accent)]" />
                         )}
                       </button>
                     ))
                   ) : (
-                    <div className="px-4 py-8 text-center text-sm text-slate-500">
+                    <div className="px-4 py-8 text-center text-sm text-[var(--color-text-soft)]">
                       Aucune notification
                     </div>
                   )}
@@ -308,12 +359,12 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
             )}
           </div>
 
-          <div className="flex items-center gap-3 pl-2 group">
-            <div className="text-right hidden sm:flex flex-col">
-              <div className="text-xs font-bold text-slate-900">{user?.name || 'Utilisateur'}</div>
-              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{roleLabel}</div>
+          <div className="group flex items-center gap-2.5 rounded-2xl border bg-white px-2.5 py-1.5">
+            <div className="hidden text-right sm:flex sm:flex-col">
+              <div className="text-xs font-semibold text-[var(--color-text)]">{user?.name || 'Utilisateur'}</div>
+              <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--color-text-soft)]">{roleLabel}</div>
             </div>
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 border border-indigo-400/30 flex items-center justify-center text-white text-sm font-black cursor-pointer shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 hover:brightness-110 transition-all hover:-translate-y-0.5" title={user?.email || ''}>
+            <div className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border border-blue-700/20 bg-[var(--color-accent)] text-xs font-black text-white shadow-[0_8px_18px_rgba(31,111,235,0.35)] transition-all group-hover:brightness-105" title={user?.email || ''}>
               {initials}
             </div>
           </div>

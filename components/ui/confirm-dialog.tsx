@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, Trash2, CheckCircle2 } from 'lucide-react';
+import { AlertCircle, Trash2 } from 'lucide-react';
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -37,38 +37,38 @@ export function ConfirmDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
-        className="sm:max-w-[480px] bg-white border border-slate-100 shadow-2xl rounded-3xl p-8"
+        className="sm:max-w-[460px] rounded-3xl border border-[var(--color-border)] bg-white p-6 shadow-[0_18px_50px_rgba(15,31,51,0.18)] sm:p-7"
         showCloseButton={false}
       >
         <DialogHeader className="mb-2">
           <div className="flex items-start gap-4">
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${
+            <div className={`w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 ${
               isDestructive 
                 ? 'bg-rose-50' 
-                : 'bg-indigo-50'
+                : 'bg-[var(--color-accent-soft)]'
             }`}>
               {isDestructive ? (
                 <Trash2 className={`w-6 h-6 ${isDestructive ? 'text-rose-600' : 'text-indigo-600'}`} />
               ) : (
-                <AlertCircle className={`w-6 h-6 ${isDestructive ? 'text-rose-600' : 'text-indigo-600'}`} />
+                <AlertCircle className={`w-6 h-6 ${isDestructive ? 'text-rose-600' : 'text-[var(--color-accent)]'}`} />
               )}
             </div>
             <div className="flex-1">
-              <DialogTitle className="text-2xl font-black text-slate-900 tracking-tight text-left">
+              <DialogTitle className="text-xl font-semibold text-[var(--color-text)] tracking-tight text-left">
                 {title}
               </DialogTitle>
             </div>
           </div>
-          <DialogDescription className="text-slate-600 font-medium pt-4 text-left leading-relaxed">
+          <DialogDescription className="pt-4 text-left leading-relaxed text-[var(--color-text-secondary)]">
             {description}
           </DialogDescription>
         </DialogHeader>
         
-        <DialogFooter className="mt-8 gap-3 sm:gap-3 flex-row justify-end pt-4 border-t border-slate-100">
+        <DialogFooter className="mt-7 flex-row justify-end gap-3 border-t border-[var(--color-border)] pt-4 sm:gap-3">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="rounded-xl font-bold px-6 py-2.5 h-auto text-slate-700 hover:bg-slate-50 border-slate-200 transition-all active:scale-95"
+            className="h-11 rounded-2xl border-[var(--color-border)] px-5 text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-muted)] transition-all active:scale-[0.99]"
           >
             {cancelLabel}
           </Button>
@@ -77,10 +77,10 @@ export function ConfirmDialog({
               onConfirm();
               onOpenChange(false);
             }}
-            className={`rounded-xl font-bold px-6 py-2.5 h-auto transition-all active:scale-95 ${
+            className={`h-11 rounded-2xl px-5 font-medium transition-all active:scale-[0.99] ${
               isDestructive 
-                ? 'bg-rose-600 hover:bg-rose-700 text-white shadow-lg shadow-rose-200' 
-                : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200'
+                ? 'bg-rose-600 hover:bg-rose-700 text-white' 
+                : 'bg-[var(--color-accent)] hover:brightness-95 text-white'
             }`}
           >
             {confirmLabel}

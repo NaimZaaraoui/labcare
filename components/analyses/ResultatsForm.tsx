@@ -6,22 +6,21 @@ import { useSession } from 'next-auth/react';
 import { 
   Save, Printer, CheckCircle, 
   Activity, ArrowLeft, Beaker, 
-  Droplets, Microscope, Sparkles, AlertCircle,
+  Microscope, Sparkles, AlertCircle,
   ChevronRight, History, Calculator, MessageSquare, Mail,
-  PencilLine, MessageCircle,
+  PencilLine, 
   NotepadTextIcon
 } from 'lucide-react';
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
 import { getTestReferenceValues, formatReferenceRange } from '@/lib/utils';
 import { useReactToPrint } from 'react-to-print';
 import { RapportImpression } from '@/components/print/RapportImpression';
 import { FactureImpression } from '@/components/print/FactureImpression';
-import { Analysis, Result } from '@/lib/types';
+import { Analysis, Result, Test } from '@/lib/types';
 import { ReceiptText } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { NotificationToast } from '@/components/ui/notification-toast';
+import { getCategoryIcon } from '@/lib/category-icons';
 import {
   Dialog,
   DialogContent,
@@ -35,6 +34,23 @@ import { getHematologyInterpretations } from '@/lib/interpretations';
 
 interface ResultatsFormProps {
   analysisId: string;
+}
+
+interface AvailableTestOption {
+  id: string;
+  code: string;
+  name: string;
+}
+
+interface AnalysisQcReadiness {
+  ready: boolean;
+  blockers: Array<{
+    materialName: string;
+    lotNumber: string;
+    status: 'missing' | 'fail';
+    tests: string[];
+  }>;
+  relevantLots: number;
 }
 
 const NFS_SORT_ORDER = [
@@ -65,6 +81,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
   const [saving, setSaving] = useState(false);
   const [validating, setValidating] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [qcReadiness, setQcReadiness] = useState<AnalysisQcReadiness | null>(null);
   const [results, setResults] = useState<Record<string, string>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [draftNotes, setDraftNotes] = useState<Record<string, string>>({});
@@ -76,7 +93,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
   const [diatronPreview, setDiatronPreview] = useState<{ index: number; sampleId: string; date: string; time: string }[] | null>(null);
   const [lastFileContent, setLastFileContent] = useState<string | null>(null);
   const [sendingEmail, setSendingEmail] = useState(false);
-  const [availableTests, setAvailableTests] = useState<any[]>([]);
+  const [availableTests, setAvailableTests] = useState<AvailableTestOption[]>([]);
   const [testSearch, setTestSearch] = useState('');
   const [selectedTestIds, setSelectedTestIds] = useState<string[]>([]);
   const [savingMeta, setSavingMeta] = useState(false);
@@ -147,13 +164,10 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
     }
   };
 
-  useEffect(() => {
-    loadAnalysis();
-    loadTests();
-    loadSettings();
-  }, [analysisId]);
+  const getErrorMessage = (error: unknown) =>
+    error instanceof Error ? error.message : 'Erreur inconnue';
 
-  const loadSettings = async () => {
+  const loadSettings = useCallback(async () => {
     try {
       const res = await fetch('/api/settings');
       if (res.ok) {
@@ -163,9 +177,21 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
     } catch (e) {
       console.error('Erreur chargement paramètres impression', e);
     }
-  };
+  }, []);
 
-  const loadAnalysis = async () => {
+  const loadHistory = useCallback(async (patientId: string, testId: string, resultId: string) => {
+    try {
+      const response = await fetch(`/api/results/history?patientId=${patientId}&testId=${testId}&currentAnalysisId=${analysisId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setHistory(prev => ({ ...prev, [resultId]: data }));
+      }
+    } catch (e) {
+      console.error('History fetch error', e);
+    }
+  }, [analysisId]);
+
+  const loadAnalysis = useCallback(async () => {
     try {
       const response = await fetch(`/api/analyses/${analysisId}`);
       if (!response.ok) throw new Error('Analyse non trouvée');
@@ -199,30 +225,51 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [analysisId, loadHistory]);
 
-  const loadTests = async () => {
+  const loadTests = useCallback(async () => {
     try {
       const response = await fetch('/api/tests');
       if (!response.ok) return;
       const data = await response.json();
-      setAvailableTests(Array.isArray(data) ? data : []);
+      if (!Array.isArray(data)) {
+        setAvailableTests([]);
+        return;
+      }
+      const normalized = data
+        .filter((item): item is { id: string; code?: string; name?: string } => Boolean(item?.id))
+        .map((item) => ({
+          id: item.id,
+          code: item.code ?? '',
+          name: item.name ?? '',
+        }));
+      setAvailableTests(normalized);
     } catch (error) {
       console.error('Erreur chargement tests', error);
     }
-  };
+  }, []);
 
-  const loadHistory = async (patientId: string, testId: string, resultId: string) => {
+  const loadQcReadiness = useCallback(async () => {
     try {
-      const response = await fetch(`/api/results/history?patientId=${patientId}&testId=${testId}&currentAnalysisId=${analysisId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setHistory(prev => ({ ...prev, [resultId]: data }));
+      const response = await fetch(`/api/analyses/${analysisId}/qc-readiness`, { cache: 'no-store' });
+      if (!response.ok) {
+        setQcReadiness(null);
+        return;
       }
-    } catch (e) {
-      console.error('History fetch error', e);
+      const data = await response.json();
+      setQcReadiness(data);
+    } catch (error) {
+      console.error('Erreur chargement statut QC analyse', error);
+      setQcReadiness(null);
     }
-  };
+  }, [analysisId]);
+
+  useEffect(() => {
+    loadAnalysis();
+    loadTests();
+    loadSettings();
+    loadQcReadiness();
+  }, [loadAnalysis, loadSettings, loadTests, loadQcReadiness]);
 
   const handleResultChange = (resultId: string, value: string) => {
     setResults(prev => {
@@ -299,7 +346,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
   }
 };
 
-  const isAbnormal = (value: string, test: any) => {
+  const isAbnormal = (value: string, test: Test) => {
     if (!value) return false;
     const refVals = getTestReferenceValues(test, analysis?.patientGender);
     const min = refVals?.min ?? test.minValue;
@@ -443,7 +490,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
     if (!analysis) return;
     if (type === 'tech') {
       const tc = analysis.results.filter((r: Result) => !r.test?.isGroup).length;
-      const cc = analysis.results.filter((r: Result) => !r.test?.isGroup && (results[r.id] as any) && (results[r.id] as any) !== '').length;
+      const cc = analysis.results.filter((r: Result) => !r.test?.isGroup && Boolean(results[r.id]) && results[r.id] !== '').length;
       if (tc === 0 || cc < tc) {
         setValidationError('Saisissez tous les résultats et sauvegardez avant la validation technique.');
         showNotification('error', 'Saisissez tous les résultats et sauvegardez avant la validation technique.');
@@ -464,6 +511,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
         return;
       }
       await loadAnalysis();
+      await loadQcReadiness();
       showNotification('success', type === 'tech'
         ? 'Validation technique enregistrée'
         : 'Résultats libérés — validation biologique enregistrée');
@@ -477,6 +525,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
   const handlePrint = useReactToPrint({
     contentRef: printRef,
     documentTitle: `Rapport_${analysis?.orderNumber}`,
+    pageStyle: `@page {size: A4 landscape; margin: 12mm 10mm; } body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }`,
     onAfterPrint: async () => {
       try {
         await fetch(`/api/analyses/${analysisId}`, {
@@ -513,17 +562,14 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
       }
 
       showNotification('success', `Email envoyé avec succès à ${recipientEmail}`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Email error:', error);
-      showNotification('error', error.message || 'Échec de l\'envoi de l\'email');
+      showNotification('error', getErrorMessage(error) || 'Échec de l\'envoi de l\'email');
     } finally {
       setSendingEmail(false);
     }
   };
 
-  const handleWhatsApp = () => {
-    showNotification('success', 'Fonction WhatsApp à venir.');
-  };
 
   const handleDiatronFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -552,9 +598,9 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
         showNotification('success', data.message || 'Importation réussie');
         await loadAnalysis();
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      showNotification('error', error.message);
+      showNotification('error', getErrorMessage(error));
     } finally {
       setIsImporting(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -581,9 +627,9 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
       const data = await res.json();
       showNotification('success', data.message || 'Importation réussie');
       await loadAnalysis();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      showNotification('error', error.message);
+      showNotification('error', getErrorMessage(error));
     } finally {
       setIsImporting(false);
     }
@@ -600,7 +646,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
 
   const totalCount = analysis.results.filter((r: Result) => !r.test?.isGroup).length;
   const completedCount = analysis.results.filter((r: Result) => {
-    return !r.test?.isGroup && (results[r.id] as any) && (results[r.id] as any) !== '';
+    return !r.test?.isGroup && Boolean(results[r.id]) && results[r.id] !== '';
   }).length;
   const abnormalCount = analysis.results.filter((r: Result) => {
     const val = results[r.id];
@@ -610,12 +656,12 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
     return (refVals.min !== null || refVals.max !== null) && isAbnormal(val, test);
   }).length;
   const isFinalValidated = analysis.status === 'validated_bio' || analysis.status === 'completed';
-  const role = (session?.data?.user as any)?.role || '';
+  const role = session?.data?.user?.role || '';
   const canTech = ['TECHNICIEN', 'ADMIN'].includes(role);
   const canBio = ['MEDECIN', 'ADMIN'].includes(role);
   const hasNFS = analysis.results.some((r: Result) => r.test && NFS_SORT_ORDER.includes(r.test.code));
 
-    const sortResults = (results: Result[]) => {
+    const sortResults = (results: Result[]): (Result & { renderCategory?: string })[] => {
       const sorted: (Result & { renderCategory?: string })[] = [];
       const visited = new Set<string>();
 
@@ -636,9 +682,8 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
       const categoriesMeta: Record<string, { rank: number, name: string }> = {};
 
       results.forEach(res => {
-        // @ts-ignore - relation populated via API
         const catRel = res.test?.categoryRel;
-        const catName = catRel?.name || res.test?.category || "Divers";
+        const catName = catRel?.name || "Divers";
         const catRank = catRel?.rank ?? 999;
         
         if (!categoryGroups[catName]) {
@@ -668,7 +713,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
       
       results.forEach(r => {
         if (!visited.has(r.testId)) {
-          sorted.push({ ...r, renderCategory: r.test?.category || 'Divers' });
+          sorted.push({ ...r, renderCategory: r.test?.categoryRel?.name || 'Divers' });
           visited.add(r.testId);
         }
       });
@@ -679,30 +724,30 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
   const sortedResults = sortResults(analysis.results);
 
   const progressPct = Math.round((completedCount / totalCount) * 100);
+  const hasQcBlockers = Boolean(qcReadiness && !qcReadiness.ready && qcReadiness.blockers.length > 0);
 
   return (
     <>
-      <div className="animate-fade-in flex flex-col gap-6 pb-20">
+      <div className="flex flex-col gap-5 pb-16">
 
       {/* ─── Header Panel ─── */}
-      <div className="bento-panel p-8">
+      <div className="rounded-3xl border bg-white p-5 shadow-[0_10px_30px_rgba(15,31,51,0.06)] lg:p-6">
         <div className="flex flex-col items-start gap-6">
-          <div className="flex items-center gap-4">
+          <div className="flex items-start gap-3">
             <button 
               onClick={() => router.push('/analyses')}
-              className="btn-secondary w-10 h-10 !p-0 shrink-0"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border bg-[var(--color-surface-muted)] text-[var(--color-text-secondary)] transition-colors hover:bg-slate-100"
             >
               <ArrowLeft size={18} />
             </button>
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="status-pill bg-indigo-50 text-indigo-600">N° {analysis.orderNumber}</span>
-                <span className="text-slate-300 text-xs">•</span>
-                <span className="text-slate-400 text-sm font-medium">{format(new Date(analysis.creationDate), 'dd MMMM yyyy', { locale: fr })}</span>
+                <span className="status-pill border border-blue-200/70 bg-blue-50 text-blue-700">N° {analysis.orderNumber}</span>
+                <span className="text-xs text-[var(--color-text-soft)]">{format(new Date(analysis.creationDate), 'dd MMMM yyyy', { locale: fr })}</span>
               </div>
-              <h1 className={`text-2xl font-bold text-slate-800 tracking-tight ${!analysis.patientFirstName && !analysis.patientLastName ? 'text-slate-400 italic' : ''}`}>
+              <h1 className={`text-xl font-semibold tracking-tight text-[var(--color-text)] ${!analysis.patientFirstName && !analysis.patientLastName ? 'italic text-[var(--color-text-soft)]' : ''}`}>
                 {(analysis.patientFirstName || analysis.patientLastName) ? (
-                   <>{analysis.patientFirstName} <span className="text-indigo-600">{analysis.patientLastName}</span></>
+                   <>{analysis.patientFirstName} <span className="text-[var(--color-accent)]">{analysis.patientLastName}</span></>
                 ) : 'Patient Sans Nom'}
               </h1>
               {analysis.validatedTechAt && (
@@ -721,27 +766,61 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
           </div>
 
           {validationError && (
-            <div className="w-full px-3 py-2 rounded-xl bg-rose-50 text-rose-600 text-sm font-medium">
+            <div className="w-full rounded-xl border border-rose-200/70 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
               {validationError}
             </div>
           )}
 
-          <div className="flex gap-3 flex-wrap items-center">
+          {analysis.status === 'in_progress' && qcReadiness && qcReadiness.relevantLots > 0 && (
+            <div className={`w-full rounded-2xl border px-4 py-3 text-sm ${
+              hasQcBlockers
+                ? 'border-amber-200 bg-amber-50 text-amber-900'
+                : 'border-emerald-200 bg-emerald-50 text-emerald-900'
+            }`}>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="font-semibold">
+                    {hasQcBlockers ? 'QC requis non conforme avant validation technique' : 'QC requis conforme pour cette analyse'}
+                  </div>
+                  <div className="mt-1 text-xs opacity-80">
+                    {qcReadiness.relevantLots} lot{qcReadiness.relevantLots > 1 ? 's' : ''} QC lié{qcReadiness.relevantLots > 1 ? 's' : ''} aux tests de cette analyse.
+                  </div>
+                </div>
+                <span className={`status-pill ${hasQcBlockers ? 'status-pill-warning' : 'status-pill-success'}`}>
+                  {hasQcBlockers ? `${qcReadiness.blockers.length} blocage(s)` : 'Prêt'}
+                </span>
+              </div>
+              {hasQcBlockers && (
+                <div className="mt-3 space-y-2 text-xs">
+                  {qcReadiness.blockers.map((blocker, index) => (
+                    <div key={`${blocker.materialName}-${blocker.lotNumber}-${index}`} className="rounded-xl border border-amber-200/70 bg-white/70 px-3 py-2">
+                      <span className="font-semibold">{blocker.materialName}</span>
+                      <span> · lot {blocker.lotNumber} · </span>
+                      <span>{blocker.status === 'fail' ? 'QC en échec' : 'QC manquant aujourd’hui'}</span>
+                      <div className="mt-1 opacity-80">Tests concernés: {blocker.tests.join(', ')}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="flex flex-wrap items-center gap-3">
             {!isFinalValidated ? (
                <>
                 <button onClick={() => setEditDialogOpen(true)} className="btn-secondary h-10">
                   <PencilLine size={16} /> Modifier dossier
                 </button>
 
-                <div className="flex flex-wrap items-center gap-4 bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
+                <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-3">
                   {/* Workflow Step 1: Technical */}
                   <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${analysis.status !== 'pending' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-200 text-slate-500'}`}>1</div>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold ${analysis.status !== 'pending' ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-500'}`}>1</div>
                     <div className="flex flex-col">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Validation Technique</span>
+                      <span className="section-label leading-none mb-1">Validation Technique</span>
                       {analysis.status === 'validated_tech' || analysis.status === 'validated_bio' || analysis.status === 'completed' ? (
                         <div className="flex flex-col">
-                           <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
+                           <span className="text-xs font-semibold text-emerald-600 flex items-center gap-1">
                              <CheckCircle size={12} /> Validée le {analysis.validatedTechAt ? format(new Date(analysis.validatedTechAt), 'dd/MM HH:mm') : ''}
                            </span>
                            <span className="text-[10px] text-slate-500 font-medium leading-none mt-0.5">Par {analysis.validatedTechName || 'Technicien'}</span>
@@ -749,7 +828,12 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                       ) : (
                         <div className="flex items-center gap-2">
                           {canTech && analysis.status === 'in_progress' ? (
-                            <button onClick={() => handleValidation('tech')} disabled={validating} className="btn-primary !h-7 !px-3 !text-[10px] shadow-indigo-500/20">
+                            <button
+                              onClick={() => handleValidation('tech')}
+                              disabled={validating || hasQcBlockers}
+                              className="btn-primary-sm !h-7 !px-3 !text-[10px] disabled:cursor-not-allowed disabled:opacity-50"
+                              title={hasQcBlockers ? 'Validation bloquée: QC requis manquant ou en échec' : undefined}
+                            >
                               Valider
                             </button>
                           ) : (
@@ -766,12 +850,12 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
 
                   {/* Workflow Step 2: Biological */}
                   <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${analysis.status === 'validated_tech' ? 'bg-indigo-600 text-white shadow-sm' : isFinalValidated ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-500'}`}>2</div>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold ${analysis.status === 'validated_tech' ? 'bg-indigo-600 text-white' : isFinalValidated ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-500'}`}>2</div>
                     <div className="flex flex-col">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Validation Biologique</span>
+                      <span className="section-label leading-none mb-1">Validation Biologique</span>
                       {isFinalValidated ? (
                          <div className="flex flex-col">
-                            <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
+                            <span className="text-xs font-semibold text-emerald-600 flex items-center gap-1">
                               <CheckCircle size={12} /> Signée le {analysis.validatedBioAt ? format(new Date(analysis.validatedBioAt), 'dd/MM HH:mm') : ''}
                             </span>
                             <span className="text-[10px] text-slate-500 font-medium leading-none mt-0.5">Par {analysis.validatedBioName || 'Biologiste'}</span>
@@ -779,7 +863,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                       ) : (
                         <div className="flex items-center gap-2">
                           {canBio && analysis.status === 'validated_tech' ? (
-                            <button onClick={() => handleValidation('bio')} disabled={validating} className="h-7 px-3 rounded-lg bg-emerald-500 text-white font-bold text-[10px] hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-500/20">
+                            <button onClick={() => handleValidation('bio')} disabled={validating} className="h-7 rounded-lg bg-emerald-600 px-3 text-[10px] font-medium text-white transition-colors hover:bg-emerald-700">
                               Signer
                             </button>
                           ) : (
@@ -793,7 +877,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                   </div>
                 </div>
 
-                <div className="flex gap-2 ml-auto">
+                <div className="ml-auto flex gap-2">
                   <button onClick={handlePrintInvoice} className="btn-secondary h-10 px-4">
                     <ReceiptText size={16} /> Facture
                   </button>
@@ -807,7 +891,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                </>
                ) : (
                  <>
-                  <div className="flex items-center gap-3 bg-emerald-50 p-2.5 rounded-2xl border border-emerald-100">
+                  <div className="flex items-center gap-3 rounded-2xl border border-emerald-200/70 bg-emerald-50 p-2.5">
                     <div className="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-lg shadow-emerald-500/20">
                        <CheckCircle size={20} />
                     </div>
@@ -821,20 +905,17 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                     </div>
                   </div>
 
-                  <div className="flex gap-2 ml-auto">
+                  <div className="ml-auto flex gap-2">
                     <button onClick={handlePrintInvoice} className="btn-secondary h-10 px-4">
                       <ReceiptText size={16} /> Facture
-                    </button>
-                    <button onClick={handleWhatsApp} className="btn-secondary h-10">
-                      <MessageCircle size={16} /> WhatsApp
                     </button>
                     <button onClick={handleSendEmail} disabled={sendingEmail} className="btn-secondary h-10">
                       <Mail size={16} className={sendingEmail ? 'animate-pulse' : ''} /> Email
                     </button>
-                    <button onClick={handlePrint} className="btn-primary h-10 !bg-emerald-500 hover:!bg-emerald-600 shadow-emerald-500/20 shadow-lg">
-                        <Printer size={16} /> Impression Finale
-                    </button>
-                  </div>
+                  <button onClick={handlePrint} className="btn-primary h-10 !bg-emerald-500 hover:!bg-emerald-600">
+                      <Printer size={16} /> Impression Finale
+                  </button>
+                </div>
                  </>
                )}
           </div>
@@ -851,16 +932,16 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
         </div>
 
         {/* Metadata Row */}
-        <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-6 border-t border-slate-100 pt-6">
-           <div>
+        <div className="mt-6 grid grid-cols-1 gap-3 border-t pt-6 sm:grid-cols-2 xl:grid-cols-4">
+           <div className="rounded-2xl border bg-[var(--color-surface-muted)] p-3">
               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">ID Paillasse</div>
               <div className="font-mono font-bold text-lg text-slate-800">{analysis.dailyId}</div>
            </div>
-           <div>
+           <div className="rounded-2xl border bg-[var(--color-surface-muted)] p-3">
               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Âge / Sexe</div>
               <div className="font-bold text-lg text-slate-800">{analysis.patientAge || '?'} ans • {analysis.patientGender}</div>
            </div>
-           <div>
+           <div className="rounded-2xl border bg-[var(--color-surface-muted)] p-3">
               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Progression</div>
               <div className="flex items-center gap-3">
                 <span className={`font-bold text-lg ${progressPct === 100 ? 'text-emerald-600' : 'text-indigo-600'}`}>{progressPct}%</span>
@@ -869,19 +950,19 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                 </div>
               </div>
            </div>
-           <div>
+           <div className="rounded-2xl border bg-[var(--color-surface-muted)] p-3">
               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Anomalies</div>
               <div className={`font-bold text-lg ${abnormalCount > 0 ? 'text-rose-500' : 'text-emerald-600'}`}>
                  {abnormalCount} Détectée{abnormalCount > 1 ? 's' : ''}
               </div>
            </div>
         </div>
-        <div className="mt-6 border-t border-slate-100 pt-6 space-y-2">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Note globale du rapport</span>
+        <div className="mt-6 border-t border-[var(--color-border)] pt-6 space-y-3">
+          <span className="section-label">Note globale du rapport</span>
           {isFinalValidated ? (
-            <div className="bg-slate-50 rounded-2xl px-4 py-3 min-h-[56px]">
+            <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-4 py-3 min-h-[56px]">
               {globalNote ? (
-                <p className="text-sm text-slate-700 whitespace-pre-wrap">
+                <p className="text-sm text-[var(--color-text-secondary)] whitespace-pre-wrap">
                   {globalNote}
                 </p>
               ) : (
@@ -894,7 +975,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                 <select
                   value={globalNotePlacement}
                   onChange={(e) => setGlobalNotePlacement(e.target.value as 'all' | 'first' | 'last')}
-                  className="input-premium h-9 text-xs w-[220px]"
+                  className="input-premium h-10 text-xs w-[240px]"
                 >
                   <option value="all">Afficher sur toutes les pages</option>
                   <option value="first">Afficher sur la 1ère page</option>
@@ -905,10 +986,10 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                 value={globalNote}
                 onChange={(e) => setGlobalNote(e.target.value)}
                 placeholder="Ajouter une note globale (conclusion, recommandation, commentaire général)..."
-                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none resize-none min-h-[84px]"
+                className="input-premium min-h-[96px] w-full resize-none p-3 text-sm bg-white"
               />
               <div className="flex justify-end">
-                <button onClick={saveGlobalNote} disabled={saveGlobalNoteBusy} className="btn-secondary h-9 disabled:opacity-60 disabled:cursor-not-allowed">
+                <button onClick={saveGlobalNote} disabled={saveGlobalNoteBusy} className="btn-secondary-sm disabled:opacity-60 disabled:cursor-not-allowed">
                   <Save size={14} /> {saveGlobalNoteBusy ? 'Enregistrement...' : 'Enregistrer la note'}
                 </button>
               </div>
@@ -918,23 +999,23 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
       </div>
 
       {/* ─── Results Panel ─── */}
-      <div className="bento-panel p-6">
+      <div className="rounded-3xl border bg-white p-5 shadow-[0_10px_30px_rgba(15,31,51,0.06)] lg:p-6">
          {/* Toolbar */}
          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
             <div className="flex items-center gap-3">
-               <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
                   <Activity size={16} />
                </div>
-               <h2 className="text-lg font-bold text-slate-800">Résultats des Tests</h2>
+               <h2 className="text-lg font-semibold text-[var(--color-text)]">Résultats des tests</h2>
             </div>
             
             <div className="flex items-center gap-3 flex-wrap">
                {/* Tabs */}
-               <div className="flex bg-slate-50 border border-slate-100 p-1 rounded-xl gap-1">
-                  <button onClick={() => setActiveTab('all')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'all' ? 'bg-white shadow-sm text-indigo-600 border border-slate-100' : 'text-slate-500 hover:text-slate-700'}`}>Tous ({totalCount})</button>
-                  <button onClick={() => setActiveTab('urgent')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'urgent' ? 'bg-rose-500 text-white shadow-sm' : 'text-slate-500 hover:text-rose-500'}`}>Anomalies ({abnormalCount})</button>
+               <div className="flex gap-1 rounded-xl border bg-[var(--color-surface-muted)] p-1">
+                  <button onClick={() => setActiveTab('all')} className={`rounded-lg px-4 py-2 text-xs font-semibold transition-all ${activeTab === 'all' ? 'border bg-white text-[var(--color-accent)]' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'}`}>Tous ({totalCount})</button>
+                  <button onClick={() => setActiveTab('urgent')} className={`rounded-lg px-4 py-2 text-xs font-semibold transition-all ${activeTab === 'urgent' ? 'bg-rose-600 text-white' : 'text-[var(--color-text-secondary)] hover:text-rose-700'}`}>Anomalies ({abnormalCount})</button>
                   {analysis.histogramData && (
-                     <button onClick={() => setActiveTab('charts')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'charts' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-indigo-600'}`}>Graphiques</button>
+                     <button onClick={() => setActiveTab('charts')} className={`rounded-lg px-4 py-2 text-xs font-semibold transition-all ${activeTab === 'charts' ? 'bg-[var(--color-accent)] text-white' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-accent)]'}`}>Graphiques</button>
                   )}
                </div>
                
@@ -1014,8 +1095,8 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                           })()}
                         </div>
                       );
-                    } catch (e) {
-                      return <div className="p-8 text-center text-slate-400">Erreur lors de l'affichage des graphiques.</div>;
+                    } catch {
+                      return <div className="p-8 text-center text-slate-400">Erreur lors de l&apos;affichage des graphiques.</div>;
                     }
                  })()}
 
@@ -1026,8 +1107,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                      const test = result.test;
                      if (!test) return null;
 
-                     const resWithCat = result as any;
-                     const renderCategory = resWithCat.renderCategory || test.category || 'Divers';
+                      const renderCategory = result.renderCategory || test.categoryRel?.name || 'Divers';
                      const showCategoryHeader = renderCategory !== currentCategory;
                      
                      let categoryHeader = null;
@@ -1036,9 +1116,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                        categoryHeader = (
                          <div key={`cat-${renderCategory}`} className="flex items-center gap-3 pt-6 pb-3 mt-4 first:mt-0 first:pt-0">
                             <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                              {renderCategory === 'HEMA' || renderCategory === 'Hématologie' ? 'Hématologie' : 
-                               renderCategory === 'BIO' || renderCategory === 'Biochimie' ? 'Biochimie' : 
-                               renderCategory === 'NFS' ? 'NFS' : renderCategory}
+                              {renderCategory}
                             </h3>
                             <div className="h-px flex-1 bg-slate-100" />
                          </div>
@@ -1051,6 +1129,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                     const isGroup = test.isGroup;
                     const prevResult = history[result.id];
                     const displayName = test.name;
+                    const CategoryIcon = getCategoryIcon(test.categoryRel?.icon);
                     
                     const isFormula = [
                         'VGM', 'CCMH', 'TCMH',
@@ -1087,7 +1166,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                                {/* Test Name + Icon */}
                                <div className="flex items-center gap-3 lg:w-56 shrink-0">
                                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${abnormal ? 'bg-rose-100 text-rose-600' : 'bg-slate-100 text-slate-500'}`}>
-                                    {test.category === 'HEMA' ? <Droplets size={14} /> : test.category === 'BIO' ? <Microscope size={14} /> : <Beaker size={14} />}
+                                     <CategoryIcon size={14} />
                                  </div>
                                  <div className="flex flex-col min-w-0">
                                     <div className="flex items-center gap-1.5">
@@ -1192,17 +1271,17 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                             {/* Notes Expanded */}
                             {expandedNotes.includes(result.id) && (
                                <div className={`ml-10 mr-4 mb-2 ${isFinalValidated ? 'opacity-70' : ''}`}>
-                                  <div className="bg-slate-50 border border-slate-100 rounded-xl p-4">
+                                  <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4">
                                      <div className="flex items-center justify-between mb-3">
                                         <div className="flex items-center gap-2 text-slate-500">
                                            <MessageSquare size={12} className="text-indigo-500" />
-                                           <span className="text-[10px] font-bold uppercase tracking-widest">Note Technique</span>
+                                           <span className="section-label">Note technique</span>
                                         </div>
                                         <div className="flex items-center gap-2">
                                             {notes[result.id] && (
                                                 <button 
                                                     onClick={() => deleteNote(result.id)}
-                                                    className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-600 text-[10px] font-bold hover:bg-rose-100 transition-colors"
+                                                    className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-600 text-[10px] font-medium hover:bg-rose-100 transition-colors"
                                                     disabled={isFinalValidated}
                                                 >
                                                     Supprimer
@@ -1210,13 +1289,13 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                                             )}
                                             <button 
                                                 onClick={() => toggleNote(result.id)}
-                                                className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 text-[10px] font-bold hover:bg-slate-200 transition-colors"
+                                                className="px-2.5 py-1 rounded-lg bg-white border border-[var(--color-border)] text-slate-600 text-[10px] font-medium hover:bg-slate-50 transition-colors"
                                             >
                                                 Annuler
                                             </button>
                                             <button 
                                                 onClick={() => applyNote(result.id)}
-                                                className="btn-primary !rounded-lg !px-3 !py-1 text-[10px]"
+                                                className="btn-primary-sm !rounded-lg !px-3 !py-1"
                                                 disabled={isFinalValidated}
                                             >
                                                 Appliquer
@@ -1228,7 +1307,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                                         onChange={(e) => handleNoteChange(result.id, e.target.value)}
                                         placeholder="Saisissez une observation (ex: prélèvement hémolysé, contrôle refait...)"
                                         disabled={isFinalValidated}
-                                        className="w-full bg-white border border-slate-100 rounded-lg p-3 text-xs focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none resize-none transition-all min-h-[72px]"
+                                        className="input-premium w-full min-h-[82px] resize-none rounded-xl bg-white p-3 text-xs"
                                         rows={2}
                                      />
                                   </div>
@@ -1238,7 +1317,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
                             {/* Static Note Indicator */}
                             {!expandedNotes.includes(result.id) && notes[result.id] && (
                                 <div
-                                  className={`ml-10 mr-4 mb-1 flex items-center gap-1.5 text-[10px] text-indigo-600 font-medium px-3 py-1.5 rounded-lg bg-indigo-50/50 w-fit transition-colors ${
+                                  className={`ml-10 mr-4 mb-1 flex items-center gap-1.5 text-[10px] text-indigo-600 font-medium px-3 py-1.5 rounded-lg border border-indigo-100 bg-indigo-50/70 w-fit transition-colors ${
                                     isFinalValidated ? 'cursor-default' : 'cursor-pointer hover:bg-indigo-50'
                                   }`}
                                   onClick={() => {
@@ -1313,7 +1392,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
             </div>
 
             <div className="grid grid-cols-1 gap-3">
-              {diatronPreview?.map((record, i) => (
+              {diatronPreview?.map((record) => (
                 <button
                   key={record.index}
                   onClick={() => handleDiatronSelect(record.index)}
@@ -1351,7 +1430,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
               onClick={() => setDiatronPreview(null)}
               className="btn-secondary"
             >
-              Annuler l'importation
+              Annuler l&apos;importation
             </button>
           </DialogFooter>
         </DialogContent>
@@ -1360,7 +1439,7 @@ export function ResultatsForm({ analysisId }: ResultatsFormProps) {
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="sm:max-w-2xl w-[95vw] max-h-[90vh] bg-white border-slate-200 shadow-2xl flex flex-col overflow-hidden">
           <DialogHeader>
-            <DialogTitle>Modifier le dossier d'analyse</DialogTitle>
+            <DialogTitle>Modifier le dossier d&apos;analyse</DialogTitle>
           </DialogHeader>
           <div className="overflow-y-auto pr-1 min-h-0">
             <div className="grid grid-cols-2 gap-4 py-2">

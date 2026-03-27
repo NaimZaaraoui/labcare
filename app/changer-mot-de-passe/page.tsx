@@ -52,30 +52,30 @@ export default function ChangePasswordPage() {
       router.push('/');
       router.refresh();
 
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#F4F7FB] flex items-center justify-center p-4">
+    <div className="auth-shell">
       <div className="w-full max-w-md">
         
         <div className="flex flex-col items-center mb-8">
-          <div className="w-20 h-20 bg-amber-500 rounded-[2.5rem] flex items-center justify-center shadow-2xl shadow-amber-100 mb-6 rotate-3">
+          <div className="w-20 h-20 bg-amber-500 rounded-3xl flex items-center justify-center shadow-2xl shadow-amber-100/70 mb-6 rotate-3">
             <ShieldCheck size={40} className="text-white" />
           </div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight text-center">Sécurité de votre compte</h1>
-          <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-2 text-center">
+          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight text-center">Sécurité de votre compte</h1>
+          <p className="text-sm font-medium text-slate-400 uppercase tracking-widest mt-2 text-center">
             Mise à jour obligatoire
           </p>
         </div>
 
-        <div className="bento-panel p-10">
+        <div className="auth-card">
           <div className="mb-8">
-            <h2 className="text-xl font-black text-slate-900 mb-2">Changer votre mot de passe</h2>
+            <h2 className="text-xl font-semibold text-slate-900 mb-2">Changer votre mot de passe</h2>
             <p className="text-slate-500 font-medium text-sm">
               Pour des raisons de sécurité, vous devez définir un nouveau mot de passe lors de votre première connexion.
             </p>
@@ -83,42 +83,49 @@ export default function ChangePasswordPage() {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">
+              <label htmlFor="new-password" className="form-label mb-3 ml-1">
                 Nouveau mot de passe
               </label>
               <div className="relative input-premium flex gap-2 items-center group">
                 <Lock size={18} className="text-slate-400 group-focus-within:text-indigo-500" />
                 <input
+                  id="new-password"
                   type={showPassword ? 'text' : 'password'}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  className="h-14 border-none w-full outline-none"
+                  aria-invalid={Boolean(error)}
+                  aria-describedby={error ? 'change-password-error' : undefined}
+                  className="h-14 border-none w-full outline-none bg-transparent"
                 />
 
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">
+              <label htmlFor="confirm-password" className="form-label mb-3 ml-1">
                 Confirmer le mot de passe
               </label>
               <div className="relative input-premium flex gap-2 items-center group">
                 <Lock size={18} className="text-slate-400 group-focus-within:text-indigo-500" />
                 <input
+                  id="confirm-password"
                   type={showPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  className="h-14 border-none w-full outline-none"
+                  aria-invalid={Boolean(error)}
+                  aria-describedby={error ? 'change-password-error' : undefined}
+                  className="h-14 border-none w-full outline-none bg-transparent"
                 />
               </div>
             </div>
                 <button 
                 type='button'
                 onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
                 className='flex gap-2 items-center text-slate-400 hover:text-indigo-500 transition-colors'>
                   {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
                   {showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
@@ -126,7 +133,7 @@ export default function ChangePasswordPage() {
 
 
             {error && (
-              <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-start gap-3">
+              <div id="change-password-error" role="alert" className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-start gap-3">
                 <AlertCircle size={18} className="text-rose-600 shrink-0 mt-0.5" />
                 <p className="text-sm font-bold text-rose-600">{error}</p>
               </div>
@@ -135,7 +142,7 @@ export default function ChangePasswordPage() {
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full h-14 text-base font-black tracking-tight"
+              className="btn-primary-md w-full h-12 text-sm"
             >
               {loading ? (
                 <><Loader2 size={20} className="animate-spin" /> Mise à jour...</>

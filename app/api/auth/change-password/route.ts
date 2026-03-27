@@ -2,6 +2,7 @@ import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { NextResponse } from 'next/server';
+import { createAuditLog, getRequestMeta } from '@/lib/audit';
 
 export async function PATCH(request: Request) {
   try {
@@ -12,6 +13,7 @@ export async function PATCH(request: Request) {
     }
 
     const { newPassword } = await request.json();
+    const meta = getRequestMeta({ headers: request.headers });
 
     if (!newPassword || newPassword.length < 8) {
       return NextResponse.json(
@@ -32,6 +34,15 @@ export async function PATCH(request: Request) {
       },
     });
 
+    await createAuditLog({
+      action: 'auth.change_password',
+      severity: 'INFO',
+      entity: 'user',
+      entityId: session.user.id,
+      ipAddress: meta.ipAddress,
+      userAgent: meta.userAgent,
+    });
+
     return NextResponse.json({ message: 'Mot de passe mis à jour avec succès.' });
   } catch (error) {
     console.error('Error changing password:', error);
@@ -41,4 +52,3 @@ export async function PATCH(request: Request) {
     );
   }
 }
-

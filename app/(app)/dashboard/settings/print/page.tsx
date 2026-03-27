@@ -14,22 +14,22 @@ export default async function PrintSettingsPage() {
   const settings = await getSettings(SETTINGS_KEYS);
 
   return (
-    <div className="p-8 max-w-3xl mx-auto space-y-8 pb-24">
-      <div>
+    <div className="mx-auto max-w-[1100px] space-y-6 pb-16">
+      <section className="rounded-3xl border bg-white px-5 py-4 shadow-[0_8px_28px_rgba(15,31,51,0.06)]">
         <Link
           href="/dashboard/settings"
-          className="group flex items-center gap-2 text-slate-400 font-bold hover:text-indigo-600 transition-all mb-4"
+          className="mb-3 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-text-soft)] transition-colors hover:text-[var(--color-accent)]"
         >
-          <div className="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center group-hover:bg-indigo-50 shadow-sm transition-all group-hover:border-indigo-100">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl border bg-[var(--color-surface-muted)]">
             <ArrowLeft size={16} />
           </div>
-          <span className="text-xs uppercase tracking-widest">Paramètres</span>
+          <span>Paramètres</span>
         </Link>
-        <h1 className="text-3xl font-black text-slate-900 tracking-tight">Modèles d&apos;impression</h1>
-        <p className="text-slate-500 font-medium mt-1">
-          Ces informations apparaissent sur chaque rapport et enveloppe imprimés.
+        <h1 className="text-xl font-semibold text-[var(--color-text)]">Modèles d&apos;impression</h1>
+        <p className="mt-1 text-sm text-[var(--color-text-soft)]">
+          Ces informations apparaissent sur chaque rapport et enveloppe imprimée.
         </p>
-      </div>
+      </section>
 
       <PrintSettingsForm initialSettings={settings} />
     </div>

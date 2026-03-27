@@ -2,33 +2,42 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { requireAnyRole, requireAuthUser } from '@/lib/authz';
+import { createAuditLog, getRequestMeta } from '@/lib/audit';
 
 export async function GET(request: NextRequest) {
   try {
+    const guard = await requireAuthUser();
+    if (!guard.ok) return guard.error;
+
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');
     const includeGrouped = searchParams.get('includeGrouped') !== 'false';
     
-    const whereClause: any = {};
+    const whereClause: { isGroup?: boolean; categoryId?: string } = {};
     
     if (!includeGrouped) {
       whereClause.isGroup = false;
     }
     
     if (category) {
-      whereClause.category = category;
+      whereClause.categoryId = category;
     }
 
-    const tests = await (prisma.test as any).findMany({
+    const tests = await prisma.test.findMany({
       where: whereClause,
       orderBy: [
-        { category: 'asc' },
         { rank: 'asc' },
         { name: 'asc' }
       ],
       include: { 
         children: includeGrouped,
-        categoryRel: true 
+        categoryRel: true,
+        _count: {
+          select: {
+            inventoryRules: true,
+          },
+        },
       }
     });
     
@@ -45,8 +54,20 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const guard = await requireAnyRole(['ADMIN']);
+    if (!guard.ok) return guard.error;
+    const meta = getRequestMeta({ headers: request.headers });
+
     const body = await request.json();
     
+    let categoryId = body.categoryId || null;
+    if (!categoryId && body.category) {
+      const cat = await prisma.category.findFirst({
+        where: { name: body.category }
+      });
+      categoryId = cat?.id || null;
+    }
+
     const test = await prisma.test.create({
         data: {
           code: body.code.toUpperCase(),
@@ -60,7 +81,7 @@ export async function POST(request: NextRequest) {
           maxValueF: body.maxValueF ? parseFloat(body.maxValueF) : null,
           decimals: body.decimals || 1,
           resultType: body.resultType || 'numeric',
-          category: body.category || null,
+          categoryId: categoryId,
           parentId: body.parentId || null,
           options: body.options || null,
           isGroup: !!body.isGroup,
@@ -69,12 +90,22 @@ export async function POST(request: NextRequest) {
         }
 
     });
+
+    await createAuditLog({
+      action: 'test.create',
+      severity: 'WARN',
+      entity: 'test',
+      entityId: test.id,
+      details: { code: test.code, name: test.name },
+      ipAddress: meta.ipAddress,
+      userAgent: meta.userAgent,
+    });
     
     return NextResponse.json(test, { status: 201 });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Erreur POST /api/tests:', error);
     
-    if (error.code === 'P2002') {
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'P2002') {
       return NextResponse.json(
         { error: 'Un test avec ce code existe déjà' },
         { status: 400 }
@@ -90,6 +121,10 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+    const guard = await requireAnyRole(['ADMIN']);
+    if (!guard.ok) return guard.error;
+    const meta = getRequestMeta({ headers: request.headers });
+
     const body = await request.json();
     const { id, ...data } = body;
 
@@ -98,6 +133,14 @@ export async function PUT(request: NextRequest) {
         { error: 'ID du test manquant' },
         { status: 400 }
       );
+    }
+
+    let categoryId = data.categoryId || null;
+    if (!categoryId && data.category) {
+      const cat = await prisma.category.findFirst({
+        where: { name: data.category }
+      });
+      categoryId = cat?.id || null;
     }
 
     const test = await prisma.test.update({
@@ -114,7 +157,7 @@ export async function PUT(request: NextRequest) {
           maxValueF: data.resultType === 'numeric' && data.maxValueF ? parseFloat(data.maxValueF) : null,          
           decimals: data.resultType === 'numeric' ? data.decimals : 1,
           resultType: data.resultType || 'numeric',
-          category: data.category || null,
+          categoryId: categoryId,
           parentId: data.parentId || null,
           options: data.options || null,
           isGroup: !!data.isGroup,
@@ -122,6 +165,16 @@ export async function PUT(request: NextRequest) {
           price: data.price ? parseFloat(data.price) : 0,
         }
 
+    });
+
+    await createAuditLog({
+      action: 'test.update',
+      severity: 'WARN',
+      entity: 'test',
+      entityId: test.id,
+      details: { code: test.code, name: test.name },
+      ipAddress: meta.ipAddress,
+      userAgent: meta.userAgent,
     });
 
     return NextResponse.json(test);
@@ -136,6 +189,10 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const guard = await requireAnyRole(['ADMIN']);
+    if (!guard.ok) return guard.error;
+    const meta = getRequestMeta({ headers: request.headers });
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     
@@ -146,8 +203,23 @@ export async function DELETE(request: NextRequest) {
       );
     }
     
+    const existing = await prisma.test.findUnique({
+      where: { id },
+      select: { id: true, code: true, name: true },
+    });
+
     await prisma.test.delete({
       where: { id }
+    });
+
+    await createAuditLog({
+      action: 'test.delete',
+      severity: 'CRITICAL',
+      entity: 'test',
+      entityId: id,
+      details: existing,
+      ipAddress: meta.ipAddress,
+      userAgent: meta.userAgent,
     });
     
     return NextResponse.json({ success: true });

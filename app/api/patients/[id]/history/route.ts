@@ -1,12 +1,16 @@
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { requireAuthUser } from '@/lib/authz';
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const guard = await requireAuthUser();
+    if (!guard.ok) return guard.error;
+
     const { id } = await params;
 
     const patient = await prisma.patient.findUnique({
@@ -29,6 +33,7 @@ export async function GET(
 
     return NextResponse.json(patient);
   } catch (error) {
+    console.error('Error fetching patient history:', error);
     return NextResponse.json(
       { error: 'Error fetching patient history' },
       { status: 500 }

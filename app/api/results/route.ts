@@ -2,9 +2,15 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import {prisma} from '@/lib/prisma';
+import { requireAnyRole } from '@/lib/authz';
+import { createAuditLog, getRequestMeta } from '@/lib/audit';
 
 export async function PUT(request: NextRequest) {
   try {
+    const guard = await requireAnyRole(['ADMIN', 'TECHNICIEN', 'MEDECIN']);
+    if (!guard.ok) return guard.error;
+    const meta = getRequestMeta({ headers: request.headers });
+
     const body = await request.json();
     const { id, value, unit, notes, abnormal } = body;
     
@@ -16,6 +22,20 @@ export async function PUT(request: NextRequest) {
         notes: notes || null,
         abnormal: abnormal || false
       }
+    });
+
+    await createAuditLog({
+      action: 'result.update',
+      severity: abnormal ? 'WARN' : 'INFO',
+      entity: 'result',
+      entityId: result.id,
+      details: {
+        analysisId: result.analysisId,
+        testId: result.testId,
+        abnormal: result.abnormal,
+      },
+      ipAddress: meta.ipAddress,
+      userAgent: meta.userAgent,
     });
     
     return NextResponse.json(result);

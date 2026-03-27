@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { requireAuthUser } from '@/lib/authz';
 
 export async function GET(request: NextRequest) {
+  const guard = await requireAuthUser();
+  if (!guard.ok) return guard.error;
+
   const { searchParams } = new URL(request.url);
   const patientId = searchParams.get('patientId');
   const testId = searchParams.get('testId');

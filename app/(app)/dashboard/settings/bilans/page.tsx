@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   Plus, 
   Search, 
@@ -64,12 +64,12 @@ export default function BilansPage() {
     action: () => {},
   });
 
-  useEffect(() => {
-    setMounted(true);
-    fetchData();
+  const showNotification = useCallback((type: 'success' | 'error', message: string) => {
+    setNotification({ type, message });
+    setTimeout(() => setNotification(null), 3000);
   }, []);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const [resBilans, resTests] = await Promise.all([
         fetch('/api/bilans'),
@@ -79,17 +79,17 @@ export default function BilansPage() {
       const testsData = await resTests.json();
       setBilans(bilansData);
       setTests(testsData);
-    } catch (error) {
+    } catch {
       showNotification('error', 'Erreur lors du chargement des données');
     } finally {
       setLoading(false);
     }
-  };
+  }, [showNotification]);
 
-  const showNotification = (type: 'success' | 'error', message: string) => {
-    setNotification({ type, message });
-    setTimeout(() => setNotification(null), 3000);
-  };
+  useEffect(() => {
+    setMounted(true);
+    fetchData();
+  }, [fetchData]);
 
   const handleOpenModal = (bilan?: Bilan) => {
     if (bilan) {
@@ -131,7 +131,7 @@ export default function BilansPage() {
       } else {
         showNotification('error', 'Erreur lors de l\'enregistrement');
       }
-    } catch (error) {
+    } catch {
        showNotification('error', 'Erreur lors de l\'enregistrement');
     }
   };
@@ -152,7 +152,7 @@ export default function BilansPage() {
           } else {
             showNotification('error', 'Erreur lors de la suppression');
           }
-        } catch (error) {
+        } catch {
           showNotification('error', 'Erreur lors de la suppression');
         }
       }
@@ -173,31 +173,31 @@ export default function BilansPage() {
   );
 
   return (
-    <div className="p-8 space-y-10 pb-24 max-w-7xl mx-auto">
+    <div className="space-y-8 pb-24">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+      <div className="bento-panel p-5 sm:p-6 flex flex-col md:flex-row md:items-end justify-between gap-5">
         <div className="flex flex-col gap-4">
           <button 
             onClick={() => router.push('/dashboard/settings')}
-            className="group flex items-center gap-2 text-slate-400 font-bold hover:text-indigo-600 transition-all"
+            className="group flex items-center gap-2 text-[var(--color-text-soft)] font-medium hover:text-[var(--color-accent)] transition-all w-fit"
           >
-            <div className="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center group-hover:bg-indigo-50 shadow-sm transition-all group-hover:border-indigo-100">
+            <div className="w-8 h-8 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] flex items-center justify-center group-hover:bg-[var(--color-accent-soft)] transition-all">
                <ArrowLeft size={16} />
             </div>
-            <span className="text-xs uppercase tracking-widest">Paramètres</span>
+            <span className="text-xs uppercase tracking-wide">Paramètres</span>
           </button>
           
           <div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight">Raccourcis & Bilans</h1>
-            <p className="text-slate-500 font-medium mt-1">Gérez vos groupes de tests rapides et bilans standards.</p>
+            <h1 className="text-2xl sm:text-3xl font-semibold text-[var(--color-text)] tracking-tight">Raccourcis et Bilans</h1>
+            <p className="text-[var(--color-text-secondary)] mt-1">Gérez vos groupes de tests rapides et bilans standards.</p>
           </div>
         </div>
 
         <button
           onClick={() => handleOpenModal()}
-          className="btn-primary flex items-center gap-2 px-6 py-4 shadow-xl shadow-indigo-100 h-14"
+          className="btn-primary-md"
         >
-          <Plus size={20} />
+          <Plus size={16} />
           <span>Nouveau Bilan</span>
         </button>
       </div>
@@ -208,30 +208,30 @@ export default function BilansPage() {
           <p className="font-bold uppercase tracking-widest text-xs">Chargement des bilans...</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {bilans.map(bilan => (
-            <div key={bilan.id} className="bento-panel p-8 group relative overflow-hidden flex flex-col gap-6">
+            <div key={bilan.id} className="bento-panel p-6 group relative overflow-hidden flex flex-col gap-5">
               <div className="flex justify-between items-center flex-wrap gap-2">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-inner">
-                    <Sparkles size={28} />
+                  <div className="w-12 h-12 rounded-2xl bg-[var(--color-accent-soft)] text-[var(--color-accent)] flex items-center justify-center">
+                    <Sparkles size={22} />
                   </div>
                   <div>
-                    <h3 className="text-xl font-black text-slate-900 group-hover:text-indigo-600 transition-colors uppercase tracking-tight">{bilan.name}</h3>
-                    {bilan.code && <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{bilan.code}</span>}
+                    <h3 className="text-lg font-semibold text-[var(--color-text)] group-hover:text-[var(--color-accent)] transition-colors tracking-tight">{bilan.name}</h3>
+                    {bilan.code && <span className="text-[11px] font-medium text-[var(--color-text-soft)] uppercase tracking-wide">{bilan.code}</span>}
                   </div>
                 </div>
                 
                 <div className="flex gap-1">
                   <button 
                     onClick={() => handleOpenModal(bilan)}
-                    className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-white rounded-xl transition-all shadow-sm border border-transparent hover:border-slate-100"
+                    className="w-9 h-9 flex items-center justify-center text-[var(--color-text-soft)] hover:text-[var(--color-accent)] hover:bg-[var(--color-surface-muted)] rounded-xl transition-all"
                   >
                     <Edit2 size={16} />
                   </button>
                   <button 
                     onClick={() => handleDelete(bilan)}
-                    className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all border border-transparent hover:border-rose-100"
+                    className="w-9 h-9 flex items-center justify-center text-[var(--color-text-soft)] hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
                   >
                     <Trash2 size={16} />
                   </button>
@@ -240,18 +240,18 @@ export default function BilansPage() {
               
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{bilan.tests.length} Analyses</p>
-                   <div className="h-[1px] flex-1 bg-slate-50 mx-4" />
+                   <p className="text-[11px] font-medium text-[var(--color-text-soft)] uppercase tracking-wide">{bilan.tests.length} Analyses</p>
+                   <div className="h-px flex-1 bg-[var(--color-border)] mx-4" />
                 </div>
                 
                 <div className="flex flex-wrap gap-2">
                   {bilan.tests.slice(0, 6).map(test => (
-                    <span key={test.id} className="px-3 py-1.5 rounded-xl bg-slate-50 text-slate-600 text-[10px] font-bold border border-slate-100 shadow-sm">
+                    <span key={test.id} className="px-3 py-1.5 rounded-xl bg-[var(--color-surface-muted)] text-[var(--color-text-secondary)] text-xs font-medium border border-[var(--color-border)]">
                       {test.code}
                     </span>
                   ))}
                   {bilan.tests.length > 6 && (
-                    <span className="px-3 py-1.5 rounded-xl bg-indigo-50 text-indigo-600 text-[10px] font-black border border-indigo-100">
+                    <span className="px-3 py-1.5 rounded-xl bg-[var(--color-accent-soft)] text-[var(--color-accent)] text-xs font-semibold border border-blue-100">
                       +{bilan.tests.length - 6}
                     </span>
                   )}
@@ -259,7 +259,7 @@ export default function BilansPage() {
               </div>
 
               {/* Decorative Accent */}
-              <div className="absolute -bottom-6 -right-6 w-24 h-24 rounded-full bg-indigo-50 opacity-0 group-hover:opacity-30 transition-opacity blur-2xl" />
+              <div className="absolute -bottom-6 -right-6 w-20 h-20 rounded-full bg-[var(--color-accent-soft)] opacity-0 group-hover:opacity-40 transition-opacity blur-2xl" />
             </div>
           ))}
 
@@ -274,52 +274,52 @@ export default function BilansPage() {
 
       {/* Modal */}
       {mounted && showModal && createPortal(
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[60] flex items-center justify-center p-4 animate-in fade-in duration-300">
+        <div className="modal-overlay z-[60] animate-in fade-in duration-300">
           <div 
-            className="bg-white rounded-[2.5rem] w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 overflow-hidden border border-slate-100"
+            className="modal-shell flex w-full max-w-3xl max-h-[90vh] flex-col overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header - Redesigned like ConfirmationModal */}
-            <div className="p-10 pb-6 flex items-start justify-between">
-              <div className="flex items-start gap-6">
-                <div className="w-16 h-16 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-200 shrink-0">
-                  <Sparkles size={32} />
+            <div className="flex items-start justify-between border-b border-[var(--color-border)] p-6">
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--color-accent-soft)] text-[var(--color-accent)]">
+                  <Sparkles size={22} />
                 </div>
                 <div>
-                  <h3 className="text-3xl font-black text-slate-900 tracking-tight">
+                  <h3 className="text-xl sm:text-2xl font-semibold text-[var(--color-text)] tracking-tight">
                     {editingBilan ? 'Modifier le Bilan' : 'Nouveau Bilan'}
                   </h3>
-                  <p className="text-slate-500 font-medium mt-1">Gérez vos raccourcis d'analyses pour une saisie rapide</p>
+                  <p className="mt-1 text-sm text-[var(--color-text-secondary)]">Gérez vos raccourcis d&apos;analyses pour une saisie rapide.</p>
                 </div>
               </div>
               <button 
                 onClick={() => setShowModal(false)} 
-                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all"
+                className="rounded-xl p-2 text-[var(--color-text-soft)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)] transition-all"
               >
-                <X size={24} />
+                <X size={20} />
               </button>
             </div>
             
             {/* Modal Body */}
-            <div className="px-10 py-6 space-y-10 overflow-y-auto custom-scrollbar flex-1 bg-white">
+            <div className="custom-scrollbar flex-1 space-y-6 overflow-y-auto bg-white p-6">
               {/* Basic Info Section */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-8 bg-slate-50/50 rounded-[2rem] border border-slate-50">
+              <div className="grid grid-cols-1 gap-5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-5 md:grid-cols-2">
                 <div className="space-y-3">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Nom du Bilan</label>
+                  <label className="ml-1 text-[11px] font-medium uppercase tracking-wide text-[var(--color-text-soft)]">Nom du bilan</label>
                   <input
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
                     placeholder="Ex: Bilan Pré-opératoire"
-                    className="input-premium h-14 bg-white shadow-sm"
+                    className="input-premium h-11 bg-white"
                   />
                 </div>
                 <div className="space-y-3">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Code Raccourci</label>
+                  <label className="ml-1 text-[11px] font-medium uppercase tracking-wide text-[var(--color-text-soft)]">Code raccourci</label>
                   <input
                     value={formData.code}
                     onChange={(e) => setFormData({...formData, code: e.target.value})}
                     placeholder="Ex: PREOP"
-                    className="input-premium h-14 bg-white shadow-sm uppercase font-black"
+                    className="input-premium h-11 bg-white uppercase"
                   />
                 </div>
               </div>
@@ -331,16 +331,16 @@ export default function BilansPage() {
                      <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-inner">
                         <Filter size={16} />
                      </div>
-                     <label className="text-xs font-black text-slate-900 uppercase tracking-widest">analyses incluses ({selectedTests.length})</label>
+                     <label className="text-xs font-medium text-[var(--color-text)] uppercase tracking-wide">Analyses incluses ({selectedTests.length})</label>
                    </div>
                    
                    <div className="relative w-full md:w-80 group">
-                     <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors" />
+                     <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-soft)] group-focus-within:text-[var(--color-accent)] transition-colors" />
                      <input 
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder="Chercher une analyse..."
-                        className="w-full pl-12 pr-4 py-4 rounded-2xl bg-white border border-slate-100 text-sm font-bold focus:ring-4 focus:ring-indigo-100 outline-none transition-all placeholder:text-slate-300 shadow-sm"
+                        className="input-premium h-11 pl-12 bg-white"
                      />
                    </div>
                 </div>
@@ -354,12 +354,12 @@ export default function BilansPage() {
                           onClick={() => toggleTest(test.id)}
                           className={`p-4 rounded-2xl border text-left transition-all flex items-center justify-between h-full group ${
                             isSelected 
-                              ? 'bg-indigo-600 border-indigo-600 shadow-lg shadow-indigo-100 translate-y-[-2px]' 
+                              ? 'bg-[var(--color-accent)] border-[var(--color-accent)] shadow-md translate-y-[-2px]' 
                               : 'bg-white border-slate-100 hover:border-indigo-200 hover:shadow-md'
                           }`}
                         >
                           <div className="overflow-hidden">
-                            <span className={`block text-sm font-black truncate leading-none mb-1 ${isSelected ? 'text-white' : 'text-slate-900'}`}>{test.code}</span>
+                            <span className={`block text-sm font-semibold truncate leading-none mb-1 ${isSelected ? 'text-white' : 'text-slate-900'}`}>{test.code}</span>
                             <span className={`text-[10px] truncate block opacity-60 font-medium ${isSelected ? 'text-indigo-50' : 'text-slate-500 italic'}`}>{test.name}</span>
                           </div>
                           
@@ -376,7 +376,7 @@ export default function BilansPage() {
                        <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-4 text-slate-200">
                           <Search size={32} />
                        </div>
-                       <p className="text-slate-400 italic text-sm font-medium">Aucune analyse trouvée pour "{searchQuery}"</p>
+                       <p className="text-slate-400 italic text-sm font-medium">Aucune analyse trouvée pour &quot;{searchQuery}&quot;</p>
                     </div>
                   )}
                 </div>
@@ -384,18 +384,18 @@ export default function BilansPage() {
             </div>
 
             {/* Modal Footer - Consistent with ConfirmationModal buttons */}
-            <div className="p-10 flex justify-end gap-3 bg-white border-t border-slate-50 mt-auto">
+            <div className="mt-auto flex justify-end gap-3 border-t border-[var(--color-border)] bg-white p-6">
               <button 
                 onClick={() => setShowModal(false)}
-                className="px-8 py-4 rounded-2xl font-black text-slate-500 hover:text-slate-700 hover:bg-slate-50 transition-all uppercase text-[10px] tracking-widest bg-slate-50/50"
+                className="btn-secondary-md"
               >
                 Annuler
               </button>
               <button 
                 onClick={handleSubmit}
-                className="px-8 py-4 rounded-2xl bg-indigo-600 text-white font-black hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all flex items-center gap-2 uppercase text-[10px] tracking-widest active:scale-95 min-w-[180px] justify-center"
+                className="btn-primary-md min-w-[180px] justify-center"
               >
-                <Save size={18} /> 
+                <Save size={16} /> 
                 <span>Enregistrer</span>
               </button>
             </div>

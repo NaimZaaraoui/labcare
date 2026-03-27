@@ -100,7 +100,7 @@ export const formatTestsForExcel = (tests: any[]) => {
       return {
         'Code': t.code || '',
         'Nom du Test': t.name || '',
-        'Catégorie': t.category || t.categoryRel?.name || '',
+        'Catégorie': t.categoryRel?.name || '',
         'Type': t.isGroup ? 'Groupe' : t.resultType || 'Numérique',
         'Unité': t.unit || '',
         'Référence': refRange,
@@ -195,7 +195,7 @@ export const formatCategorySummaryForExcel = (analysesWithResults: any[]): Recor
   const byCategory = analysesWithResults.reduce<Record<string, { category: string; count: number; abnormal: number; normal: number }>>((acc, a) => {
     a.results?.forEach((res: any) => {
       if (res.test?.isGroup) return;
-      const cat = res.test?.category || 'Non classé';
+      const cat = res.test?.categoryRel?.name || 'Non classé';
       if (!acc[cat]) {
         acc[cat] = { category: cat, count: 0, abnormal: 0, normal: 0 };
       }

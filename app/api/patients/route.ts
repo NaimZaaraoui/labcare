@@ -1,9 +1,15 @@
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { requireAnyRole, requireAuthUser } from '@/lib/authz';
+import { Prisma } from '@/app/generated/prisma';
+import { createAuditLog, getRequestMeta } from '@/lib/audit';
 
 export async function GET(request: Request) {
   try {
+    const guard = await requireAuthUser();
+    if (!guard.ok) return guard.error;
+
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('query');
     const start = searchParams.get('start');
@@ -11,7 +17,7 @@ export async function GET(request: Request) {
     const skip = parseInt(searchParams.get('skip') || '0', 10);
     const limit = parseInt(searchParams.get('limit') || '50', 10);
 
-    const whereClause: any = {};
+    const whereClause: Prisma.PatientWhereInput = {};
 
     if (query) {
       whereClause.OR = [
@@ -44,6 +50,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(patients);
   } catch (error) {
+    console.error('Error fetching patients:', error);
     return NextResponse.json(
       { error: 'Error fetching patients' },
       { status: 500 }
@@ -53,6 +60,10 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const guard = await requireAnyRole(['ADMIN', 'TECHNICIEN', 'RECEPTIONNISTE']);
+    if (!guard.ok) return guard.error;
+    const meta = getRequestMeta({ headers: request.headers });
+
     const body = await request.json();
     const { firstName, lastName, birthDate, gender, address, phoneNumber } = body;
 
@@ -67,8 +78,22 @@ export async function POST(request: Request) {
       },
     });
 
+    await createAuditLog({
+      action: 'patient.create',
+      severity: 'INFO',
+      entity: 'patient',
+      entityId: patient.id,
+      details: {
+        firstName: patient.firstName,
+        lastName: patient.lastName,
+      },
+      ipAddress: meta.ipAddress,
+      userAgent: meta.userAgent,
+    });
+
     return NextResponse.json(patient);
   } catch (error) {
+    console.error('Error creating patient:', error);
     return NextResponse.json(
       { error: 'Error creating patient' },
       { status: 500 }

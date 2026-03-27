@@ -8,28 +8,33 @@ export default function LabSettingsPage() {
   const router = useRouter();
 
   return (
-    <div className="p-8 space-y-10 max-w-7xl mx-auto pb-24">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <button 
-            onClick={() => router.push('/dashboard/settings')}
-            className="group flex items-center gap-2 text-slate-400 font-bold hover:text-indigo-600 transition-all mb-4"
-          >
-            <div className="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center group-hover:bg-indigo-50 shadow-sm transition-all group-hover:border-indigo-100">
-               <ArrowLeft size={16} />
+    <div className="mx-auto max-w-screen-2xl space-y-6 pb-16">
+      <section className="rounded-3xl border bg-white px-5 py-4 shadow-[0_8px_28px_rgba(15,31,51,0.06)]">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <button
+              onClick={() => router.push('/dashboard/settings')}
+              className="mb-3 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-text-soft)] transition-colors hover:text-[var(--color-accent)]"
+            >
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl border bg-[var(--color-surface-muted)]">
+                <ArrowLeft size={16} />
+              </span>
+              Retour aux paramètres
+            </button>
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600 text-white">
+                <Beaker size={22} />
+              </div>
+              <h1 className="text-xl font-semibold tracking-tight text-[var(--color-text)]">
+                Configuration <span className="text-[var(--color-accent)]">métier</span>
+              </h1>
             </div>
-            <span className="text-xs uppercase tracking-widest">Retour aux paramètres</span>
-          </button>
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-200">
-              <Beaker size={24} />
-            </div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight">Configuration <span className="text-indigo-600">Métier</span></h1>
+            <p className="mt-1 text-sm text-[var(--color-text-soft)]">
+              Gérer les types d&apos;échantillons et les paramètres financiers.
+            </p>
           </div>
-          <p className="text-slate-500 font-medium mt-1 ml-16">Gérez les types d'échantillons et les paramètres financiers.</p>
         </div>
-      </div>
+      </section>
 
       <LabSettingsForm />
     </div>

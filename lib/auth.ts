@@ -13,25 +13,31 @@ export const ROLES = {
 export type Role = keyof typeof ROLES;
 
 export const ROLE_PERMISSIONS: Record<string, string[]> = {
-  BIOLOGISTE: ['*'],
+  ADMIN: ['*'],
   TECHNICIEN: [
     '/',
     '/analyses',
     '/analyses/nouvelle',
     '/analyses/:id',
+    '/dashboard/qc',
     '/dashboard/patients',
+    '/dashboard/inventory',
     '/dashboard/documents',
   ],
   RECEPTIONNISTE: [
     '/',
     '/analyses',
     '/analyses/nouvelle',
+    '/dashboard/qc',
     '/dashboard/patients',
+    '/dashboard/inventory',
     '/dashboard/documents',
   ],
   MEDECIN: [
     '/',
     '/analyses',
+    '/dashboard/qc',
+    '/dashboard/inventory',
     '/dashboard/documents',
   ],
 };

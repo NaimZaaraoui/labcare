@@ -15,14 +15,14 @@ async function main() {
     where: { code: 'ROUTINE' },
     update: {
       name: 'BILAN DE ROUTINE',
-      category: 'Biochimie',
+
       isGroup: true,
       resultType: 'text',
     },
     create: {
       name: 'BILAN DE ROUTINE',
       code: 'ROUTINE',
-      category: 'Biochimie',
+
       isGroup: true,
       resultType: 'text',
     },
@@ -35,7 +35,7 @@ async function main() {
       unit: 'g/l',
       minValue: 0.70,
       maxValue: 1.10,
-      category: 'Biochimie',
+
       parentId: routineGroup.id,
     },
     {
@@ -44,7 +44,7 @@ async function main() {
       unit: 'g/l',
       minValue: 0.15,
       maxValue: 0.45,
-      category: 'Biochimie',
+
       parentId: routineGroup.id,
     },
     {
@@ -53,7 +53,7 @@ async function main() {
       unit: 'mg/l',
       minValue: 7.0,
       maxValue: 13.0,
-      category: 'Biochimie',
+
       parentId: routineGroup.id,
     },
     {
@@ -62,7 +62,7 @@ async function main() {
       unit: 'g/l',
       minValue: 1.50,
       maxValue: 2.00,
-      category: 'Biochimie',
+
       parentId: routineGroup.id,
     },
     {
@@ -71,7 +71,7 @@ async function main() {
       unit: 'g/l',
       minValue: 0.35,
       maxValue: 1.50,
-      category: 'Biochimie',
+
       parentId: routineGroup.id,
     },
     {
@@ -80,7 +80,7 @@ async function main() {
       unit: 'mg/l',
       minValue: 35,
       maxValue: 70,
-      category: 'Biochimie',
+
       parentId: routineGroup.id,
     },
   ];

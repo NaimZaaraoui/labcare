@@ -35,7 +35,6 @@ model Test {
   maxValueF   Float?
   decimals    Int?      @default(1)
   resultType  String    @default("numeric")
-  category    String?
   categoryId  String?
   rank        Int       @default(0)
   options     String?
@@ -50,6 +49,10 @@ model Test {
   children    Test[]    @relation("TestHierarchy")
   categoryRel Category? @relation(fields: [categoryId], references: [id])
   bilans      Bilan[]   @relation("BilanToTest")
+  inventoryRules ItemTestRule[]
+  consumptions AnalysisConsumption[]
+  qcTargets   QcTarget[]
+  qcValues    QcValue[]
 
   @@map("tests")
 }
@@ -86,6 +89,7 @@ model Analysis {
   patient             Patient?  @relation(fields: [patientId], references: [id])
   results             Result[]
   notifications       Notification[]
+  consumptions        AnalysisConsumption[]
 
   @@map("analyses")
 }
@@ -146,6 +150,7 @@ model User {
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   notifications      Notification[]
+  auditLogs          AuditLog[]
 
   @@map("users")
 }
@@ -173,4 +178,244 @@ model Notification {
   createdAt   DateTime @default(now())
 
   @@map("notifications")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userName   String?
+  userEmail  String?
+  userRole   String?
+  action     String
+  severity   String   @default("INFO")
+  entity     String
+  entityId   String?
+  details    String?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([action])
+  @@index([severity])
+  @@index([entity])
+  @@index([userId])
+  @@map("audit_logs")
+}
+
+model AuditLogArchive {
+  id         String   @id
+  userId     String?
+  userName   String?
+  userEmail  String?
+  userRole   String?
+  action     String
+  severity   String
+  entity     String
+  entityId   String?
+  details    String?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime
+  archivedAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([archivedAt])
+  @@index([severity])
+  @@map("audit_logs_archive")
+}
+
+model InventoryItem {
+  id           String   @id @default(cuid())
+  name         String
+  reference    String?
+  category     String
+  kind         String   @default("REAGENT")
+  unit         String
+  currentStock Float    @default(0)
+  minThreshold Float
+  storage      String?
+  supplier     String?
+  notes        String?
+  isActive     Boolean  @default(true)
+  lots         InventoryLot[]
+  movements    StockMovement[]
+  rules        ItemTestRule[]
+  consumptions AnalysisConsumption[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([name])
+  @@index([category])
+  @@index([kind])
+  @@index([isActive])
+  @@map("inventory_items")
+}
+
+model InventoryLot {
+  id         String        @id @default(cuid())
+  itemId     String
+  item       InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  lotNumber  String
+  expiryDate DateTime
+  quantity   Float
+  remaining  Float
+  receivedAt DateTime      @default(now())
+  isActive   Boolean       @default(true)
+
+  @@index([itemId, expiryDate])
+  @@index([itemId, isActive])
+  @@map("inventory_lots")
+}
+
+model StockMovement {
+  id          String        @id @default(cuid())
+  itemId      String
+  item        InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  type        String
+  quantity    Float
+  lotNumber   String?
+  reason      String?
+  performedBy String
+  performedAt DateTime      @default(now())
+
+  @@index([itemId, performedAt])
+  @@index([type])
+  @@map("stock_movements")
+}
+
+model ItemTestRule {
+  id              String        @id @default(cuid())
+  itemId          String
+  testId          String
+  quantityPerTest Float
+  isActive        Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  item            InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  test            Test          @relation(fields: [testId], references: [id], onDelete: Cascade)
+
+  @@unique([itemId, testId])
+  @@index([testId, isActive])
+  @@index([itemId, isActive])
+  @@map("item_test_rules")
+}
+
+model AnalysisConsumption {
+  id         String        @id @default(cuid())
+  analysisId String
+  testId     String
+  itemId     String
+  quantity   Float
+  createdAt  DateTime      @default(now())
+  analysis   Analysis      @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  test       Test          @relation(fields: [testId], references: [id], onDelete: Cascade)
+  item       InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([analysisId, testId, itemId])
+  @@index([analysisId])
+  @@index([itemId])
+  @@map("analysis_consumptions")
+}
+
+model QcMaterial {
+  id           String   @id @default(cuid())
+  name         String
+  level        String
+  manufacturer String?
+  isActive     Boolean  @default(true)
+  lots         QcLot[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([name])
+  @@map("qc_materials")
+}
+
+model QcLot {
+  id         String     @id @default(cuid())
+  materialId String
+  material   QcMaterial @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  lotNumber  String
+  expiryDate DateTime
+  isActive   Boolean    @default(true)
+  targets    QcTarget[]
+  results    QcResult[]
+  receivedAt DateTime   @default(now())
+  openedAt   DateTime?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  @@index([materialId, isActive])
+  @@index([expiryDate])
+  @@unique([materialId, lotNumber])
+  @@map("qc_lots")
+}
+
+model QcTarget {
+  id            String  @id @default(cuid())
+  lotId         String
+  lot           QcLot   @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  testId        String?
+  test          Test?   @relation(fields: [testId], references: [id], onDelete: SetNull)
+  testCode      String
+  testName      String
+  controlMode   String  @default("STATISTICAL")
+  mean          Float
+  sd            Float?
+  minAcceptable Float?
+  maxAcceptable Float?
+  unit          String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([lotId])
+  @@index([testCode])
+  @@unique([lotId, testCode])
+  @@map("qc_targets")
+}
+
+model QcResult {
+  id              String    @id @default(cuid())
+  lotId           String
+  lot             QcLot     @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  values          QcValue[]
+  performedBy     String
+  performedByName String?
+  performedAt     DateTime  @default(now())
+  instrumentName  String?
+  comment         String?
+  status          String
+  createdAt       DateTime  @default(now())
+
+  @@index([lotId, performedAt])
+  @@index([status])
+  @@map("qc_results")
+}
+
+model QcValue {
+  id                String   @id @default(cuid())
+  resultId          String
+  result            QcResult @relation(fields: [resultId], references: [id], onDelete: Cascade)
+  testId            String?
+  test              Test?    @relation(fields: [testId], references: [id], onDelete: SetNull)
+  testCode          String
+  testName          String
+  controlMode       String   @default("STATISTICAL")
+  measured          Float
+  mean              Float
+  sd                Float?
+  minAcceptable     Float?
+  maxAcceptable     Float?
+  zScore            Float?
+  inAcceptanceRange Boolean?
+  flag              String
+  rule              String?
+  unit              String?
+
+  @@index([resultId])
+  @@index([testCode])
+  @@map("qc_values")
 }

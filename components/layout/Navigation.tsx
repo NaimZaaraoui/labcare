@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { NAVIGATION_GROUPS } from '@/lib/constants';
@@ -12,7 +12,6 @@ import {
 import { useMobileMenu } from '@/contexts/MobileMenuContext';
 
 import { useSession, signOut } from 'next-auth/react';
-import { useState } from 'react';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 
 
@@ -27,7 +26,16 @@ export function Navigation() {
   const { isCollapsed, toggleCollapse, isOpen: mobileOpen, close: closeMobile } = useMobileMenu();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
-  const role = (session?.user as any)?.role || 'TECHNICIEN';
+  const role = session?.user?.role || 'TECHNICIEN';
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [mobileOpen]);
 
 
   const isLinkVisible = (href: string) => {
@@ -44,8 +52,7 @@ export function Navigation() {
   };
 
   const handleNavClick = () => closeMobile();
-  // We consider it open if not explicitly collapsed
-  const sidebarOpen = isCollapsed === false ? true : !isCollapsed;
+  const sidebarOpen = !isCollapsed;
 
   // Filter navigation groups based on visibility
   const filteredGroups = NAVIGATION_GROUPS.map(group => ({
@@ -55,52 +62,49 @@ export function Navigation() {
 
   return (
     <>
-      {/* Desktop Sidebar */}
       <aside
-        className={`fixed top-0 left-0 h-full bg-white z-50 transition-all duration-300 hidden lg:flex flex-col shadow-[4px_0_24px_rgb(0,0,0,0.02)] ${
-          sidebarOpen ? 'w-64' : 'w-20'
+        className={`fixed left-0 top-0 z-50 hidden h-full flex-col border-r border-[var(--color-border)] bg-[var(--color-surface)]/95 shadow-[8px_0_36px_rgba(15,31,51,0.08)] backdrop-blur-sm transition-all duration-300 lg:flex ${
+          sidebarOpen ? 'w-[var(--shell-nav-width)]' : 'w-[var(--shell-nav-width-collapsed)]'
         }`}
       >
-        {/* Logo */}
-        <div className="h-24 px-6 flex items-center gap-4">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 border border-indigo-400/30 flex items-center justify-center flex-shrink-0 shadow-lg shadow-indigo-500/30">
+        <div className="flex h-20 items-center gap-3 px-5">
+          <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl border border-blue-700/20 bg-[var(--color-accent)] shadow-[0_8px_22px_rgba(31,111,235,0.34)]">
             <Microscope className="w-5 h-5 text-white drop-shadow-sm" />
           </div>
           {sidebarOpen && (
             <div className="overflow-hidden">
-              <h1 className="text-xl font-bold text-slate-800">
-                NexLab
-              </h1>
-              <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">CSSB System</p>
+              <h1 className="text-lg font-semibold text-[var(--color-text)]">NexLab</h1>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-soft)]">CSSB LIMS</p>
             </div>
           )}
         </div>
+        <div className="mx-4 border-b border-[var(--color-border)]" />
 
-        {/* Navigation */}
-        <nav className="p-4 space-y-6 flex-1 overflow-y-auto">
+        <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-5">
           {filteredGroups.map((group, gIdx) => (
             <div key={gIdx} className="space-y-2">
               {sidebarOpen && (
-                <div className="px-4 text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-2">
+                <div className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--color-text-soft)]">
                   {group.title}
                 </div>
               )}
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 {group.links.map((item) => {
                   const active = isActive(item.href);
                   return (
                     <Link
                       key={item.href}
                       href={item.href}
-                      className={`flex items-center gap-3 py-3 rounded-2xl font-semibold transition-all duration-200 ${
+                      title={!sidebarOpen ? item.name : undefined}
+                      className={`group flex items-center gap-3 rounded-2xl py-2.5 font-medium transition-all duration-200 ${
                         active
-                          ? 'bg-indigo-50 text-indigo-600 px-4'
-                          : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50 px-4'
+                          ? 'border border-blue-600/20 bg-[var(--color-accent-soft)] px-3 text-[var(--color-accent)]'
+                          : 'border border-transparent px-3 text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]'
                       } ${!sidebarOpen && 'justify-center px-0'}`}
                     >
-                      <item.icon className={`w-5 h-5 flex-shrink-0 ${active ? 'text-indigo-500' : 'text-slate-400'}`} />
+                      <item.icon className={`h-[18px] w-[18px] flex-shrink-0 ${active ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-soft)] group-hover:text-[var(--color-text-secondary)]'}`} />
                       {sidebarOpen && (
-                        <span className="text-sm flex-1">{item.name}</span>
+                        <span className="flex-1 text-[13px]">{item.name}</span>
                       )}
                     </Link>
                   );
@@ -110,25 +114,23 @@ export function Navigation() {
           ))}
         </nav>
 
-        {/* Bottom Actions */}
-        <div className="p-4 space-y-2 mt-auto">
+        <div className="mt-auto space-y-2 p-3">
           <button 
             onClick={() => setShowLogoutConfirm(true)}
-            className={`w-full flex items-center gap-3 py-3 rounded-2xl font-semibold text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors ${
-              !sidebarOpen ? 'justify-center px-0' : 'px-4'
+            className={`group w-full rounded-2xl py-2.5 font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-rose-50 hover:text-rose-700 ${
+              !sidebarOpen ? 'px-0' : 'px-4'
             }`}
           >
-            <LogOut className="w-5 h-5 flex-shrink-0 text-slate-400 group-hover:text-rose-500" />
-            {sidebarOpen && <span className="text-sm">Déconnexion</span>}
+            <span className={`flex items-center gap-3 ${!sidebarOpen && 'justify-center'}`}>
+              <LogOut className="h-[18px] w-[18px] flex-shrink-0 text-[var(--color-text-soft)] group-hover:text-rose-600" />
+              {sidebarOpen && <span className="text-[13px]">Déconnexion</span>}
+            </span>
           </button>
-
-
         </div>
 
-        {/* Toggle Button */}
         <button
           onClick={toggleCollapse}
-          className="absolute -right-3 top-10 w-7 h-7 bg-white shadow-md border border-slate-100 rounded-full flex items-center justify-center hover:bg-slate-50 transition-colors text-slate-400"
+          className="absolute -right-3 top-8 flex h-7 w-7 items-center justify-center rounded-full border bg-white text-[var(--color-text-soft)] shadow-md transition-colors hover:bg-[var(--color-surface-muted)]"
         >
           <ChevronLeft
             className={`w-4 h-4 transition-transform ${!sidebarOpen && 'rotate-180'}`}
@@ -136,37 +138,35 @@ export function Navigation() {
         </button>
       </aside>
 
-      {/* Mobile Overlay */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-30 lg:hidden"
+          className="fixed inset-0 z-40 bg-slate-900/25 backdrop-blur-sm lg:hidden"
           onClick={closeMobile}
         />
       )}
 
-      {/* Mobile Sidebar */}
       <aside
-        className={`fixed top-0 left-0 h-full w-72 bg-white z-40 transition-transform lg:hidden shadow-2xl ${
+        className={`fixed left-0 top-0 z-50 flex h-full w-[88vw] max-w-[320px] flex-col border-r border-[var(--color-border)] bg-[var(--color-surface)] transition-transform shadow-2xl lg:hidden ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="h-24 px-6 flex items-center gap-4 border-b border-slate-100">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 border border-indigo-400/30 flex items-center justify-center flex-shrink-0 shadow-lg shadow-indigo-500/30">
+        <div className="flex h-20 items-center gap-3 border-b px-5">
+          <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl border border-blue-700/20 bg-[var(--color-accent)] shadow-[0_8px_22px_rgba(31,111,235,0.34)]">
             <Microscope className="w-5 h-5 text-white drop-shadow-sm" />
           </div>
           <div className="overflow-hidden">
-            <h1 className="text-xl font-bold text-slate-800">NexLab</h1>
-             <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">CSSB System</p>
+            <h1 className="text-lg font-semibold text-[var(--color-text)]">NexLab</h1>
+             <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-soft)]">CSSB LIMS</p>
           </div>
         </div>
 
-        <nav className="p-4 space-y-6 flex-1 overflow-y-auto">
+        <nav className="flex-1 space-y-6 overflow-y-auto p-4 pb-2">
           {filteredGroups.map((group, gIdx) => (
             <div key={gIdx} className="space-y-2">
-              <div className="px-4 text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-2">
+              <div className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--color-text-soft)]">
                 {group.title}
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 {group.links.map((item) => {
                   const active = isActive(item.href);
                   return (
@@ -174,14 +174,14 @@ export function Navigation() {
                       key={item.href}
                       href={item.href}
                       onClick={handleNavClick}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-2xl font-semibold transition-all ${
+                      className={`group flex items-center gap-3 rounded-2xl px-3 py-2.5 font-medium transition-all ${
                         active
-                          ? 'bg-indigo-50 text-indigo-600'
-                          : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                          ? 'border border-blue-600/20 bg-[var(--color-accent-soft)] text-[var(--color-accent)]'
+                          : 'border border-transparent text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]'
                       }`}
                     >
-                      <item.icon className={`w-5 h-5 flex-shrink-0 ${active ? 'text-indigo-500' : 'text-slate-400'}`} />
-                      <span className="text-sm flex-1">{item.name}</span>
+                      <item.icon className={`h-[18px] w-[18px] flex-shrink-0 ${active ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-soft)] group-hover:text-[var(--color-text-secondary)]'}`} />
+                      <span className="flex-1 text-[13px]">{item.name}</span>
                     </Link>
                   );
                 })}
@@ -190,16 +190,14 @@ export function Navigation() {
           ))}
         </nav>
         
-         <div className="p-4 space-y-2 mt-auto border-t border-slate-100">
+         <div className="mt-auto space-y-2 border-t p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <button 
             onClick={() => setShowLogoutConfirm(true)}
-            className="w-full flex items-center gap-3 py-3 px-4 rounded-2xl font-semibold text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+            className="group flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-rose-50 hover:text-rose-700"
           >
-            <LogOut className="w-5 h-5 flex-shrink-0 text-slate-400 group-hover:text-rose-500" />
-            <span className="text-sm">Déconnexion</span>
+            <LogOut className="h-[18px] w-[18px] flex-shrink-0 text-[var(--color-text-soft)] group-hover:text-rose-600" />
+            <span className="text-[13px]">Déconnexion</span>
           </button>
-
-
         </div>
       </aside>
       

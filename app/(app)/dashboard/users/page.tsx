@@ -4,14 +4,9 @@ import { useState, useEffect } from 'react';
 import { 
   UserPlus, 
   RefreshCw, 
-  Trash2, 
   Shield, 
   User as UserIcon, 
-  Mail, 
-  ShieldAlert,
-  CheckCircle2,
   XCircle,
-  MoreVertical,
   Key,
   UserCheck,
   UserX,
@@ -86,8 +81,8 @@ export default function UsersManagementPage() {
       if (!response.ok) throw new Error('Erreur lors du chargement des utilisateurs');
       const data = await response.json();
       setUsers(data);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Erreur de chargement');
     } finally {
       setLoading(false);
     }
@@ -116,8 +111,8 @@ export default function UsersManagementPage() {
 
       setFormData({ name: '', email: '', role: 'TECHNICIEN', password: '' });
       fetchUsers();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Erreur lors de la création');
     } finally {
       setSubmitLoading(false);
     }
@@ -146,8 +141,8 @@ export default function UsersManagementPage() {
           }
 
           fetchUsers();
-        } catch (err: any) {
-          setError(err.message);
+        } catch (err: unknown) {
+          setError(err instanceof Error ? err.message : 'Erreur de modification');
         }
       }
     });
@@ -170,8 +165,8 @@ export default function UsersManagementPage() {
 
           if (!response.ok) throw new Error('Erreur lors de la réinitialisation');
           fetchUsers();
-        } catch (err: any) {
-          setError(err.message);
+        } catch (err: unknown) {
+          setError(err instanceof Error ? err.message : 'Erreur de réinitialisation');
         }
       }
     });
@@ -180,38 +175,39 @@ export default function UsersManagementPage() {
 
 
   return (
-    <div className="p-8 space-y-10 max-w-7xl mx-auto">
+    <div className="mx-auto max-w-[1500px] space-y-6 pb-16">
       
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <section className="rounded-3xl border bg-white px-5 py-4 shadow-[0_8px_28px_rgba(15,31,51,0.06)]">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <button 
             onClick={() => router.push('/')}
-            className="group flex items-center gap-2 text-slate-400 font-bold hover:text-indigo-600 transition-all mb-4"
+            className="mb-3 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-text-soft)] transition-colors hover:text-[var(--color-accent)]"
           >
-            <div className="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center group-hover:bg-indigo-50 shadow-sm transition-all group-hover:border-indigo-100">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl border bg-[var(--color-surface-muted)]">
                <ArrowLeft size={16} />
             </div>
-            <span className="text-xs uppercase tracking-widest">Tableau de bord</span>
+            <span>Tableau de bord</span>
           </button>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Gestion des Utilisateurs</h1>
-          <p className="text-slate-500 font-medium mt-1">Gérez les accès et les rôles de votre personnel de laboratoire.</p>
+          <h1 className="text-xl font-semibold text-[var(--color-text)]">Gestion des utilisateurs</h1>
+          <p className="mt-1 text-sm text-[var(--color-text-soft)]">Gérer les accès et rôles du personnel du laboratoire.</p>
         </div>
 
        
           <div className="hidden lg:flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-2xl border border-indigo-100">
                     <Settings className="w-4 h-4 animate-spin-slow" />
-                    <span className="text-xs font-black uppercase tracking-wider">Mode Administrateur</span>
+                    <span className="text-xs font-semibold uppercase tracking-[0.12em]">Mode administrateur</span>
                   </div>
       </div>
+      </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+      <div className="space-y-8">
         
         {/* Section A: User List */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bento-panel overflow-hidden">
+        <div className="space-y-6">
+          <div className="overflow-hidden rounded-3xl border bg-white shadow-[0_8px_24px_rgba(15,31,51,0.05)]">
             <div className="p-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/30">
-              <h3 className="font-black text-slate-900 flex items-center gap-2">
+              <h3 className="font-semibold text-slate-900 flex items-center gap-2">
                 <UserIcon size={18} className="text-indigo-500" />
                 Liste du Personnel
               </h3>
@@ -233,10 +229,10 @@ export default function UsersManagementPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="text-left border-b border-slate-50">
-                      <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Utilisateur</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Rôle</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Statut</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
+                      <th className="px-6 py-4 text-[10px] font-semibold text-slate-400 uppercase tracking-[0.12em]">Utilisateur</th>
+                      <th className="px-6 py-4 text-[10px] font-semibold text-slate-400 uppercase tracking-[0.12em]">Rôle</th>
+                      <th className="px-6 py-4 text-[10px] font-semibold text-slate-400 uppercase tracking-[0.12em]">Statut</th>
+                      <th className="px-6 py-4 text-[10px] font-semibold text-slate-400 uppercase tracking-[0.12em] text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
@@ -248,7 +244,7 @@ export default function UsersManagementPage() {
                               {user.name.charAt(0)}
                             </div>
                             <div>
-                              <p className="text-sm font-bold text-slate-900">{user.name}</p>
+                              <p className="text-sm font-semibold text-slate-900">{user.name}</p>
                               <p className="text-xs text-slate-400 font-medium">{user.email}</p>
                             </div>
                           </div>
@@ -260,12 +256,12 @@ export default function UsersManagementPage() {
                         </td>
                         <td className="px-6 py-4">
                           {user.isActive ? (
-                            <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-600">
+                            <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                               Actif
                             </span>
                           ) : (
-                            <span className="flex items-center gap-1.5 text-xs font-bold text-slate-400">
+                            <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
                               <span className="w-1.5 h-1.5 rounded-full bg-slate-300" />
                               Désactivé
                             </span>
@@ -306,15 +302,15 @@ export default function UsersManagementPage() {
 
         {/* Section B: Create User Form */}
         <div className="space-y-6">
-          <div className="bento-panel p-8 sticky top-8">
-            <h3 className="text-xl font-black text-slate-900 mb-6 flex items-center gap-2">
+          <div className="rounded-3xl border bg-white p-6 shadow-[0_8px_24px_rgba(15,31,51,0.05)]">
+            <h3 className="mb-6 flex items-center gap-2 text-lg font-semibold text-slate-900">
               <UserPlus size={20} className="text-indigo-500" />
               Nouveau Compte
             </h3>
 
-            <form onSubmit={handleCreateUser} className="space-y-5">
-              <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Nom Complet</label>
+            <form onSubmit={handleCreateUser} className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+              <div className="space-y-2">
+                <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-[0.12em] mb-2 ml-1">Nom complet</label>
                 <input 
                   type="text" 
                   value={formData.name}
@@ -325,8 +321,8 @@ export default function UsersManagementPage() {
                 />
               </div>
 
-              <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Email Personnel</label>
+              <div className="space-y-2">
+                <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-[0.12em] mb-2 ml-1">Email personnel</label>
                 <input 
                   type="email" 
                   value={formData.email}
@@ -337,8 +333,8 @@ export default function UsersManagementPage() {
                 />
               </div>
 
-              <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Rôle Système</label>
+              <div className="space-y-2">
+                <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-[0.12em] mb-2 ml-1">Rôle système</label>
                 <select 
                   value={formData.role}
                   onChange={(e) => setFormData({...formData, role: e.target.value})}
@@ -352,8 +348,8 @@ export default function UsersManagementPage() {
                 </select>
               </div>
 
-              <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Mot de Passe Initial</label>
+              <div className="space-y-2">
+                <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-[0.12em] mb-2 ml-1">Mot de passe initial</label>
                 <input 
                   type="password" 
                   value={formData.password}
@@ -365,21 +361,21 @@ export default function UsersManagementPage() {
                 />
                 <p className="text-[10px] text-slate-400 mt-2 ml-1 flex items-center gap-1">
                   <Shield size={10} />
-                  L'utilisateur devra le changer au 1er accès
+                  L&apos;utilisateur devra le changer au 1er accès
                 </p>
               </div>
 
               {error && (
-                <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-3">
+                <div className="xl:col-span-2 p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-3">
                   <XCircle size={16} className="text-rose-500 shrink-0" />
-                  <p className="text-xs font-bold text-rose-600">{error}</p>
+                  <p className="text-xs font-semibold text-rose-600">{error}</p>
                 </div>
               )}
 
               <button 
                 type="submit" 
                 disabled={submitLoading}
-                className="btn-primary w-full h-12 text-sm font-black shadow-lg shadow-indigo-100"
+                className="btn-primary-md xl:col-span-2 w-full text-sm font-semibold"
               >
                 {submitLoading ? <RefreshCw className="animate-spin mx-auto" size={18} /> : 'Créer le Compte'}
               </button>

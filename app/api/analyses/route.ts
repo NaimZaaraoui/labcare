@@ -4,9 +4,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import {prisma} from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { notifyUsers, getUserIdsByRoles } from '@/lib/notifications';
+import { requireAnyRole, requireAuthUser } from '@/lib/authz';
+import { createAuditLog, getRequestMeta } from '@/lib/audit';
 
 export async function GET(request: NextRequest) {
   try {
+    const guard = await requireAuthUser();
+    if (!guard.ok) return guard.error;
+
     const { searchParams } = new URL(request.url);
     const patientId = searchParams.get('patientId');
     const start = searchParams.get('start');
@@ -78,6 +83,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const guard = await requireAnyRole(['ADMIN', 'TECHNICIEN', 'RECEPTIONNISTE']);
+    if (!guard.ok) return guard.error;
+    const meta = getRequestMeta({ headers: request.headers });
+
     const body = await request.json();
     
     // Générer numéro d'ordre unique (Robuste: cherche le max existant du jour)
@@ -277,6 +286,20 @@ export async function POST(request: NextRequest) {
     } catch (e) {
       console.error('Error in analysis notifications:', e);
     }
+
+    await createAuditLog({
+      action: 'analysis.create',
+      severity: analysis.isUrgent ? 'WARN' : 'INFO',
+      entity: 'analysis',
+      entityId: analysis.id,
+      details: {
+        orderNumber: analysis.orderNumber,
+        patient: `${analysis.patientLastName || ''} ${analysis.patientFirstName || ''}`.trim(),
+        totalPrice: analysis.totalPrice,
+      },
+      ipAddress: meta.ipAddress,
+      userAgent: meta.userAgent,
+    });
 
     return NextResponse.json(analysis, { status: 201 });
   } catch (error: any) {

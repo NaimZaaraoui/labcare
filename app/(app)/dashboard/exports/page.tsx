@@ -12,7 +12,10 @@ import {
   Package,
   BarChart3,
   ListOrdered,
-  Filter
+  Filter,
+  AlertCircle,
+  CircleCheckBig,
+  Clock3
 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, startOfYear, endOfYear, startOfDay, endOfDay } from 'date-fns';
 import { useRouter } from 'next/navigation';
@@ -41,84 +44,63 @@ const EXPORT_CONFIG = [
     id: 'analyses',
     label: 'Liste des Analyses',
     description: 'Export complet des dossiers avec patients et statuts',
-    icon: Activity,
-    color: 'from-indigo-500 to-indigo-600',
-    bgColor: 'bg-indigo-50',
-    textColor: 'text-indigo-600'
+    icon: Activity
   },
   {
     id: 'results',
     label: 'Résultats Détaillés',
     description: 'Valeurs de chaque test avec références et unités',
-    icon: FileSpreadsheet,
-    color: 'from-violet-500 to-violet-600',
-    bgColor: 'bg-violet-50',
-    textColor: 'text-violet-600'
+    icon: FileSpreadsheet
   },
   {
     id: 'daily',
     label: 'Synthèse Journalière',
     description: 'Statistiques agrégées par jour',
-    icon: ListOrdered,
-    color: 'from-cyan-500 to-cyan-600',
-    bgColor: 'bg-cyan-50',
-    textColor: 'text-cyan-600'
+    icon: ListOrdered
   },
   {
     id: 'monthly',
     label: 'Synthèse Mensuelle',
     description: 'Statistiques agrégées par mois',
-    icon: Calendar,
-    color: 'from-teal-500 to-teal-600',
-    bgColor: 'bg-teal-50',
-    textColor: 'text-teal-600'
+    icon: Calendar
   },
   {
     id: 'by_category',
     label: 'Répartition par Catégorie',
     description: 'Nombre de résultats normaux/anormaux par catégorie',
-    icon: BarChart3,
-    color: 'from-amber-500 to-amber-600',
-    bgColor: 'bg-amber-50',
-    textColor: 'text-amber-600'
+    icon: BarChart3
   },
   {
     id: 'by_patient',
     label: 'Historique par Patient',
     description: 'Liste des patients avec nombre d\'analyses et dépenses',
-    icon: Users,
-    color: 'from-emerald-500 to-emerald-600',
-    bgColor: 'bg-emerald-50',
-    textColor: 'text-emerald-600'
+    icon: Users
   },
   {
     id: 'patients',
     label: 'Fichier Patients',
     description: 'Coordonnées complètes des patients inscrits',
-    icon: Users,
-    color: 'from-rose-500 to-rose-600',
-    bgColor: 'bg-rose-50',
-    textColor: 'text-rose-600'
+    icon: Users
   },
   {
     id: 'catalog',
     label: 'Catalogue des Tests',
     description: 'Liste des tests avec tarifs et valeurs de référence',
-    icon: Package,
-    color: 'from-purple-500 to-purple-600',
-    bgColor: 'bg-purple-50',
-    textColor: 'text-purple-600'
+    icon: Package
   }
 ] as const;
 
 export default function ExportsPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [exportType, setExportType] = useState<ExportType>('analyses');
   const [dateRange, setDateRange] = useState({
     start: format(startOfMonth(new Date()), 'yyyy-MM-dd'),
     end: format(endOfMonth(new Date()), 'yyyy-MM-dd')
   });
+  const [quickPreset, setQuickPreset] = useState<'today' | 'month' | 'year' | 'custom'>('month');
   const [statusFilter, setStatusFilter] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -142,6 +124,22 @@ export default function ExportsPage() {
   }, []);
 
   const handleExport = async () => {
+    if (needsDateRange) {
+      if (!dateRange.start || !dateRange.end) {
+        setErrorMessage('Veuillez renseigner une date de début et une date de fin.');
+        setStatusMessage(null);
+        return;
+      }
+
+      if (dateRange.start > dateRange.end) {
+        setErrorMessage('La date de début doit être antérieure ou égale à la date de fin.');
+        setStatusMessage(null);
+        return;
+      }
+    }
+
+    setErrorMessage(null);
+    setStatusMessage('Préparation de l’export...');
     setLoading(true);
     try {
       let url = '';
@@ -206,14 +204,31 @@ export default function ExportsPage() {
       }
 
       const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Erreur serveur (${response.status})`);
+      }
       const data = await response.json();
 
       if (data && Array.isArray(data)) {
+        setStatusMessage('Formatage des données...');
         const formattedData = formatter(data);
+        if (!formattedData.length) {
+          setErrorMessage('Aucune donnée trouvée pour les filtres sélectionnés.');
+          setStatusMessage(null);
+          return;
+        }
         exportToExcel(formattedData, fileName, sheetName);
+        setStatusMessage(
+          `Export terminé: ${formattedData.length} ligne${formattedData.length > 1 ? 's' : ''} générée${formattedData.length > 1 ? 's' : ''}.`
+        );
+      } else {
+        setErrorMessage('Format de réponse invalide. Merci de réessayer.');
+        setStatusMessage(null);
       }
     } catch (error) {
       console.error('Export error:', error);
+      setErrorMessage('Échec de l’export. Vérifiez les filtres puis réessayez.');
+      setStatusMessage(null);
     } finally {
       setLoading(false);
     }
@@ -242,6 +257,7 @@ export default function ExportsPage() {
       start: format(start, 'yyyy-MM-dd'),
       end: format(end, 'yyyy-MM-dd')
     });
+    setQuickPreset(type);
   };
 
   const selectedConfig = EXPORT_CONFIG.find(e => e.id === exportType);
@@ -264,35 +280,34 @@ export default function ExportsPage() {
   };
 
   return (
-    <div className="p-8 space-y-10 max-w-7xl mx-auto pb-24 animate-fade-in">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+    <div className="mx-auto max-w-[1500px] space-y-6 pb-16">
+      <section className="rounded-3xl border bg-white px-5 py-4 shadow-[0_8px_28px_rgba(15,31,51,0.06)]">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <button 
             onClick={() => router.push('/')}
-            className="group flex items-center gap-2 text-slate-400 font-bold hover:text-indigo-600 transition-all mb-4"
+            className="mb-3 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-text-soft)] transition-colors hover:text-[var(--color-accent)]"
           >
-            <div className="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center group-hover:bg-indigo-50 shadow-sm transition-all group-hover:border-indigo-100">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl border bg-[var(--color-surface-muted)]">
                <ArrowLeft size={16} />
             </div>
-            <span className="text-xs uppercase tracking-widest">Tableau de bord</span>
+            <span>Tableau de bord</span>
           </button>
           
-          <div className="flex items-start gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 text-white flex items-center justify-center shadow-xl shadow-indigo-200 shrink-0">
-               <DownloadCloud size={28} />
+          <div className="flex items-start gap-3">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--color-accent)] text-white">
+               <DownloadCloud size={24} />
             </div>
             <div>
-              <h1 className="text-3xl font-black text-slate-900 tracking-tight">Exports de Données</h1>
-              <p className="text-slate-500 font-medium mt-1">Générez des rapports Excel personnalisés pour votre gestion.</p>
+              <h1 className="text-xl font-semibold text-[var(--color-text)]">Exports de données</h1>
+              <p className="mt-1 text-sm text-[var(--color-text-soft)]">Générer des rapports Excel personnalisés pour votre gestion.</p>
             </div>
           </div>
         </div>
 
-        <div className="hidden lg:flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-2xl border border-emerald-100">
-          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800">Format XLSX</span>
-        </div>
+        
       </div>
+      </section>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
         <div className="xl:col-span-2 space-y-6">
@@ -304,22 +319,22 @@ export default function ExportsPage() {
                   onClick={() => setExportType(config.id as ExportType)}
                   className={`flex items-start gap-4 p-5 rounded-2xl border-2 transition-all text-left group ${
                     exportType === config.id 
-                      ? `border-transparent bg-gradient-to-br ${config.color} text-white shadow-lg` 
-                      : 'border-slate-100 hover:border-slate-200 bg-white'
+                      ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)] text-[var(--color-text)]'
+                      : 'border-[var(--color-border)] bg-white hover:border-slate-300'
                   }`}
                 >
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-all ${
                     exportType === config.id 
-                      ? 'bg-white/20 text-white' 
-                      : `${config.bgColor} ${config.textColor}`
+                      ? 'bg-[var(--color-accent)] text-white shadow-[0_6px_14px_rgba(31,111,235,0.22)]'
+                      : 'bg-[var(--color-surface-muted)] text-[var(--color-accent)]'
                   }`}>
                     <config.icon size={24} />
                   </div>
                   <div className="min-w-0">
-                    <div className={`font-bold text-sm mb-1 ${exportType === config.id ? 'text-white' : 'text-slate-700'}`}>
+                    <div className="mb-1 text-sm font-bold text-[var(--color-text)]">
                       {config.label}
                     </div>
-                    <div className={`text-[11px] leading-relaxed ${exportType === config.id ? 'text-white/80' : 'text-slate-400'}`}>
+                    <div className="text-[11px] leading-relaxed text-[var(--color-text-soft)]">
                       {config.description}
                     </div>
                   </div>
@@ -330,38 +345,53 @@ export default function ExportsPage() {
 
           <div className="bento-panel p-6">
             <div className="flex items-center gap-3 mb-6">
-              <div className={`w-10 h-10 rounded-xl ${selectedConfig?.bgColor || 'bg-slate-50'} ${selectedConfig?.textColor || 'text-slate-500'} flex items-center justify-center`}>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--color-accent-soft)] text-[var(--color-accent)]">
                 {selectedConfig && <selectedConfig.icon size={20} />}
               </div>
               <div>
-                <h3 className="text-lg font-bold text-slate-800">{selectedConfig?.label}</h3>
-                <p className="text-xs text-slate-400">{selectedConfig?.description}</p>
+                <h3 className="text-lg font-bold text-[var(--color-text)]">{selectedConfig?.label}</h3>
+                <p className="text-xs text-[var(--color-text-soft)]">{selectedConfig?.description}</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {needsDateRange && (
                 <div className="space-y-4">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                  <label className="form-label flex items-center gap-2">
                     <Calendar size={14} /> Période
                   </label>
                   
-                  <div className="flex bg-slate-50 p-1 rounded-xl gap-1">
+                  <div className="grid grid-cols-3 gap-2 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-1.5">
                     <button 
-                      onClick={() => setQuickRange('today')} 
-                      className="flex-1 py-2 text-[11px] font-bold rounded-lg hover:bg-white transition-all text-slate-600"
+                      type="button"
+                      onClick={() => setQuickRange('today')}
+                      className={`rounded-xl px-2 py-2 text-[11px] font-semibold transition-all ${
+                        quickPreset === 'today'
+                          ? 'bg-white text-[var(--color-text)] shadow-sm'
+                          : 'text-[var(--color-text-soft)] hover:bg-white/80'
+                      }`}
                     >
                       Aujourd&apos;hui
                     </button>
                     <button 
-                      onClick={() => setQuickRange('month')} 
-                      className="flex-1 py-2 text-[11px] font-bold rounded-lg hover:bg-white transition-all text-slate-600"
+                      type="button"
+                      onClick={() => setQuickRange('month')}
+                      className={`rounded-xl px-2 py-2 text-[11px] font-semibold transition-all ${
+                        quickPreset === 'month'
+                          ? 'bg-white text-[var(--color-text)] shadow-sm'
+                          : 'text-[var(--color-text-soft)] hover:bg-white/80'
+                      }`}
                     >
                       Mois
                     </button>
                     <button 
-                      onClick={() => setQuickRange('year')} 
-                      className="flex-1 py-2 text-[11px] font-bold rounded-lg hover:bg-white transition-all text-slate-600"
+                      type="button"
+                      onClick={() => setQuickRange('year')}
+                      className={`rounded-xl px-2 py-2 text-[11px] font-semibold transition-all ${
+                        quickPreset === 'year'
+                          ? 'bg-white text-[var(--color-text)] shadow-sm'
+                          : 'text-[var(--color-text-soft)] hover:bg-white/80'
+                      }`}
                     >
                       Année
                     </button>
@@ -369,20 +399,26 @@ export default function ExportsPage() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Du</span>
+                      <span className="section-label ml-1">Du</span>
                       <input 
                         type="date" 
                         value={dateRange.start}
-                        onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                        onChange={(e) => {
+                          setDateRange(prev => ({ ...prev, start: e.target.value }));
+                          setQuickPreset('custom');
+                        }}
                         className="input-premium h-11 !text-sm"
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Au</span>
+                      <span className="section-label ml-1">Au</span>
                       <input 
                         type="date" 
                         value={dateRange.end}
-                        onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                        onChange={(e) => {
+                          setDateRange(prev => ({ ...prev, end: e.target.value }));
+                          setQuickPreset('custom');
+                        }}
                         className="input-premium h-11 !text-sm"
                       />
                     </div>
@@ -392,7 +428,7 @@ export default function ExportsPage() {
 
               {needsCategoryFilter && (
                 <div className="space-y-4">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                  <label className="form-label flex items-center gap-2">
                     <Filter size={14} /> Catégorie de tests
                   </label>
                   <select 
@@ -416,7 +452,7 @@ export default function ExportsPage() {
 
               {needsStatusFilter && (
                 <div className="space-y-4">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  <label className="form-label">
                     Statut des analyses
                   </label>
                   <select 
@@ -446,19 +482,32 @@ export default function ExportsPage() {
               )}
             </div>
 
+            {(statusMessage || errorMessage) && (
+              <div
+                className={`mt-5 flex items-start gap-2 rounded-2xl border px-4 py-3 text-sm ${
+                  errorMessage
+                    ? 'border-rose-200 bg-rose-50 text-rose-700'
+                    : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                }`}
+              >
+                {errorMessage ? <AlertCircle size={16} className="mt-0.5 shrink-0" /> : <CircleCheckBig size={16} className="mt-0.5 shrink-0" />}
+                <span>{errorMessage || statusMessage}</span>
+              </div>
+            )}
+
             <button
               onClick={handleExport}
               disabled={loading}
-              className={`w-full mt-6 h-14 rounded-2xl font-bold text-sm flex items-center justify-center gap-3 transition-all ${
+              className={`btn-primary-md mt-6 h-14 w-full text-sm font-semibold ${
                 loading 
-                  ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
-                  : 'btn-primary shadow-xl shadow-indigo-200 hover:shadow-indigo-300'
+                  ? 'cursor-not-allowed border border-[var(--color-border)] bg-slate-100 text-slate-400 shadow-none'
+                  : ''
               }`}
             >
               {loading ? (
                 <>
                   <div className="w-5 h-5 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin" />
-                  Génération en cours...
+                  Export en cours...
                 </>
               ) : (
                 <>
@@ -471,7 +520,7 @@ export default function ExportsPage() {
         </div>
 
         <div className="space-y-6">
-          <div className="bento-panel p-6 bg-gradient-to-br from-indigo-600 to-indigo-700 text-white overflow-hidden relative">
+          <div className="bento-panel relative overflow-hidden bg-gradient-to-br from-[var(--color-accent)] to-blue-700 p-6 text-white">
             <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
             <div className="absolute -left-8 -bottom-8 w-32 h-32 bg-indigo-400/20 rounded-full blur-2xl" />
             
@@ -513,6 +562,26 @@ export default function ExportsPage() {
             </div>
           </div>
 
+          <div className="bento-panel p-6">
+            <h4 className="form-label mb-4 flex items-center gap-2">
+              <Clock3 size={14} />
+              Statut export
+            </h4>
+            <div className="space-y-2 text-xs text-[var(--color-text-soft)]">
+              <p>
+                Type: <span className="font-semibold text-[var(--color-text)]">{selectedConfig?.label}</span>
+              </p>
+              {needsDateRange && (
+                <p>
+                  Période: <span className="font-semibold text-[var(--color-text)]">{dateRange.start} → {dateRange.end}</span>
+                </p>
+              )}
+              <p>
+                État: <span className="font-semibold text-[var(--color-text)]">{loading ? 'Traitement...' : 'Prêt à exporter'}</span>
+              </p>
+            </div>
+          </div>
+
           <div className="bento-panel p-6 bg-slate-50/50">
             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">
               Conseils
@@ -524,7 +593,7 @@ export default function ExportsPage() {
                 'Le statut "Validé Bio" = résultats certifiés'
               ].map((tip, i) => (
                 <li key={i} className="flex items-start gap-2 text-xs text-slate-500">
-                  <span className="w-5 h-5 rounded-full bg-white border border-slate-200 flex items-center justify-center text-[10px] font-bold text-indigo-500 shrink-0">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-[10px] font-bold text-[var(--color-accent)]">
                     {i + 1}
                   </span>
                   {tip}

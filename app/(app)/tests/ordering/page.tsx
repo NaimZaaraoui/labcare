@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   DndContext, 
   closestCenter,
@@ -65,6 +65,11 @@ interface Test {
   rank: number;
 }
 
+interface SortableRenderProps {
+  attributes: Record<string, unknown>;
+  listeners: Record<string, unknown> | undefined;
+}
+
 // Icônes disponibles
 const AVAILABLE_ICONS = [
   { name: 'Folder', icon: Folder },
@@ -84,7 +89,7 @@ function CategoryIcon({ iconName }: { iconName?: string | null }) {
 }
 
 // Sortable Item Component
-function SortableItem({ id, children, active }: { id: string, children: (props: any) => React.ReactNode, active: boolean }) {
+function SortableItem({ id, children }: { id: string, children: (props: SortableRenderProps) => React.ReactNode }) {
   const {
     attributes,
     listeners,
@@ -158,12 +163,7 @@ export default function OrderingPage() {
     })
   );
 
-  useEffect(() => {
-    setMounted(true);
-    fetchCategories();
-  }, []);
-
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const res = await fetch('/api/categories', {
         cache: 'no-store',
@@ -172,8 +172,8 @@ export default function OrderingPage() {
       if (res.ok) {
         const data = await res.json();
         setCategories(data);
-        if (data.length > 0 && !selectedCategory) {
-            setSelectedCategory(data[0]);
+        if (data.length > 0) {
+          setSelectedCategory((prev) => prev ?? data[0]);
         }
       }
     } catch (error) {
@@ -181,9 +181,14 @@ export default function OrderingPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const updateOrder = async (model: 'category' | 'test', items: any[]) => {
+  useEffect(() => {
+    setMounted(true);
+    fetchCategories();
+  }, [fetchCategories]);
+
+  const updateOrder = async (model: 'category' | 'test', items: Array<{ id: string }>) => {
     setSaving(true);
     const updates = items.map((item, index) => ({
       id: item.id,
@@ -311,7 +316,7 @@ export default function OrderingPage() {
         const error = await res.json();
         showNotification('error', error.error || 'Erreur lors de la création');
       }
-    } catch (error) {
+    } catch {
       showNotification('error', 'Erreur lors de la création');
     }
   };
@@ -346,7 +351,7 @@ export default function OrderingPage() {
         const error = await res.json();
         showNotification('error', error.error || 'Erreur lors de la modification');
       }
-    } catch (error) {
+    } catch {
       showNotification('error', 'Erreur lors de la modification');
     }
   };
@@ -367,7 +372,7 @@ export default function OrderingPage() {
         const error = await res.json();
         showNotification('error', error.error || 'Erreur lors de la suppression');
       }
-    } catch (error) {
+    } catch {
       showNotification('error', 'Erreur lors de la suppression');
     }
   };
@@ -393,7 +398,7 @@ export default function OrderingPage() {
       } else {
         showNotification('error', 'Erreur lors de la réinitialisation');
       }
-    } catch (error) {
+    } catch {
       showNotification('error', 'Erreur lors de la réinitialisation');
     }
   };
@@ -433,7 +438,7 @@ export default function OrderingPage() {
     const isExpanded = expandedCategories.has(cat.id);
 
     return (
-      <SortableItem key={cat.id} id={cat.id} active={selectedCategory?.id === cat.id}>
+      <SortableItem key={cat.id} id={cat.id}>
         {({ attributes, listeners }) => (
           <div 
             className={`
@@ -511,7 +516,7 @@ export default function OrderingPage() {
     cat.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredTests = selectedCategory?.tests.filter(test =>
+  const filteredTests = selectedCategory?.tests?.filter(test =>
     test.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     test.code.toLowerCase().includes(searchQuery.toLowerCase())
   ) || [];
@@ -519,29 +524,29 @@ export default function OrderingPage() {
   const rootCategories = buildCategoryTree(searchQuery ? filteredCategories : categories);
   const visibleCategories = searchQuery ? filteredCategories : getVisibleCategories(rootCategories);
 
-  if (loading) return <div className="flex justify-center p-20"><Loader2 className="animate-spin text-indigo-600" /></div>;
+  if (loading) return <div className="flex justify-center p-20"><Loader2 className="animate-spin text-[var(--color-accent)]" /></div>;
 
   return (
-    <div className="p-8 space-y-8 animate-fade-in pb-24">
+    <div className="space-y-6 pb-24">
 
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bento-panel p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <button 
             onClick={() => router.back()}
-            className="group flex items-center gap-2 text-slate-400 font-bold hover:text-indigo-600 transition-all"
+            className="group flex items-center gap-2 text-[var(--color-text-soft)] font-medium hover:text-[var(--color-accent)] transition-all"
           >
-            <div className="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center group-hover:bg-indigo-50 shadow-sm transition-all group-hover:border-indigo-100">
+            <div className="w-8 h-8 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] flex items-center justify-center group-hover:bg-[var(--color-accent-soft)] transition-all">
               <ArrowLeft size={16} />
             </div>
           </button>
           <div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight">Organisation du Laboratoire</h1>
-            <p className="text-slate-500 font-medium mt-1">Réorganisez l&apos;ordre d&apos;affichage par glisser-déposer.</p>
+            <h1 className="text-2xl sm:text-3xl font-semibold text-[var(--color-text)] tracking-tight">Organisation du Laboratoire</h1>
+            <p className="text-[var(--color-text-secondary)] mt-1">Réorganisez l&apos;ordre d&apos;affichage par glisser-déposer.</p>
           </div>
         </div>
         <div className="flex items-center gap-3 shrink-0">
-          {saving && <span className="text-sm font-bold text-indigo-600 animate-pulse flex items-center gap-2"><Save size={14} /> Sauvegarde...</span>}
+          {saving && <span className="text-sm font-medium text-[var(--color-accent)] animate-pulse flex items-center gap-2"><Save size={14} /> Sauvegarde...</span>}
           <button
             onClick={() => setConfirmDialog({
               open: true,
@@ -549,14 +554,14 @@ export default function OrderingPage() {
               description: 'Êtes-vous sûr de vouloir réinitialiser l\'ordre par défaut ? Cette action est irréversible.',
               action: handleReset
             })}
-            className="px-4 py-2.5 rounded-2xl bg-rose-50 text-rose-600 hover:bg-rose-100 font-bold text-sm flex items-center gap-2 transition-all border border-rose-100"
+            className="btn-secondary h-11 text-sm text-rose-600 border-rose-200 bg-rose-50 hover:bg-rose-100"
           >
             <RotateCcw size={16} />
             Réinitialiser
           </button>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="px-4 py-2.5 rounded-2xl bg-indigo-600 text-white hover:bg-indigo-700 font-black text-sm flex items-center gap-2 transition-all shadow-lg shadow-indigo-100"
+            className="btn-primary-md text-sm"
           >
             <PlusCircle size={16} />
             Nouvelle Catégorie
@@ -565,25 +570,25 @@ export default function OrderingPage() {
       </div>
 
       {/* Barre de recherche */}
-      <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+      <div className="relative bento-panel p-4">
+        <Search className="absolute left-8 top-1/2 -translate-y-1/2 text-[var(--color-text-soft)]" size={18} />
         <input
           type="text"
           placeholder="Rechercher une catégorie ou un test..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
+          className="input-premium h-11 pl-12"
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         {/* Categories Column */}
         <div className="lg:col-span-1 space-y-4">
-          <div className="bg-slate-900 text-white p-4 rounded-t-2xl flex items-center gap-3 shadow-lg">
-            <Layers size={20} className="text-indigo-400" />
-            <h2 className="font-bold">Catégories</h2>
+          <div className="bento-panel p-4 rounded-b-none border-b-0 flex items-center gap-3">
+            <Layers size={18} className="text-[var(--color-accent)]" />
+            <h2 className="font-semibold text-[var(--color-text)]">Catégories</h2>
           </div>
-          <div className="bg-white rounded-b-2xl shadow-xl shadow-slate-200/50 p-2 min-h-[400px]">
+          <div className="bento-panel rounded-t-none p-2 min-h-[400px]">
                 <DndContext 
                   sensors={categorySensors}
                   collisionDetection={closestCenter}
@@ -617,7 +622,7 @@ export default function OrderingPage() {
                       if (!cat) return null;
                       return (
                         <div 
-                          className="p-4 rounded-xl flex items-center justify-between bg-white border border-indigo-200 shadow-2xl opacity-90 scale-105 cursor-grabbing"
+                          className="p-4 rounded-xl flex items-center justify-between bg-white border border-blue-200 shadow-xl opacity-90 scale-105 cursor-grabbing"
                           style={{ width: activeDragWidth ? `${activeDragWidth}px` : 'auto' }}
                         >
                           <div className="flex items-center gap-3">
@@ -635,11 +640,11 @@ export default function OrderingPage() {
 
         {/* Tests Column */}
         <div className="lg:col-span-1 space-y-4">
-           <div className="bg-slate-900 text-white p-4 rounded-t-2xl flex items-center gap-3 shadow-lg">
-            <Beaker size={20} className="text-emerald-400" />
-            <h2 className="font-bold">Tests de : <span className="text-white">{selectedCategory?.name}</span></h2>
+           <div className="bento-panel p-4 rounded-b-none border-b-0 flex items-center gap-3">
+            <Beaker size={18} className="text-emerald-600" />
+            <h2 className="font-semibold text-[var(--color-text)]">Tests de : <span className="text-[var(--color-text-secondary)]">{selectedCategory?.name}</span></h2>
           </div>
-          <div className="bg-white rounded-b-2xl shadow-xl shadow-slate-200/50 p-2 min-h-[400px]">
+          <div className="bento-panel rounded-t-none p-2 min-h-[400px]">
              {selectedCategory ? (
                 <DndContext 
                   sensors={testSensors}
@@ -653,14 +658,14 @@ export default function OrderingPage() {
                   >
                     <div className="space-y-2">
                       {filteredTests.map((test) => (
-                          <SortableItem key={test.id} id={test.id} active={false}>
+                          <SortableItem key={test.id} id={test.id}>
                             {({ attributes, listeners }) => (
-                              <div className="p-3 bg-white border border-slate-100 rounded-xl flex items-center justify-between hover:border-indigo-200 hover:shadow-md transition-all group">
+                              <div className="p-3 bg-white border border-[var(--color-border)] rounded-xl flex items-center justify-between hover:border-blue-200 hover:shadow-md transition-all group">
                                 <div className="flex items-center gap-4">
-                                    <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 font-mono text-[10px] flex items-center justify-center font-bold group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
+                                    <div className="w-8 h-8 rounded-lg bg-[var(--color-surface-muted)] text-[var(--color-text-secondary)] font-mono text-[10px] flex items-center justify-center font-semibold group-hover:bg-[var(--color-accent-soft)] group-hover:text-[var(--color-accent)] transition-colors">
                                       {test.code}
                                     </div>
-                                    <span className="font-bold text-slate-700">{test.name}</span>
+                                    <span className="font-medium text-[var(--color-text)]">{test.name}</span>
                                 </div>
                                 <div {...attributes} {...listeners} className="p-2 -mr-2 text-slate-300 group-hover:text-indigo-400 cursor-grab active:cursor-grabbing touch-none">
                                   <GripVertical size={16} />
@@ -709,17 +714,17 @@ export default function OrderingPage() {
 
       {/* Modal de création / édition */}
       {mounted && (showCreateModal || showEditModal) && createPortal(
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
+        <div className="modal-overlay z-[100] animate-in fade-in duration-200">
           <div 
-            className="bg-white rounded-3xl p-8 max-w-md w-full space-y-6 shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-200 overflow-y-auto h-[90vh]"
+            className="modal-shell h-[90vh] w-full max-w-md space-y-6 overflow-y-auto p-6 animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--color-accent-soft)] text-[var(--color-accent)]">
                   {showEditModal ? <Edit2 size={20} /> : <PlusCircle size={20} />}
                 </div>
-                <h3 className="text-xl font-black text-slate-900 tracking-tight">
+                <h3 className="text-xl font-semibold text-[var(--color-text)] tracking-tight">
                   {showEditModal ? 'Modifier la Catégorie' : 'Nouvelle Catégorie'}
                 </h3>
               </div>
@@ -730,7 +735,7 @@ export default function OrderingPage() {
                   setEditingCategory(null);
                   setNewCategoryName('');
                 }} 
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-text-soft)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)] transition-all"
               >
                 <X size={20} />
               </button>
@@ -738,28 +743,28 @@ export default function OrderingPage() {
 
             <div className="space-y-5">
               <div className="space-y-2">
-                <label className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Nom de la catégorie</label>
+                <label className="px-1 text-[11px] font-medium uppercase tracking-wide text-[var(--color-text-soft)]">Nom de la catégorie</label>
                 <input
                   type="text"
                   value={newCategoryName}
                   onChange={(e) => setNewCategoryName(e.target.value)}
                   placeholder="Ex: Sérologie, Biochimie..."
-                  className="w-full px-5 py-3 rounded-2xl border border-slate-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 outline-none transition-all font-bold text-slate-700"
+                  className="input-premium h-11"
                   autoFocus
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Icône</label>
-                <div className="grid grid-cols-4 gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                <label className="px-1 text-[11px] font-medium uppercase tracking-wide text-[var(--color-text-soft)]">Icône</label>
+                <div className="grid grid-cols-4 gap-2 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-3">
                   {AVAILABLE_ICONS.map(({ name, icon: Icon }) => (
                     <button
                       key={name}
                       onClick={() => setNewCategoryIcon(name)}
                       className={`p-3 rounded-xl transition-all ${
                         newCategoryIcon === name
-                          ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 scale-105'
-                          : 'bg-white text-slate-400 border border-slate-200 hover:border-indigo-300 hover:text-indigo-500'
+                          ? 'bg-[var(--color-accent)] text-white shadow-md scale-105'
+                          : 'bg-white text-[var(--color-text-soft)] border border-[var(--color-border)] hover:border-blue-200 hover:text-[var(--color-accent)]'
                       }`}
                       title={name}
                     >
@@ -770,11 +775,11 @@ export default function OrderingPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Hiérarchie (Parent)</label>
+                <label className="px-1 text-[11px] font-medium uppercase tracking-wide text-[var(--color-text-soft)]">Hiérarchie (Parent)</label>
                 <select
                   value={newCategoryParent}
                   onChange={(e) => setNewCategoryParent(e.target.value)}
-                  className="w-full px-5 py-3 rounded-2xl border border-slate-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 outline-none transition-all font-bold text-slate-700 bg-white appearance-none cursor-pointer"
+                  className="input-premium h-11 bg-white appearance-none cursor-pointer"
                 >
                   <option value="">📂 Catégorie principale (Racine)</option>
                   {categories
@@ -796,15 +801,15 @@ export default function OrderingPage() {
                   setEditingCategory(null);
                   setNewCategoryName('');
                 }}
-                className="flex-1 px-6 py-4 rounded-2xl bg-slate-50 text-slate-600 hover:bg-slate-100 font-bold transition-all border border-slate-100"
+                className="btn-secondary-md flex-1"
               >
                 Annuler
               </button>
               <button
                 onClick={showEditModal ? handleEditCategory : handleCreateCategory}
-                className="flex-1 px-6 py-4 rounded-2xl bg-slate-900 text-white hover:bg-slate-800 font-bold transition-all shadow-xl shadow-slate-200 flex items-center justify-center gap-2"
+                className="btn-primary-md flex-1 justify-center"
               >
-                {showEditModal ? <Save size={18} /> : <PlusCircle size={18} />}
+                {showEditModal ? <Save size={16} /> : <PlusCircle size={16} />}
                 {showEditModal ? 'Enregistrer' : 'Créer'}
               </button>
             </div>

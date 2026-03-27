@@ -2,7 +2,7 @@
 
 import { Geist } from "next/font/google";
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { RapportImpression } from '@/components/print/RapportImpression';
 import { Analysis } from '@/lib/types';
 
@@ -14,14 +14,24 @@ const geist = Geist({
 
 export default function ExportPage() {
   const { id } = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [reportSettings, setReportSettings] = useState<Record<string, string>>({});
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    const printToken = searchParams.get('printToken') || '';
+    const tokenHeaders = printToken ? { 'x-internal-print-token': printToken } : undefined;
+    const patchHeaders = {
+      'Content-Type': 'application/json',
+      ...(tokenHeaders || {}),
+    };
+
     const fetchAnalysis = async () => {
       try {
-        const res = await fetch(`/api/analyses/${id}`);
+        const res = await fetch(`/api/analyses/${id}`, {
+          headers: tokenHeaders,
+        });
         if (res.ok) {
           const data = await res.json();
           setAnalysis(data);
@@ -30,7 +40,7 @@ export default function ExportPage() {
           if (!data.printedAt) {
             await fetch(`/api/analyses/${id}`, {
               method: 'PATCH',
-              headers: { 'Content-Type': 'application/json' },
+              headers: patchHeaders,
               body: JSON.stringify({ printedAt: new Date().toISOString() })
             });
           }
@@ -48,7 +58,9 @@ export default function ExportPage() {
 
     const fetchSettings = async () => {
       try {
-        const res = await fetch('/api/settings');
+        const res = await fetch('/api/settings', {
+          headers: tokenHeaders,
+        });
         if (res.ok) {
           const data = await res.json();
           setReportSettings(data);
@@ -62,7 +74,7 @@ export default function ExportPage() {
       fetchAnalysis();
       fetchSettings();
     }
-  }, [id]);
+  }, [id, searchParams]);
 
   if (!analysis) return null;
 
