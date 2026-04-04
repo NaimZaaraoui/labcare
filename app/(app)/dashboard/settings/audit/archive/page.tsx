@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { ArrowLeft, Archive, Search, RefreshCw, Download, X } from 'lucide-react';
+import { Archive, Search, RefreshCw, Download, X } from 'lucide-react';
+import { PageBackLink } from '@/components/ui/PageBackLink';
 
 type AuditArchiveItem = {
   id: string;
@@ -134,15 +135,7 @@ export default function AuditArchivePage() {
   return (
     <div className="mx-auto max-w-[1500px] space-y-6 pb-16">
       <section className="rounded-3xl border bg-white px-5 py-4 shadow-[0_8px_28px_rgba(15,31,51,0.06)]">
-        <button
-          onClick={() => router.push('/dashboard/settings/audit')}
-          className="mb-3 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-text-soft)] transition-colors hover:text-[var(--color-accent)]"
-        >
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl border bg-[var(--color-surface-muted)]">
-            <ArrowLeft size={16} />
-          </span>
-          Audit actif
-        </button>
+        <PageBackLink href="/dashboard/settings/audit" />
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-xl font-semibold text-[var(--color-text)]">Archives d&apos;audit</h1>

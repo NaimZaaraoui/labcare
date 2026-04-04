@@ -99,7 +99,14 @@ export default function ChangePasswordPage() {
                   aria-describedby={error ? 'change-password-error' : undefined}
                   className="h-14 border-none w-full outline-none bg-transparent"
                 />
-
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-slate-400 hover:text-indigo-500 transition-colors rounded-xl hover:bg-white"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
               </div>
             </div>
 
@@ -122,15 +129,6 @@ export default function ChangePasswordPage() {
                 />
               </div>
             </div>
-                <button 
-                type='button'
-                onClick={() => setShowPassword(!showPassword)}
-                aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-                className='flex gap-2 items-center text-slate-400 hover:text-indigo-500 transition-colors'>
-                  {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
-                  {showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-                </button>
-
 
             {error && (
               <div id="change-password-error" role="alert" className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-start gap-3">

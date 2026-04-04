@@ -58,7 +58,7 @@ export async function POST(
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Résultats d'Analyse — LabCare</title>
+  <title>Résultats d'Analyse — NexLab</title>
 </head>
 <body style="margin:0;padding:0;background-color:#f1f5f9;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
 
@@ -199,7 +199,7 @@ export async function POST(
 </html>`;
 
     const { data, error } = await resend.emails.send({
-      from: 'LabCare <onboarding@resend.dev>',
+      from: 'NexLab <onboarding@resend.dev>',
       to: recipientEmail,
       subject: `Vos résultats d'analyse — ${patientName} — Réf. ${analysis.orderNumber}`,
       html,

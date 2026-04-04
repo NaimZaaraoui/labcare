@@ -3,30 +3,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { ArrowLeft, ShieldCheck, Search, RefreshCw, Download, X, Archive } from 'lucide-react';
-
-type AuditItem = {
-  id: string;
-  severity: 'INFO' | 'WARN' | 'CRITICAL';
-  userName: string | null;
-  userEmail: string | null;
-  userRole: string | null;
-  action: string;
-  entity: string;
-  entityId: string | null;
-  details: string | null;
-  ipAddress: string | null;
-  userAgent: string | null;
-  createdAt: string;
-};
-
-type AuditResponse = {
-  items: AuditItem[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-};
+import { ShieldCheck, Archive } from 'lucide-react';
+import { AuditFiltersPanel } from '@/components/audit/AuditFiltersPanel';
+import { AuditLogDetailsModal } from '@/components/audit/AuditLogDetailsModal';
+import { AuditLogsTable } from '@/components/audit/AuditLogsTable';
+import type { AuditItem, AuditResponse } from '@/components/audit/types';
+import { PageBackLink } from '@/components/ui/PageBackLink';
 
 export default function AuditLogsPage() {
   const router = useRouter();
@@ -137,10 +119,31 @@ export default function AuditLogsPage() {
     }
   };
 
-  const formatDetails = (value: string | null) => {
+  const renderDetails = (value: string | null) => {
     if (!value) return 'Aucun détail.';
     try {
-      const parsed = JSON.parse(value) as unknown;
+      const parsed = JSON.parse(value);
+      
+      // Visualisation spéciale pour les deltas (modifications de résultats)
+      if (parsed.deltas && typeof parsed.deltas === 'object') {
+        const tests = Object.keys(parsed.deltas);
+        return (
+          <div className="flex flex-col gap-2 font-sans">
+            {tests.map(testCode => {
+              const { oldValue, newValue } = parsed.deltas[testCode];
+              return (
+                <div key={testCode} className="text-sm font-mono bg-white px-3 py-2 rounded-xl border border-slate-200 inline-flex items-center gap-3 w-fit shadow-sm">
+                  <span className="font-bold text-slate-700">{testCode}:</span>
+                  <span className="text-rose-500 line-through bg-rose-50 px-1.5 py-0.5 rounded">{oldValue || 'vide'}</span> 
+                  <span className="text-slate-400">➔</span>
+                  <span className="text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded">{newValue || 'vide'}</span>
+                </div>
+              );
+            })}
+          </div>
+        );
+      }
+      
       return JSON.stringify(parsed, null, 2);
     } catch {
       return value;
@@ -160,15 +163,7 @@ export default function AuditLogsPage() {
   return (
     <div className="mx-auto max-w-[1500px] space-y-6 pb-16">
       <section className="rounded-3xl border bg-white px-5 py-4 shadow-[0_8px_28px_rgba(15,31,51,0.06)]">
-        <button
-          onClick={() => router.push('/dashboard/settings')}
-          className="mb-3 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-text-soft)] transition-colors hover:text-[var(--color-accent)]"
-        >
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl border bg-[var(--color-surface-muted)]">
-            <ArrowLeft size={16} />
-          </span>
-          Paramètres
-        </button>
+        <PageBackLink href="/dashboard/settings" />
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-xl font-semibold text-[var(--color-text)]">Journal d&apos;audit</h1>
@@ -192,112 +187,43 @@ export default function AuditLogsPage() {
         </div>
       </section>
 
-      <section className="bento-panel p-5">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-8">
-          <label className="xl:col-span-2">
-            <span className="form-label mb-1.5">Recherche</span>
-            <div className="input-premium flex h-11 items-center gap-2">
-              <Search size={16} className="text-[var(--color-text-soft)]" />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Utilisateur, action, ID..."
-                className="w-full border-none bg-transparent outline-none"
-              />
-            </div>
-          </label>
-          <label>
-            <span className="form-label mb-1.5">Module</span>
-            <select value={moduleName} onChange={(e) => setModuleName(e.target.value)} className="input-premium h-11">
-              <option value="">Tous</option>
-              <option value="qc">QC</option>
-              <option value="inventory">Inventaire</option>
-              <option value="database">Base de données</option>
-              <option value="analyses">Analyses</option>
-              <option value="patients">Patients</option>
-              <option value="tests">Tests</option>
-              <option value="users">Utilisateurs</option>
-              <option value="settings">Paramètres</option>
-            </select>
-          </label>
-          <label>
-            <span className="form-label mb-1.5">Action</span>
-            <input value={action} onChange={(e) => setAction(e.target.value)} className="input-premium h-11" placeholder="ex: user.create" />
-          </label>
-          <label>
-            <span className="form-label mb-1.5">Entité</span>
-            <input value={entity} onChange={(e) => setEntity(e.target.value)} className="input-premium h-11" placeholder="ex: user" />
-          </label>
-          <label>
-            <span className="form-label mb-1.5">Criticité</span>
-            <select value={severity} onChange={(e) => setSeverity(e.target.value)} className="input-premium h-11">
-              <option value="">Toutes</option>
-              <option value="INFO">INFO</option>
-              <option value="WARN">WARN</option>
-              <option value="CRITICAL">CRITICAL</option>
-            </select>
-          </label>
-          <label>
-            <span className="form-label mb-1.5">Du</span>
-            <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="input-premium h-11" />
-          </label>
-          <label>
-            <span className="form-label mb-1.5">Au</span>
-            <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="input-premium h-11" />
-          </label>
-        </div>
-
-        <div className="mt-4 flex items-center gap-3">
-          <label className="flex items-center gap-2">
-            <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--color-text-soft)]">Par page</span>
-            <select
-              value={pageSize}
-              onChange={(e) => {
-                setPageSize(Number(e.target.value));
-                setPage(1);
-              }}
-              className="input-premium h-10 w-24"
-            >
-              {[10, 25, 50, 100].map((size) => (
-                <option key={size} value={size}>
-                  {size}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button
-            onClick={() => {
-              setPage(1);
-              fetchLogs();
-            }}
-            className="btn-primary-sm"
-          >
-            <Search size={16} />
-            Filtrer
-          </button>
-          <button
-            onClick={() => {
-              setQuery('');
-              setAction('');
-              setModuleName('');
-              setEntity('');
-              setSeverity('');
-              setFrom('');
-              setTo('');
-              setPage(1);
-              fetchLogs();
-            }}
-            className="btn-secondary-sm"
-          >
-            <RefreshCw size={16} />
-            Réinitialiser
-          </button>
-          <a href={csvExportHref} className="btn-secondary-sm">
-            <Download size={16} />
-            Export CSV
-          </a>
-        </div>
-      </section>
+      <AuditFiltersPanel
+        query={query}
+        action={action}
+        moduleName={moduleName}
+        entity={entity}
+        severity={severity}
+        from={from}
+        to={to}
+        pageSize={pageSize}
+        csvExportHref={csvExportHref}
+        onQueryChange={setQuery}
+        onActionChange={setAction}
+        onModuleNameChange={setModuleName}
+        onEntityChange={setEntity}
+        onSeverityChange={setSeverity}
+        onFromChange={setFrom}
+        onToChange={setTo}
+        onPageSizeChange={(value) => {
+          setPageSize(value);
+          setPage(1);
+        }}
+        onFilter={() => {
+          setPage(1);
+          fetchLogs();
+        }}
+        onReset={() => {
+          setQuery('');
+          setAction('');
+          setModuleName('');
+          setEntity('');
+          setSeverity('');
+          setFrom('');
+          setTo('');
+          setPage(1);
+          fetchLogs();
+        }}
+      />
 
       <section className="bento-panel p-5">
         <h3 className="text-sm font-semibold text-[var(--color-text)]">Rétention et archivage</h3>
@@ -327,67 +253,13 @@ export default function AuditLogsPage() {
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-3xl border bg-white shadow-[0_8px_24px_rgba(15,31,51,0.05)]">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[980px]">
-            <thead>
-              <tr className="border-b bg-[var(--color-surface-muted)] text-left">
-                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--color-text-soft)]">Date</th>
-                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--color-text-soft)]">Criticité</th>
-                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--color-text-soft)]">Utilisateur</th>
-                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--color-text-soft)]">Action</th>
-                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--color-text-soft)]">Entité</th>
-                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--color-text-soft)]">Détails</th>
-                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--color-text-soft)]">IP</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {loading && (
-                <tr>
-                  <td colSpan={7} className="px-4 py-10 text-center text-sm text-[var(--color-text-soft)]">Chargement...</td>
-                </tr>
-              )}
-              {!loading && visibleItems.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="px-4 py-10 text-center text-sm text-[var(--color-text-soft)]">Aucun log trouvé.</td>
-                </tr>
-              )}
-              {!loading &&
-                visibleItems.map((item) => (
-                  <tr key={item.id} className="hover:bg-[var(--color-surface-muted)]/50">
-                    <td className="px-4 py-3 text-xs text-[var(--color-text-secondary)]">
-                      {new Date(item.createdAt).toLocaleString('fr-FR')}
-                    </td>
-                    <td className="px-4 py-3 text-xs">
-                      <span className={severityBadgeClass(item.severity)}>{item.severity}</span>
-                    </td>
-                    <td className="px-4 py-3 text-xs text-[var(--color-text-secondary)]">
-                      <div className="font-semibold text-[var(--color-text)]">{item.userName || 'Système'}</div>
-                      <div>{item.userEmail || '—'}</div>
-                    </td>
-                    <td className="px-4 py-3 text-xs font-semibold text-[var(--color-text)]">{item.action}</td>
-                    <td className="px-4 py-3 text-xs text-[var(--color-text-secondary)]">
-                      {item.entity}
-                      {item.entityId ? ` (${item.entityId})` : ''}
-                    </td>
-                    <td className="max-w-[340px] px-4 py-3 text-xs text-[var(--color-text-soft)]">
-                      <div className="truncate">{detailsPreview(item.details)}</div>
-                      {item.details && (
-                        <button
-                          onClick={() => setSelectedLog(item)}
-                          className="mt-1 text-[11px] font-semibold text-[var(--color-accent)] hover:underline"
-                        >
-                          Voir
-                        </button>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-xs text-[var(--color-text-soft)]">{item.ipAddress || '—'}</td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <AuditLogsTable
+        loading={loading}
+        visibleItems={visibleItems}
+        detailsPreview={detailsPreview}
+        severityBadgeClass={severityBadgeClass}
+        onSelectLog={setSelectedLog}
+      />
 
       <div className="flex items-center justify-between">
         <p className="text-xs text-[var(--color-text-soft)]">
@@ -423,32 +295,11 @@ export default function AuditLogsPage() {
         </div>
       </div>
 
-      {selectedLog && (
-        <div className="modal-overlay" onClick={() => setSelectedLog(null)}>
-          <div className="modal-shell w-full max-w-3xl p-5" onClick={(e) => e.stopPropagation()}>
-            <div className="mb-4 flex items-start justify-between gap-3">
-              <div>
-                <h3 className="text-base font-semibold text-[var(--color-text)]">Détails du log</h3>
-                <p className="mt-1 text-xs text-[var(--color-text-soft)]">
-                  {new Date(selectedLog.createdAt).toLocaleString('fr-FR')} • {selectedLog.action}
-                </p>
-              </div>
-              <button
-                onClick={() => setSelectedLog(null)}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border bg-[var(--color-surface-muted)] text-[var(--color-text-soft)] hover:text-[var(--color-text)]"
-                aria-label="Fermer"
-              >
-                <X size={16} />
-              </button>
-            </div>
-            <div className="rounded-2xl border bg-[var(--color-surface-muted)] p-4">
-              <pre className="max-h-[50vh] overflow-auto whitespace-pre-wrap break-words text-xs text-[var(--color-text-secondary)]">
-                {formatDetails(selectedLog.details)}
-              </pre>
-            </div>
-          </div>
-        </div>
-      )}
+      <AuditLogDetailsModal
+        selectedLog={selectedLog}
+        detailsContent={selectedLog ? renderDetails(selectedLog.details) : ''}
+        onClose={() => setSelectedLog(null)}
+      />
     </div>
   );
 }

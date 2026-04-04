@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
         qc: ['qc.'],
         inventory: ['inventory.'],
         database: ['database.'],
+        temperature: ['temperature.'],
         analyses: ['analysis.', 'result.'],
         users: ['user.'],
         settings: ['settings.', 'audit.'],
@@ -37,8 +38,9 @@ export async function GET(request: NextRequest) {
 
       const prefixes = modulePrefixes[moduleName];
       if (prefixes?.length) {
+        const existing = where.AND ? (Array.isArray(where.AND) ? where.AND : [where.AND]) : [];
         where.AND = [
-          ...(where.AND || []),
+          ...existing,
           {
             OR: prefixes.map((prefix) => ({
               action: { startsWith: prefix },

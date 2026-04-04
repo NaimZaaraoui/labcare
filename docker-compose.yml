@@ -1,6 +1,6 @@
 services:
-  labcare:
-    container_name: labcare-app
+  nexlab:
+    container_name: nexlab-app
     build:
       context: .
       dockerfile: Dockerfile
@@ -9,16 +9,16 @@ services:
     ports:
       - "0.0.0.0:80:3000"
     environment:
-      - DATABASE_URL=file:/app/data/labcare.db
+      - DATABASE_URL=file:/app/data/nexlab.db
       - NODE_ENV=production
       - NEXT_TELEMETRY_DISABLED=1
       - RESEND_API_KEY=${RESEND_API_KEY}
       - CHROMIUM_PATH=/usr/bin/chromium
       - AUTH_SECRET=${AUTH_SECRET}
-      - NEXTAUTH_URL=http://labcare.localhost
+      - NEXTAUTH_URL=http://nexlab.localhost
       - AUTH_TRUST_HOST=${AUTH_TRUST_HOST}
     volumes:
-      - labcare-db:/app/data
+      - nexlab-db:/app/data
       - ./public/uploads:/app/public/uploads
     networks:
       - app-net
@@ -43,7 +43,7 @@ services:
         max-file: "10"
 
 volumes:
-  labcare-db:
+  nexlab-db:
     driver: local
 
 networks:

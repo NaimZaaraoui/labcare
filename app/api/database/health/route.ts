@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAnyRole } from '@/lib/authz';
 import { getDatabaseBackupDirectory, getDatabaseFilePath, listDatabaseBackups } from '@/lib/database-backups';
+import { listRecoveryBundles } from '@/lib/recovery-bundles';
 
 export const runtime = 'nodejs';
 
@@ -14,13 +15,18 @@ export async function GET() {
     const databasePath = getDatabaseFilePath();
     const backupDirectory = getDatabaseBackupDirectory();
 
-    const [dbPing, dbStat, backupStat, backups, maintenanceSetting, criticalLogs] = await Promise.all([
+    const [dbPing, dbStat, backupStat, backups, recoveryBundles, maintenanceSetting, externalTargetSetting, criticalLogs] = await Promise.all([
       prisma.$queryRaw`SELECT 1`,
       fs.stat(databasePath).catch(() => null),
       fs.statfs(backupDirectory).catch(() => null),
       listDatabaseBackups(),
+      listRecoveryBundles(),
       prisma.setting.findUnique({
         where: { key: 'maintenance_mode' },
+        select: { value: true },
+      }),
+      prisma.setting.findUnique({
+        where: { key: 'database_backup_external_target' },
         select: { value: true },
       }),
       prisma.auditLog.findMany({
@@ -57,6 +63,16 @@ export async function GET() {
           backupStat && typeof backupStat.bavail === 'number' && typeof backupStat.bsize === 'number'
             ? Number(backupStat.bavail) * Number(backupStat.bsize)
             : null,
+      },
+      recoveryBundles: {
+        count: recoveryBundles.length,
+        latestCreatedAt: recoveryBundles[0]?.createdAt ?? null,
+      },
+      externalTarget: {
+        configuredPath: externalTargetSetting?.value || '',
+        available: externalTargetSetting?.value
+          ? Boolean(await fs.stat(externalTargetSetting.value).catch(() => null))
+          : false,
       },
       maintenance: {
         enabled: maintenanceSetting?.value === 'true',

@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { requireAnyRole } from '@/lib/authz';
 import { createAuditLog, getRequestMeta } from '@/lib/audit';
 import { evaluateAcceptanceRange, evaluateRunStatus, evaluateWestgard, type QcValueFlag } from '@/lib/qc';
+import { getUserIdsByRoles, notifyUsers } from '@/lib/notifications';
 
 type QcEntryValue = {
   testCode?: string;
@@ -94,7 +95,7 @@ export async function POST(
               performedAt: 'desc',
             },
           },
-          take: 2,
+          take: 9,
           select: {
             zScore: true,
           },
@@ -172,6 +173,16 @@ export async function POST(
       ipAddress: meta.ipAddress,
       userAgent: meta.userAgent,
     });
+
+    if (status === 'fail' || status === 'warn') {
+      const adminIds = await getUserIdsByRoles(['ADMIN', 'TECHNICIEN'], guard.userId);
+      await notifyUsers({
+        userIds: adminIds,
+        type: 'qc_alert',
+        title: status === 'fail' ? 'QC en échec' : 'QC en avertissement',
+        message: `${lot.material.name} · Lot ${lot.lotNumber} · ${preparedValues.length} paramètre(s)`,
+      });
+    }
 
     return NextResponse.json(result, { status: 201 });
   } catch (error) {

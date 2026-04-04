@@ -1,16 +1,9 @@
 'use client';
 
-import { Geist } from "next/font/google";
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { RapportImpression } from '@/components/print/RapportImpression';
 import { Analysis } from '@/lib/types';
-
-const geist = Geist({
-  subsets: ["latin"],
-  variable: "--font-geist",
-  display: "swap",
-});
 
 export default function ExportPage() {
   const { id } = useParams<{ id: string }>();
@@ -18,6 +11,12 @@ export default function ExportPage() {
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [reportSettings, setReportSettings] = useState<Record<string, string>>({});
   const [ready, setReady] = useState(false);
+  const autoPrint = searchParams.get('autoprint') === '1';
+  const closeAfterPrint = searchParams.get('closeAfterPrint') === '1';
+  const selectedResultIds = (searchParams.get('selected') || '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean);
 
   useEffect(() => {
     const printToken = searchParams.get('printToken') || '';
@@ -45,7 +44,7 @@ export default function ExportPage() {
             });
           }
 
-          setTimeout(() => setReady(true), 2000);
+          setTimeout(() => setReady(true), 500);
         } else {
           console.error('API Error: analyses fetch returned', res.status);
           setTimeout(() => setReady(true), 1000);
@@ -76,6 +75,31 @@ export default function ExportPage() {
     }
   }, [id, searchParams]);
 
+  useEffect(() => {
+    if (!ready || !autoPrint) return;
+
+    const timer = window.setTimeout(() => {
+      window.print();
+    }, 150);
+
+    if (closeAfterPrint) {
+      const previous = window.onafterprint;
+      window.onafterprint = () => {
+        previous?.call(window, new Event('afterprint'));
+        window.close();
+      };
+
+      return () => {
+        window.clearTimeout(timer);
+        window.onafterprint = previous;
+      };
+    }
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [autoPrint, closeAfterPrint, ready]);
+
   if (!analysis) return null;
 
   const resultsRecord: Record<string, string> = {};
@@ -84,10 +108,10 @@ export default function ExportPage() {
   });
 
   return (
-    <div className={`${geist.variable} font-sans`}>
+    <div className="font-sans">
       <style>{`
         *, body, html {
-          font-family: var(--font-geist), ui-sans-serif, system-ui, sans-serif !important;
+          font-family: "Segoe UI", "Helvetica Neue", ui-sans-serif, system-ui, sans-serif !important;
         }
         * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         body { margin: 0 !important; padding: 0 !important; background: white !important; }
@@ -96,7 +120,7 @@ export default function ExportPage() {
       <RapportImpression
         analysis={analysis}
         results={resultsRecord}
-        selectedResultIds={[]}
+        selectedResultIds={selectedResultIds}
         settings={reportSettings}
       />
 

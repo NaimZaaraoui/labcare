@@ -1,11 +1,13 @@
-'use client';
+import * as Tooltip from '@radix-ui/react-tooltip';
 
 type ChartPoint = {
   id: string;
   performedAt: string;
+  performedByName?: string;
   measured: number;
   zScore: number | null;
   flag: string;
+  rule?: string | null;
   inAcceptanceRange?: boolean | null;
 };
 
@@ -112,8 +114,8 @@ export function LeveyJenningsChart({
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className="min-w-[640px]">
+      <div className="overflow-x-auto relative pb-8">
+        <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className="min-w-[640px] overflow-visible">
           {statistical ? (
             [-3, -2, -1, 0, 1, 2, 3].map((line) => {
               const y = yToPx(mean + line * sd, rangeMin, rangeMax);
@@ -157,31 +159,84 @@ export function LeveyJenningsChart({
             <path d={path} fill="none" stroke="#0f172a" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" />
           )}
 
-          {ordered.map((point, index) => {
-            const fill =
-              point.flag === 'fail' ? '#dc2626' :
-              point.flag === 'warn' ? '#d97706' :
-              '#16a34a';
+          <Tooltip.Provider>
+            {ordered.map((point, index) => {
+              const cx = xToPx(index, ordered.length);
+              const cy = yToPx(point.measured, rangeMin, rangeMax);
+              
+              const fill =
+                point.flag === 'fail' ? '#dc2626' :
+                point.flag === 'warn' ? '#d97706' :
+                '#16a34a';
 
-            return (
-              <g key={point.id}>
-                <circle
-                  cx={xToPx(index, ordered.length)}
-                  cy={yToPx(point.measured, rangeMin, rangeMax)}
-                  r={point.flag === 'fail' ? 5.2 : 4.2}
-                  fill={fill}
-                  stroke="white"
-                  strokeWidth="1.5"
-                />
-                <title>
-                  {statistical
-                    ? `${new Date(point.performedAt).toLocaleDateString('fr-FR')} • ${point.measured} • z=${point.zScore?.toFixed(2) ?? '—'}`
-                    : `${new Date(point.performedAt).toLocaleDateString('fr-FR')} • ${point.measured} • ${point.inAcceptanceRange ? 'dans la plage' : 'hors plage'}`}
-                </title>
-              </g>
-            );
-          })}
+              return (
+                <Tooltip.Root key={point.id} delayDuration={0}>
+                  <Tooltip.Trigger asChild>
+                    <circle
+                      cx={cx}
+                      cy={cy}
+                      r={point.flag === 'fail' ? 5.2 : 4.2}
+                      fill={fill}
+                      stroke="white"
+                      strokeWidth="1.5"
+                      className="cursor-pointer transition-all hover:r-[7px] outline-none focus-visible:stroke-indigo-600 focus-visible:stroke-[3]"
+                    />
+                  </Tooltip.Trigger>
+                  <Tooltip.Portal>
+                    <Tooltip.Content
+                      side="top"
+                      align="center"
+                      sideOffset={5}
+                      className="z-[100] animate-in fade-in zoom-in-95 duration-100"
+                    >
+                      <div className="bg-slate-900 text-white p-3 rounded-2xl shadow-xl text-xs min-w-[200px] border border-slate-700 relative">
+                        <div className="flex justify-between items-center mb-2 pb-2 border-b border-slate-700">
+                           <span className="font-bold">{new Date(point.performedAt).toLocaleString('fr-FR')}</span>
+                           <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest ${
+                             point.flag === 'fail' ? 'bg-rose-500' : point.flag === 'warn' ? 'bg-amber-500' : 'bg-emerald-500'
+                           }`}>
+                             {point.flag === 'fail' ? 'Échec' : point.flag === 'warn' ? 'Alerte' : 'Conforme'}
+                           </span>
+                        </div>
+                        <div className="grid gap-1">
+                          <div className="flex justify-between">
+                            <span className="text-slate-400">Valeur:</span>
+                            <span className="font-black text-white">{point.measured} {unit || ''}</span>
+                          </div>
+                          {statistical ? (
+                            <div className="flex justify-between">
+                              <span className="text-slate-400">Z-Score:</span>
+                              <span className="font-black text-white">{point.zScore?.toFixed(2) ?? '—'}</span>
+                            </div>
+                          ) : (
+                            <div className="flex justify-between">
+                              <span className="text-slate-400">Zone:</span>
+                              <span className="font-black text-white">{point.inAcceptanceRange ? 'Dans la plage' : 'Hors plage'}</span>
+                            </div>
+                          )}
+                          {point.rule && (
+                            <div className="flex justify-between mt-1 pt-1 border-t border-slate-700">
+                              <span className="text-slate-400">Règle violée:</span>
+                              <span className="font-black text-rose-400">{point.rule}</span>
+                            </div>
+                          )}
+                          {point.performedByName && (
+                            <div className="flex justify-between mt-1 pt-1 border-t border-slate-700">
+                              <span className="text-slate-400">Opérateur:</span>
+                              <span className="font-medium text-slate-300">{point.performedByName}</span>
+                            </div>
+                          )}
+                        </div>
+                        <Tooltip.Arrow className="fill-slate-900 border-slate-700" width={12} height={6} />
+                      </div>
+                    </Tooltip.Content>
+                  </Tooltip.Portal>
+                </Tooltip.Root>
+              );
+            })}
+          </Tooltip.Provider>
         </svg>
+
       </div>
     </div>
   );

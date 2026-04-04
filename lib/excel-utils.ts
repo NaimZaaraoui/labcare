@@ -41,7 +41,7 @@ export const formatPatientsForExcel = (patients: any[]) => {
 /**
  * Format analysis data for Excel
  */
-export const formatAnalysesForExcel = (analyses: any[]) => {
+export const formatAnalysesForExcel = (analyses: any[], currencyUnit: string = 'DA') => {
   return analyses.map(a => ({
     'N° Commande': a.orderNumber,
     'ID Paillasse': a.dailyId || '',
@@ -50,7 +50,7 @@ export const formatAnalysesForExcel = (analyses: any[]) => {
     'Âge': a.patientAge || '?',
     'Statut': a.status === 'completed' || a.status === 'validated_bio' ? 'Validé' : 
               a.status === 'validated_tech' ? 'Valid. Tech' : 'En cours',
-    'Total (DA)': a.totalPrice || 0,
+    [`Total (${currencyUnit})`]: a.totalPrice || 0,
     'Date Création': a.creationDate ? format(new Date(a.creationDate), 'dd/MM/yyyy HH:mm', { locale: fr }) : '',
     'Validé par': a.validatedBioName || a.validatedTechName || ''
   }));
@@ -92,7 +92,7 @@ function differenceInYears(dateLeft: Date, dateRight: Date): number {
 /**
  * Format tests catalog for Excel
  */
-export const formatTestsForExcel = (tests: any[]) => {
+export const formatTestsForExcel = (tests: any[], currencyUnit: string = 'DA') => {
   return tests
     .filter(t => !t.parentId)
     .map(t => {
@@ -104,7 +104,7 @@ export const formatTestsForExcel = (tests: any[]) => {
         'Type': t.isGroup ? 'Groupe' : t.resultType || 'Numérique',
         'Unité': t.unit || '',
         'Référence': refRange,
-        'Prix (DA)': t.price || 0,
+        [`Prix (${currencyUnit})`]: t.price || 0,
         'Type Échantillon': t.sampleType || ''
       };
     });
@@ -129,7 +129,7 @@ interface MonthlySummary {
 /**
  * Format analyses summary per day
  */
-export const formatDailySummaryForExcel = (analyses: any[]): Record<string, unknown>[] => {
+export const formatDailySummaryForExcel = (analyses: any[], currencyUnit: string = 'DA'): Record<string, unknown>[] => {
   const byDate = analyses.reduce<Record<string, DailySummary>>((acc, a) => {
     const dateKey = format(new Date(a.creationDate), 'yyyy-MM-dd');
     if (!acc[dateKey]) {
@@ -150,7 +150,7 @@ export const formatDailySummaryForExcel = (analyses: any[]): Record<string, unkn
     .map(d => ({
       'Date': format(new Date(d.date), 'dd/MM/yyyy', { locale: fr }),
       'Nb Analyses': d.count,
-      'Montant Total (DA)': d.total,
+      [`Montant Total (${currencyUnit})`]: d.total,
       'Validées': d.validated,
       'En Cours': d.pending,
       'Taux Validation': d.count > 0 ? `${Math.round((d.validated / d.count) * 100)}%` : '0%'
@@ -160,7 +160,7 @@ export const formatDailySummaryForExcel = (analyses: any[]): Record<string, unkn
 /**
  * Format analyses summary per month
  */
-export const formatMonthlySummaryForExcel = (analyses: any[]): Record<string, unknown>[] => {
+export const formatMonthlySummaryForExcel = (analyses: any[], currencyUnit: string = 'DA'): Record<string, unknown>[] => {
   const byMonth = analyses.reduce<Record<string, MonthlySummary>>((acc, a) => {
     const monthKey = format(new Date(a.creationDate), 'yyyy-MM');
     if (!acc[monthKey]) {
@@ -181,7 +181,7 @@ export const formatMonthlySummaryForExcel = (analyses: any[]): Record<string, un
     .map(m => ({
       'Mois': format(new Date(m.month + '-01'), 'MMMM yyyy', { locale: fr }),
       'Nb Analyses': m.count,
-      'Montant Total (DA)': m.total,
+      [`Montant Total (${currencyUnit})`]: m.total,
       'Validées': m.validated,
       'En Cours': m.pending,
       'Taux Validation': m.count > 0 ? `${Math.round((m.validated / m.count) * 100)}%` : '0%'
@@ -223,7 +223,7 @@ export const formatCategorySummaryForExcel = (analysesWithResults: any[]): Recor
 /**
  * Format analyses per patient
  */
-export const formatPatientAnalysesForExcel = (analyses: any[]): Record<string, unknown>[] => {
+export const formatPatientAnalysesForExcel = (analyses: any[], currencyUnit: string = 'DA'): Record<string, unknown>[] => {
   const byPatient = analyses.reduce<Record<string, { patient: string; gender: string; age: number; count: number; total: number; lastVisit: Date }>>((acc, a) => {
     const key = a.patientId || a.patientFirstName + a.patientLastName;
     if (!acc[key]) {
@@ -251,7 +251,7 @@ export const formatPatientAnalysesForExcel = (analyses: any[]): Record<string, u
       'Sexe': p.gender === 'M' ? 'Homme' : 'Femme',
       'Âge': p.age || '?',
       'Nb Analyses': p.count,
-      'Total Dépenses (DA)': p.total,
+      [`Total Dépenses (${currencyUnit})`]: p.total,
       'Dernière Visite': format(p.lastVisit, 'dd/MM/yyyy', { locale: fr })
     }));
 };

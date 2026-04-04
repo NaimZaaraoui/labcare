@@ -16,6 +16,7 @@ import Link from 'next/link';
 import { differenceInMinutes } from 'date-fns';
 import { useSession } from 'next-auth/react';
 import { Analysis as SharedAnalysis } from '@/lib/types';
+import { formatTatLabel, getTatMinutes, getTatTextClass } from '@/lib/tat';
 
 type Analysis = SharedAnalysis & { isUrgent?: boolean };
 
@@ -28,6 +29,8 @@ interface Stats {
   urgent: number;
   purePending?: number;
   tat?: number;
+  tatWarn?: number;
+  tatAlert?: number;
 }
 
 interface DashboardData {
@@ -58,6 +61,12 @@ interface BackupAlertSummary {
   isStale: boolean;
 }
 
+interface TemperatureTodaySummary {
+  totalInstruments: number;
+  missingCount: number;
+  alertCount: number;
+}
+
 interface KpiCardProps {
   title: string;
   value: number;
@@ -80,19 +89,6 @@ const STATUS_MAP: Record<string, { label: string; classes: string }> = {
   completed: { label: 'Validé', classes: 'bg-emerald-50 text-emerald-700 border border-emerald-200/70' },
 };
 
-const getTatClasses = (date: string | Date) => {
-  const minutes = differenceInMinutes(new Date(), new Date(date));
-  if (minutes >= 60) return 'text-[var(--color-critical)] font-semibold';
-  if (minutes >= 45) return 'text-[var(--color-warning)] font-semibold';
-  return 'text-[var(--color-text-soft)]';
-};
-
-const formatTat = (date: string | Date) => {
-  const minutes = differenceInMinutes(new Date(), new Date(date));
-  if (minutes < 60) return `${minutes} min`;
-  return `${Math.floor(minutes / 60)} h ${minutes % 60} min`;
-};
-
 export default function DashboardPage() {
   const { data: session } = useSession();
   const [loading, setLoading] = useState(true);
@@ -103,6 +99,7 @@ export default function DashboardPage() {
   const [inventoryAlerts, setInventoryAlerts] = useState<InventoryAlertItem[]>([]);
   const [qcToday, setQcToday] = useState<QcTodaySummary | null>(null);
   const [backupAlert, setBackupAlert] = useState<BackupAlertSummary | null>(null);
+  const [temperatureToday, setTemperatureToday] = useState<TemperatureTodaySummary | null>(null);
 
   const loadDashboard = useCallback(async () => {
     setLoading(true);
@@ -112,13 +109,14 @@ export default function DashboardPage() {
         fetch('/api/stats', { cache: 'no-store' }),
         fetch('/api/inventory', { cache: 'no-store' }),
         fetch('/api/qc/today', { cache: 'no-store' }),
+        fetch('/api/temperature/today', { cache: 'no-store' }),
       ];
 
       if (session?.user?.role === 'ADMIN') {
         requests.push(fetch('/api/database/backups', { cache: 'no-store' }));
       }
 
-      const [analysesRes, statsRes, inventoryRes, qcRes, backupsRes] = await Promise.all(requests);
+      const [analysesRes, statsRes, inventoryRes, qcRes, temperatureRes, backupsRes] = await Promise.all(requests);
       const [analyses, stats] = await Promise.all([analysesRes.json(), statsRes.json()]);
       setState({ analyses, stats });
 
@@ -132,6 +130,11 @@ export default function DashboardPage() {
       if (qcRes.ok) {
         const qcData = await qcRes.json();
         setQcToday(qcData);
+      }
+
+      if (temperatureRes.ok) {
+        const tempData = await temperatureRes.json();
+        setTemperatureToday(tempData);
       }
 
       if (session?.user?.role === 'ADMIN' && backupsRes?.ok) {
@@ -254,6 +257,27 @@ export default function DashboardPage() {
         </section>
       )}
 
+      {temperatureToday &&
+        (temperatureToday.alertCount > 0 || temperatureToday.missingCount > 0) && (
+          <section className="rounded-3xl border border-sky-200/70 bg-sky-50/80 px-5 py-4 shadow-[0_8px_22px_rgba(40,120,180,0.08)]">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-sky-800">
+                  Suivi des températures
+                </h2>
+                <p className="mt-1 text-sm text-sky-900">
+                  {temperatureToday.missingCount} instrument{temperatureToday.missingCount > 1 ? 's' : ''} sans relevé complet
+                  · {temperatureToday.alertCount} alerte{temperatureToday.alertCount > 1 ? 's' : ''} hors plage.
+                </p>
+              </div>
+              <Link href="/dashboard/temperature" className="btn-secondary">
+                Voir les relevés
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </section>
+        )}
+
       {role === 'ADMIN' && backupAlert && (backupAlert.isStale || !backupAlert.hasBackups) && (
         <section className="rounded-3xl border border-rose-200/70 bg-rose-50/85 px-5 py-4 shadow-[0_8px_22px_rgba(190,50,70,0.08)]">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -334,8 +358,13 @@ export default function DashboardPage() {
                     <div className="col-span-2 text-center font-mono text-xs font-medium text-[var(--color-text-secondary)]">
                       {analysis.orderNumber}
                     </div>
-                    <div className={`col-span-2 text-center text-xs ${getTatClasses(analysis.creationDate)}`}>
-                      {formatTat(analysis.creationDate)}
+                    <div
+                      className={`col-span-2 text-center text-xs ${getTatTextClass(getTatMinutes(analysis), {
+                        warnMinutes: state.stats.tatWarn ?? 45,
+                        alertMinutes: state.stats.tatAlert ?? 60,
+                      })}`}
+                    >
+                      {formatTatLabel(getTatMinutes(analysis))}
                     </div>
                     <div className="col-span-2 flex justify-end">
                       <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${status.classes}`}>

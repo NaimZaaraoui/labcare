@@ -74,7 +74,7 @@ export async function PATCH(
     }
 
     if (action === 'reset-password') {
-      const hashedPassword = await bcrypt.hash('LabCare2024!', 12);
+      const hashedPassword = await bcrypt.hash('NexLab2026!', 12);
       await prisma.user.update({
         where: { id },
         data: {

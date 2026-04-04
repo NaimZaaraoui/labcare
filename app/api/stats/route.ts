@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { notifyUsers, getUserIdsByRoles } from '@/lib/notifications';
 import { requireAuthUser } from '@/lib/authz';
+import { getTatMinutes, normalizeTatThresholds } from '@/lib/tat';
 
 export async function GET() {
   try {
@@ -10,6 +11,15 @@ export async function GET() {
 
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
+
+    const tatSettings = await prisma.setting.findMany({
+      where: { key: { in: ['tat_warn', 'tat_alert'] } },
+      select: { key: true, value: true },
+    });
+    const tatThresholds = normalizeTatThresholds(
+      tatSettings.find((row) => row.key === 'tat_warn')?.value,
+      tatSettings.find((row) => row.key === 'tat_alert')?.value,
+    );
 
     const total = await prisma.analysis.count();
     
@@ -63,18 +73,20 @@ export async function GET() {
         updatedAt: { gte: startOfDay }
       },
       select: {
+        creationDate: true,
         createdAt: true,
-        updatedAt: true
+        updatedAt: true,
+        validatedTechAt: true,
+        validatedBioAt: true,
       }
     });
 
     let avgTat = 0;
     if (completedToday.length > 0) {
       const totalTat = completedToday.reduce((acc, curr) => {
-        const diff = curr.updatedAt.getTime() - curr.createdAt.getTime();
-        return acc + diff;
+        return acc + (getTatMinutes(curr) ?? 0);
       }, 0);
-      avgTat = Math.round((totalTat / completedToday.length) / (1000 * 60)); // en minutes
+      avgTat = Math.round(totalTat / completedToday.length);
     }
 
 
@@ -116,6 +128,8 @@ export async function GET() {
       completed,
       urgent,
       tat: avgTat,
+      tatWarn: tatThresholds.warnMinutes,
+      tatAlert: tatThresholds.alertMinutes,
       trend: {
         labels: trendLabels,
         data: trendData
@@ -125,8 +139,7 @@ export async function GET() {
 
     // --- TAT Breach Check ---
     try {
-      const TAT_ALERT_MINUTES = 60;
-      const breachThreshold = new Date(Date.now() - TAT_ALERT_MINUTES * 60 * 1000);
+      const breachThreshold = new Date(Date.now() - tatThresholds.alertMinutes * 60 * 1000);
       
       const breachedAnalyses = await prisma.analysis.findMany({
         where: {
@@ -151,7 +164,7 @@ export async function GET() {
             userIds: adminIds,
             type: 'tat_breach',
             title: 'Délai dépassé',
-            message: `L'analyse de ${a.patientLastName} ${a.patientFirstName} (ORD-${a.orderNumber}) dépasse ${TAT_ALERT_MINUTES} minutes.`,
+            message: `L'analyse de ${a.patientLastName} ${a.patientFirstName} (ORD-${a.orderNumber}) dépasse ${tatThresholds.alertMinutes} minutes.`,
             analysisId: a.id,
           });
         }

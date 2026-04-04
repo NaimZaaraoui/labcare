@@ -1,14 +1,14 @@
-# LabCare - Laboratory Information Management System (LIMS)
+# NexLab - Laboratory Information Management System (LIMS)
 
-![LabCare Dashboard](public/showcase.png)
+![NexLab Dashboard](public/showcase.png)
 
-**LabCare** is a modern, high-performance Laboratory Information Management System designed to streamline the daily operations of medical laboratories. Built with simplicity and efficiency in mind, it handles everything from patient registration to result reporting with a professional touch.
+**NexLab** is a modern, high-performance Laboratory Information Management System designed to streamline the daily operations of medical laboratories. Built with simplicity and efficiency in mind, it handles everything from patient registration to result reporting with a professional touch.
 
 ## ❤️ Why I Built This
 
 As a medical laboratory technologist, I spent years manually writing out patient results, managing piles of paperwork, and worrying about transcription errors. I realized that valuable time spent on administration could be better spent on patient care and analysis accuracy. 
 
-Frustrated by existing solutions that were either too expensive, too complex, or outdated, I decided to build **LabCare**. My goal was to create a LIMS that is intuitive, efficient, and tailored specifically to the real-world needs of a modern laboratory—because I know exactly what those needs are.
+Frustrated by existing solutions that were either too expensive, too complex, or outdated, I decided to build **NexLab**. My goal was to create a LIMS that is intuitive, efficient, and tailored specifically to the real-world needs of a modern laboratory—because I know exactly what those needs are.
 
 ## 🚀 Key Features
 
@@ -81,10 +81,10 @@ To build and run the application using Docker:
 
 ```bash
 # Build the image
-docker build -t labcare-lims .
+docker build -t nexlab-lims .
 
 # Run the container with volume for database persistence
-docker run -p 3000:3000 -v $(pwd)/data:/app/data labcare-lims
+docker run -p 3000:3000 -v $(pwd)/data:/app/data nexlab-lims
 ```
 
 > [!IMPORTANT]
@@ -115,4 +115,4 @@ This project is licensed under the MIT License.
 
 ---
 
-**LabCare** — Precision and Care in Every Result.
+**NexLab** — Precision and Care in Every Result.

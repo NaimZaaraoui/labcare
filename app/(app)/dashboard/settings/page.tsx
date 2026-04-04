@@ -7,7 +7,6 @@ import {
   Users, 
   Settings, 
   ChevronRight,
-  ArrowLeft,
   ShieldCheck,
   Database,
   Printer
@@ -15,6 +14,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useEffect } from 'react';
+import { PageBackLink } from '@/components/ui/PageBackLink';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -115,15 +115,7 @@ export default function SettingsPage() {
       <section className="rounded-3xl border bg-white px-5 py-4 shadow-[0_8px_28px_rgba(15,31,51,0.06)]">
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
           <div>
-            <button
-              onClick={() => router.push('/')}
-              className="mb-3 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-text-soft)] transition-colors hover:text-[var(--color-accent)]"
-            >
-              <span className="flex h-8 w-8 items-center justify-center rounded-xl border bg-[var(--color-surface-muted)]">
-                <ArrowLeft size={16} />
-              </span>
-              Tableau de bord
-            </button>
+            <PageBackLink href="/" />
             <h1 className="text-xl font-semibold text-[var(--color-text)]">Paramètres système</h1>
             <p className="mt-1 text-sm text-[var(--color-text-soft)]">Configurer le fonctionnement global de NexLab CSSB.</p>
           </div>

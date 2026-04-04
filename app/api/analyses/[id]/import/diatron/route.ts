@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@/app/generated/prisma';
 import { prisma } from '@/lib/prisma';
 import { parseDiatronFile } from '@/lib/parsers/diatron';
+
+interface ImportDiatronPayload {
+  content?: string;
+  selectedIndex?: number;
+}
 
 export async function POST(
   request: NextRequest,
@@ -8,7 +14,7 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    const body = await request.json();
+    const body = (await request.json()) as ImportDiatronPayload;
     const { content } = body;
 
     if (!content) {
@@ -57,21 +63,21 @@ export async function POST(
     }
 
     // Update results based on mapping
-    const resultUpdates = analysis.results
-      .map(res => {
-        const value = selectedRecord.results[res.test?.code || ''];
-        if (value) {
-          return prisma.result.update({
+    const resultUpdates: Prisma.PrismaPromise<unknown>[] = [];
+    analysis.results.forEach((res) => {
+      const value = selectedRecord.results[res.test?.code || ''];
+      if (value) {
+        resultUpdates.push(
+          prisma.result.update({
             where: { id: res.id },
-            data: { value }
-          });
-        }
-        return null;
-      })
-      .filter((update): update is any => update !== null);
+            data: { value },
+          })
+        );
+      }
+    });
 
     // Combine with histogram data update if present
-    const finalUpdates: any[] = [...resultUpdates];
+    const finalUpdates: Prisma.PrismaPromise<unknown>[] = [...resultUpdates];
     if (selectedRecord.histograms) {
       finalUpdates.push(
         prisma.analysis.update({
@@ -96,12 +102,12 @@ export async function POST(
         time: selectedRecord.time
       }
     });
-
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
     console.error('Error importing Diatron data:', error);
     return NextResponse.json({ 
       error: 'Erreur lors de l\'importation',
-      details: error.message 
+      details: errorMessage 
     }, { status: 500 });
   }
 }

@@ -6,6 +6,14 @@ import { auth } from '@/lib/auth';
 import { notifyUsers, getUserIdsByRoles } from '@/lib/notifications';
 import { hasValidInternalPrintToken, requireAuthUser } from '@/lib/authz';
 import { createAuditLog, getRequestMeta } from '@/lib/audit';
+import { getPreviousResultsMapForAnalysis } from '@/lib/analysis-history';
+import {
+  buildAnalysisPatchData,
+  buildPaymentState,
+  isPaymentOnlyAnalysisUpdate,
+  isPrintOnlyAnalysisUpdate,
+  type AnalysisPatchPayload,
+} from '@/lib/analysis-updates';
 
 export async function GET(
   request: NextRequest,
@@ -20,24 +28,8 @@ export async function GET(
 
     const { id } = await params;
     
-    const analysis = await prisma.analysis.findUnique({
-      where: { id },
-      include: {
-        patient: true,
-        results: {
-          include: {
-            test: {
-              include: { 
-                children: true,
-                parent: true,
-                categoryRel: true
-              }
-            }
-          }
-        }
-      }
-    });
-    
+    const analysis = await getPreviousResultsMapForAnalysis(id);
+
     if (!analysis) {
       return NextResponse.json(
         { error: 'Analyse non trouvée' },
@@ -45,40 +37,7 @@ export async function GET(
       );
     }
 
-    // --- Fetch Previous Results ---
-    // Look for the most recent COMPLETED analysis for the same patient, BEFORE the current one
-    const previousAnalysis = await prisma.analysis.findFirst({
-      where: {
-        patientId: analysis.patientId,
-        status: { in: ['completed', 'validated_bio'] },
-        creationDate: {
-          lt: analysis.creationDate
-        }
-      },
-      orderBy: {
-        creationDate: 'desc'
-      },
-      include: {
-        results: true
-      }
-    });
-
-    const previousResultsMap: Record<string, string> = {};
-    if (previousAnalysis) {
-      previousAnalysis.results.forEach((r) => {
-        if (r.value) {
-          previousResultsMap[r.testId] = r.value;
-        }
-      });
-    }
-
-    // Attach previous results to the response
-    const analysisWithHistory = {
-      ...analysis,
-      previousResults: previousResultsMap
-    };
-    
-    return NextResponse.json(analysisWithHistory);
+    return NextResponse.json(analysis);
   } catch (error) {
     console.error('Erreur GET /api/analyses/[id]:', error);
     return NextResponse.json(
@@ -100,7 +59,7 @@ export async function PUT(
     }
 
     const { id } = await params;
-    const body = await request.json();
+    const body = (await request.json()) as { status?: string };
 
     const existing = await prisma.analysis.findUnique({
       where: { id },
@@ -154,20 +113,8 @@ export async function PATCH(
     if (!guard.ok) return guard.error;
 
     const { id } = await params;
-    const body = await request.json();
+    const body = (await request.json()) as AnalysisPatchPayload;
     const meta = getRequestMeta({ headers: request.headers });
-    
-    const parseGender = (value: unknown) => {
-      if (value !== 'M' && value !== 'F') return undefined;
-      return value;
-    };
-
-    const parseNumber = (value: unknown) => {
-      if (value === null) return null;
-      if (value === undefined || value === '') return undefined;
-      const n = Number(value);
-      return Number.isNaN(n) ? undefined : n;
-    };
 
     const existing = await prisma.analysis.findUnique({
       where: { id },
@@ -191,38 +138,8 @@ export async function PATCH(
       );
     }
 
-    const isPrintOnlyUpdate =
-      body.printedAt !== undefined &&
-      body.status === undefined &&
-      body.dailyId === undefined &&
-      body.receiptNumber === undefined &&
-      body.patientFirstName === undefined &&
-      body.patientLastName === undefined &&
-      body.patientAge === undefined &&
-      body.patientGender === undefined &&
-      body.provenance === undefined &&
-      body.medecinPrescripteur === undefined &&
-      body.isUrgent === undefined &&
-      body.globalNote === undefined &&
-      body.globalNotePlacement === undefined &&
-      body.amountPaid === undefined &&
-      body.paymentMethod === undefined;
-
-    const isPaymentOnlyUpdate =
-      (body.amountPaid !== undefined || body.paymentMethod !== undefined) &&
-      body.status === undefined &&
-      body.printedAt === undefined &&
-      body.dailyId === undefined &&
-      body.receiptNumber === undefined &&
-      body.patientFirstName === undefined &&
-      body.patientLastName === undefined &&
-      body.patientAge === undefined &&
-      body.patientGender === undefined &&
-      body.provenance === undefined &&
-      body.medecinPrescripteur === undefined &&
-      body.isUrgent === undefined &&
-      body.globalNote === undefined &&
-      body.globalNotePlacement === undefined;
+    const isPrintOnlyUpdate = isPrintOnlyAnalysisUpdate(body);
+    const isPaymentOnlyUpdate = isPaymentOnlyAnalysisUpdate(body);
 
     if ((existing.status === 'completed' || existing.status === 'validated_bio') && !isPrintOnlyUpdate && !isPaymentOnlyUpdate) {
       return NextResponse.json(
@@ -231,50 +148,11 @@ export async function PATCH(
       );
     }
 
-    const parsedAmountPaid = parseNumber(body.amountPaid);
-    const nextAmountPaid =
-      parsedAmountPaid !== undefined
-        ? Math.max(0, Number(parsedAmountPaid ?? 0))
-        : existing.amountPaid ?? 0;
-    const totalPrice = existing.totalPrice ?? 0;
-    const nextPaymentStatus =
-      nextAmountPaid <= 0
-        ? 'UNPAID'
-        : nextAmountPaid >= totalPrice
-          ? 'PAID'
-          : 'PARTIAL';
-    const nextPaymentMethod =
-      body.paymentMethod !== undefined ? (body.paymentMethod || null) : existing.paymentMethod;
-    const nextPaidAt =
-      parsedAmountPaid !== undefined
-        ? nextPaymentStatus === 'PAID'
-          ? existing.paidAt || new Date()
-          : null
-        : undefined;
+    const paymentState = buildPaymentState(body, existing);
 
     const analysis = await prisma.analysis.update({
       where: { id },
-      data: {
-        status: body.status || undefined,
-        printedAt: body.printedAt !== undefined ? (body.printedAt ? new Date(body.printedAt) : null) : undefined,
-        dailyId: body.dailyId !== undefined ? (body.dailyId || null) : undefined,
-        receiptNumber: body.receiptNumber !== undefined ? (body.receiptNumber || null) : undefined,
-        patientFirstName: body.patientFirstName !== undefined ? (body.patientFirstName || null) : undefined,
-        patientLastName: body.patientLastName !== undefined ? (body.patientLastName || null) : undefined,
-        patientAge: parseNumber(body.patientAge),
-        patientGender: parseGender(body.patientGender),
-        provenance: body.provenance !== undefined ? (body.provenance || null) : undefined,
-        medecinPrescripteur: body.medecinPrescripteur !== undefined ? (body.medecinPrescripteur || null) : undefined,
-        isUrgent: body.isUrgent !== undefined ? Boolean(body.isUrgent) : undefined,
-        globalNote: body.globalNote !== undefined ? (body.globalNote?.trim() || null) : undefined,
-        globalNotePlacement: body.globalNotePlacement !== undefined && ['all', 'first', 'last'].includes(body.globalNotePlacement)
-          ? body.globalNotePlacement
-          : undefined,
-        amountPaid: parsedAmountPaid !== undefined ? nextAmountPaid : undefined,
-        paymentStatus: parsedAmountPaid !== undefined ? nextPaymentStatus : undefined,
-        paymentMethod: body.paymentMethod !== undefined ? nextPaymentMethod : undefined,
-        paidAt: nextPaidAt
-      },
+      data: buildAnalysisPatchData(body, paymentState),
       include: {
         results: {
           include: {
@@ -284,7 +162,7 @@ export async function PATCH(
       }
     });
 
-    if (parsedAmountPaid !== undefined || body.paymentMethod !== undefined) {
+    if (paymentState.parsedAmountPaid !== undefined || body.paymentMethod !== undefined) {
       await createAuditLog({
         action: 'analysis.payment_update',
         severity: 'WARN',
@@ -294,9 +172,9 @@ export async function PATCH(
           orderNumber: existing.orderNumber,
           patient: `${existing.patientLastName || ''} ${existing.patientFirstName || ''}`.trim(),
           previousAmountPaid: existing.amountPaid ?? 0,
-          nextAmountPaid,
-          paymentStatus: nextPaymentStatus,
-          paymentMethod: nextPaymentMethod,
+          nextAmountPaid: paymentState.nextAmountPaid,
+          paymentStatus: paymentState.nextPaymentStatus,
+          paymentMethod: paymentState.nextPaymentMethod,
         },
         ipAddress: meta.ipAddress,
         userAgent: meta.userAgent,

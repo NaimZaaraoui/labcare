@@ -4,71 +4,18 @@ import React from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { LucideMicroscope } from 'lucide-react';
-import { Analysis } from '@/lib/types';
+import type { AnalysisPrintProps } from '@/components/print/types';
+import { buildInvoiceItems, resolvePrintBranding } from '@/components/print/report-helpers';
 
-interface FactureImpressionProps {
-  analysis: Analysis;
-  settings?: Record<string, string>;
-}
-
-export const FactureImpression: React.FC<FactureImpressionProps> = ({ analysis, settings }) => {
-    const LAB_NAME     = settings?.lab_name     || 'Laboratoire';
-    const LAB_SUBTITLE = settings?.lab_subtitle || 'Service de Laboratoire';
-    const LAB_ADDRESS  = [settings?.lab_address_1, settings?.lab_address_2].filter(Boolean).join(', ');
-    const LAB_PHONE    = settings?.lab_phone    || '';
-    const BIO_TITLE    = settings?.lab_bio_title || 'Docteur';
-    const BIO_NAME     = settings?.lab_bio_name  || '';
-    const BIO_ONMPT    = settings?.lab_bio_onmpt || '';
-    const FOOTER_TEXT  = settings?.lab_footer_text || '';
-    const AMOUNT_UNIT  = settings?.amount_unit  || 'TND';
+export const FactureImpression: React.FC<AnalysisPrintProps> = ({ analysis, settings }) => {
+    const { LAB_NAME, LAB_SUBTITLE, LAB_ADDRESS, LAB_PHONE, BIO_TITLE, BIO_NAME, BIO_ONMPT, FOOTER_TEXT } = resolvePrintBranding(settings);
+    const AMOUNT_UNIT = settings?.amount_unit || 'TND';
 
     const patientName = `${analysis.patientFirstName || ''} ${analysis.patientLastName || ''}`.trim() || 'PATIENT SANS NOM';
     const dateFacture = format(new Date(), 'dd MMMM yyyy', { locale: fr });
     const dateEdition = format(new Date(analysis.creationDate), 'dd MMMM yyyy', { locale: fr });
 
-    const invoiceItemsFinal = React.useMemo(() => {
-        const results = analysis.results || [];
-        const items: { name: string; price: number; isGroup: boolean }[] = [];
-
-        results.forEach(res => {
-            const test = res.test;
-            if (!test) return;
-
-            const parentId = test.parentId;
-            if (!parentId) {
-                if (test.isGroup && test.children && test.children.length > 0) {
-                    const childIds = test.children.map(c => c.id);
-                    const allChildrenPresent = childIds.every(cid => 
-                        results.some(r => r.testId === cid)
-                    );
-
-                    if (allChildrenPresent) {
-                        const price = test.price ?? test.children.reduce((sum, c) => sum + (c.price || 0), 0);
-                        items.push({ name: test.name, price, isGroup: true });
-                        return;
-                    }
-                }
-
-                if (test.isGroup) return;
-
-                const childIds = test.children?.map(c => c.id) || [];
-                const presentChildIds = childIds.filter(cid => results.some(r => r.testId === cid));
-
-                if (presentChildIds.length > 0 && presentChildIds.length < childIds.length) {
-                    test.children?.forEach(child => {
-                        if (results.some(r => r.testId === child.id)) {
-                            items.push({ name: child.name, price: child.price || 0, isGroup: false });
-                        }
-                    });
-                    return;
-                }
-
-                items.push({ name: test.name, price: test.price || 0, isGroup: test.isGroup || false });
-            }
-        });
-
-        return items;
-    }, [analysis.results]);
+    const invoiceItemsFinal = React.useMemo(() => buildInvoiceItems(analysis.results), [analysis.results]);
     const computedTotal = React.useMemo(
       () => invoiceItemsFinal.reduce((sum, item) => sum + item.price, 0),
       [invoiceItemsFinal]

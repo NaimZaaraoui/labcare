@@ -6,21 +6,48 @@ export function evaluateWestgard(
   zScore: number,
   previousZScores: number[]
 ): { flag: QcValueFlag; rule?: string } {
+  const sequence = [zScore, ...previousZScores];
+
+  // 1_3S: Un point au-delà de 3 SD
   if (Math.abs(zScore) > 3) {
-    return { flag: 'fail', rule: '1-3s' };
+    return { flag: 'fail', rule: '1-3S' };
   }
 
-  if (
-    previousZScores.length >= 1 &&
-    Math.abs(zScore) > 2 &&
-    Math.abs(previousZScores[0]) > 2 &&
-    Math.sign(zScore) === Math.sign(previousZScores[0])
-  ) {
-    return { flag: 'fail', rule: '2-2s' };
+  // 2_2S: Deux points consécutifs au-delà de 2 SD du même côté de la moyenne
+  if (sequence.length >= 2) {
+    if (Math.abs(sequence[0]) > 2 && Math.abs(sequence[1]) > 2) {
+      if (Math.sign(sequence[0]) === Math.sign(sequence[1])) {
+        return { flag: 'fail', rule: '2-2S' };
+      }
+    }
   }
 
+  // R_4S: Différence de 4 SD ou plus entre deux points consécutifs
+  if (sequence.length >= 2) {
+    if (Math.abs(sequence[0] - sequence[1]) > 4) {
+      return { flag: 'fail', rule: 'R-4S' };
+    }
+  }
+
+  // 4_1S: Quatre points consécutifs au-delà de 1 SD du même côté (Avertissement)
+  if (sequence.length >= 4) {
+    const firstFour = sequence.slice(0, 4);
+    if (firstFour.every((z) => Math.abs(z) > 1 && Math.sign(z) === Math.sign(sequence[0]))) {
+      return { flag: 'warn', rule: '4-1S' };
+    }
+  }
+
+  // 10_X: Dix points consécutifs du même côté de la moyenne (Biais systématique - Avertissement)
+  if (sequence.length >= 10) {
+    const firstTen = sequence.slice(0, 10);
+    if (firstTen.every((z) => Math.sign(z) === Math.sign(sequence[0]) && Math.sign(z) !== 0)) {
+      return { flag: 'warn', rule: '10-X' };
+    }
+  }
+
+  // 1_2S: Règle d'avertissement simple si > 2 SD
   if (Math.abs(zScore) > 2) {
-    return { flag: 'warn', rule: '1-2s' };
+    return { flag: 'warn', rule: '1-2S' };
   }
 
   return { flag: 'ok' };

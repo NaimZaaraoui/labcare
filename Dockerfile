@@ -88,7 +88,7 @@ COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/node_modules ./node_modules
 
 # Copy the dev database with all tests
-COPY  --chown=nextjs:nodejs dev.db /app/data/labcare.db
+COPY  --chown=nextjs:nodejs dev.db /app/data/nexlab.db
 
 # Automatically reference the standalone build
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
@@ -102,5 +102,5 @@ ENV PORT 3000
 ENV CHROMIUM_PATH /usr/bin/chromium
 ENV HOSTNAME "0.0.0.0"
 
-# Migrate DB at startup and start server
-CMD ["sh", "-c", "npx prisma migrate deploy && node server.js"]
+# Sync DB schema at startup and start server
+CMD ["sh", "-c", "npx prisma db push && node server.js"]

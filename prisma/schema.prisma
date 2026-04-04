@@ -80,6 +80,10 @@ model Analysis {
   paymentStatus       String    @default("UNPAID")
   paymentMethod       String?
   paidAt              DateTime?
+  insuranceProvider   String?
+  insuranceCoverage   Float?
+  insuranceShare      Float     @default(0)
+  patientShare        Float     @default(0)
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
   globalNote          String?
@@ -95,6 +99,7 @@ model Analysis {
   notifications       Notification[]
   consumptions        AnalysisConsumption[]
 
+  @@index([patientId, creationDate])
   @@map("analyses")
 }
 
@@ -133,10 +138,12 @@ model Patient {
   lastName    String
   birthDate   DateTime?
   gender      String     @default("M")
-  phoneNumber String?
-  email       String?
-  address     String?
-  createdAt   DateTime   @default(now())
+  phoneNumber       String?
+  email             String?
+  address           String?
+  insuranceProvider String?
+  insuranceNumber   String?
+  createdAt         DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
   analyses    Analysis[]
 
@@ -422,4 +429,51 @@ model QcValue {
   @@index([resultId])
   @@index([testCode])
   @@map("qc_values")
+}
+
+model Instrument {
+  id        String               @id @default(cuid())
+  name      String
+  type      String
+  targetMin Float
+  targetMax Float
+  unit      String               @default("°C")
+  location  String?
+  isActive  Boolean              @default(true)
+  readings  TemperatureReading[]
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+
+  @@index([name])
+  @@index([type])
+  @@index([isActive])
+  @@map("instruments")
+}
+
+model TemperatureReading {
+  id               String     @id @default(cuid())
+  instrumentId     String
+  instrument       Instrument @relation(fields: [instrumentId], references: [id], onDelete: Cascade)
+  value            Float
+  period           String
+  recordedDate     DateTime
+  measuredAt       DateTime   @default(now())
+  recordedAt       DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  isOutOfRange     Boolean    @default(false)
+  correctiveAction String?
+  isInvalid        Boolean    @default(false)
+  invalidReason    String?
+  invalidatedAt    DateTime?
+  invalidatedBy    String?
+  invalidatedById  String?
+  recordedBy       String
+  recordedById     String?
+
+  @@unique([instrumentId, recordedDate, period])
+  @@index([instrumentId, recordedDate])
+  @@index([recordedAt])
+  @@index([isInvalid])
+  @@index([isOutOfRange])
+  @@map("temperature_readings")
 }

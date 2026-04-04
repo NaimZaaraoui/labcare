@@ -3,28 +3,20 @@ import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { hasValidInternalPrintToken } from '@/lib/authz';
 import { createAuditLog, getRequestMeta } from '@/lib/audit';
-
-const ALLOWED_KEYS = [
-  'lab_name', 'lab_subtitle', 'lab_parent',
-  'lab_address_1', 'lab_address_2', 'lab_phone', 'lab_email',
-  'lab_bio_name', 'lab_bio_title', 'lab_bio_onmpt',
-  'lab_footer_text', 'lab_stamp_image', 'lab_bio_signature', 'tat_warn', 'tat_alert',
-  'sample_types', 'amount_unit', 'qc_range_basis', 'maintenance_mode', 'maintenance_message',
-  'database_backup_retention_count',
-];
+import { ALLOWED_SETTINGS_KEYS, normalizeSettingsRecord, type LabSettingsMap } from '@/lib/settings-schema';
 
 type SettingRow = { key: string; value: string };
 
 function normalizeSettings(rows: SettingRow[]) {
-  return Object.fromEntries(
-    ALLOWED_KEYS.map((key) => [key, rows.find((row) => row.key === key)?.value ?? ''])
-  ) as Record<string, string>;
+  return normalizeSettingsRecord(
+    Object.fromEntries(rows.map((row) => [row.key, row.value]))
+  );
 }
 
 export async function GET(request: Request) {
   if (hasValidInternalPrintToken(request)) {
     const rows = await prisma.setting.findMany({
-      where: { key: { in: ALLOWED_KEYS } },
+      where: { key: { in: [...ALLOWED_SETTINGS_KEYS] } },
       select: { key: true, value: true },
     });
     return NextResponse.json(normalizeSettings(rows));
@@ -37,7 +29,7 @@ export async function GET(request: Request) {
   }
 
   const rows = await prisma.setting.findMany({
-    where: { key: { in: ALLOWED_KEYS } },
+    where: { key: { in: [...ALLOWED_SETTINGS_KEYS] } },
     select: { key: true, value: true },
   });
 
@@ -52,7 +44,7 @@ export async function PATCH(request: Request) {
   }
 
   const body = await request.json();
-  const { settings } = body as { settings: Record<string, string> };
+  const { settings } = body as { settings: Partial<LabSettingsMap> };
   const meta = getRequestMeta({ headers: request.headers });
 
   if (!settings || typeof settings !== 'object') {
@@ -60,7 +52,7 @@ export async function PATCH(request: Request) {
   }
 
   // Validate keys
-  const invalidKeys = Object.keys(settings).filter(k => !ALLOWED_KEYS.includes(k));
+  const invalidKeys = Object.keys(settings).filter((key) => !ALLOWED_SETTINGS_KEYS.includes(key as (typeof ALLOWED_SETTINGS_KEYS)[number]));
   if (invalidKeys.length > 0) {
     return NextResponse.json({ error: `Clé(s) invalide(s): ${invalidKeys.join(', ')}` }, { status: 400 });
   }
@@ -93,6 +85,16 @@ export async function PATCH(request: Request) {
     }
   }
 
+  if ('database_backup_external_target' in settings) {
+    const target = (settings.database_backup_external_target ?? '').trim();
+    if (target.length > 500) {
+      return NextResponse.json(
+        { error: 'Le chemin de sauvegarde externe est trop long.' },
+        { status: 400 }
+      );
+    }
+  }
+
   const userId = user?.id ?? 'system';
 
   await prisma.$transaction(
@@ -118,7 +120,7 @@ export async function PATCH(request: Request) {
 
   // Return updated settings
   const rows = await prisma.setting.findMany({
-    where: { key: { in: ALLOWED_KEYS } },
+    where: { key: { in: [...ALLOWED_SETTINGS_KEYS] } },
     select: { key: true, value: true },
   });
   return NextResponse.json(normalizeSettings(rows));

@@ -50,6 +50,10 @@ export interface Analysis {
   paymentStatus: 'UNPAID' | 'PARTIAL' | 'PAID' | null;
   paymentMethod?: string | null;
   paidAt?: string | Date | null;
+  insuranceProvider?: string | null;
+  insuranceCoverage?: number | null;
+  insuranceShare?: number;
+  patientShare?: number;
   validatedTechAt?: string | Date;
   validatedTechBy?: string;
   validatedTechName?: string;
@@ -95,6 +99,8 @@ export interface Patient {
   phoneNumber: string | null;
   email: string | null;
   address: string | null;
+  insuranceProvider?: string | null;
+  insuranceNumber?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

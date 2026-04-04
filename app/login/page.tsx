@@ -80,7 +80,7 @@ export default function LoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="nom@labcare.local"
+                  placeholder="nom@nexlab.local"
                   required
                   aria-invalid={Boolean(error)}
                   aria-describedby={error ? 'login-error' : undefined}

@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 async function main() {
   const existing = await prisma.user.findUnique({
-    where: { email: 'admin@labcare.local' },
+    where: { email: 'admin@nexlab.local' },
   });
 
   if (existing) {
@@ -14,20 +14,21 @@ async function main() {
     return;
   }
 
-  const hashed = await bcrypt.hash('admin123', 12);
+  const hashed = await bcrypt.hash('NexLab2026!', 12);
 
   await prisma.user.create({
     data: {
       name: 'Administrateur',
-      email: 'admin@labcare.local',
+      email: 'admin@nexlab.local',
       password: hashed,
       role: 'ADMIN',
+      mustChangePassword: true,
     },
   });
 
   console.log('✅ Admin user created');
-  console.log('   Email: admin@labcare.local');
-  console.log('   Password: admin123');
+  console.log('   Email: admin@nexlab.local');
+  console.log('   Password: NexLab2026!');
   console.log('   ⚠️  Change this password after first login!');
 }
 

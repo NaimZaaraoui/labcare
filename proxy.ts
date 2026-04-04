@@ -23,9 +23,7 @@ export async function proxy(req: NextRequest) {
     (isInternalExportRoute && hasValidInternalPrintToken) ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/favicon') ||
-    pathname.startsWith('/public') ||
-    pathname === '/logo.png' ||
-    pathname === '/boxylab.jpg'
+    pathname.startsWith('/public')
   ) {
     return NextResponse.next();
   }
@@ -62,5 +60,5 @@ export async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|public|logo.png|boxylab.jpg).*)'],
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|public).*)'],
 };

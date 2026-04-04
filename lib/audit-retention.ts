@@ -30,7 +30,6 @@ export async function archiveAndPurgeAuditLogs(retentionDays: number) {
         userAgent: log.userAgent,
         createdAt: log.createdAt,
       })),
-      skipDuplicates: true,
     }),
     prisma.auditLog.deleteMany({
       where: { id: { in: oldLogs.map((log) => log.id) } },

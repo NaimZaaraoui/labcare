@@ -1,6 +1,7 @@
 // src/app/api/analyses/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@/app/generated/prisma';
 import {prisma} from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { notifyUsers, getUserIdsByRoles } from '@/lib/notifications';
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
     const includeResults = searchParams.get('includeResults') === 'true';
     const category = searchParams.get('category');
     
-    const where: any = {};
+    const where: Prisma.AnalysisWhereInput = {};
 
     if (patientId) {
       where.patientId = patientId;
@@ -46,7 +47,9 @@ export async function GET(request: NextRequest) {
       where.results = {
         some: {
           test: {
-            category: category
+            categoryRel: {
+              name: category,
+            }
           }
         }
       };
@@ -56,22 +59,42 @@ export async function GET(request: NextRequest) {
       where,
       include: {
         patient: true,
-        ...(includeResults && {
-          results: {
-            include: {
-              test: {
-                include: {
-                  categoryRel: true
-                }
+        results: includeResults ? {
+          include: {
+            test: {
+              include: {
+                categoryRel: true
               }
             }
           }
-        })
+        } : {
+          select: {
+            id: true,
+            testId: true,
+            test: {
+              select: {
+                parentId: true,
+                isGroup: true,
+              }
+            }
+          }
+        }
       },
       orderBy: { creationDate: 'desc' }
     });
-    
-    return NextResponse.json(analyses);
+
+    const normalizedAnalyses = analyses.map((analysis) => {
+      const testsCount = (analysis.results || []).filter(
+        (result) => !result.test?.parentId
+      ).length;
+
+      return {
+        ...analysis,
+        testsCount,
+      };
+    });
+
+    return NextResponse.json(normalizedAnalyses);
   } catch (error) {
     console.error('Erreur GET /api/analyses:', error);
     return NextResponse.json(
@@ -141,7 +164,7 @@ export async function POST(request: NextRequest) {
         if (allIds.has(id)) return;
         allIds.add(id);
         
-        const test = await (prisma.test as any).findUnique({
+        const test = await prisma.test.findUnique({
           where: { id },
           include: { children: true }
         });
@@ -176,7 +199,10 @@ export async function POST(request: NextRequest) {
       globalNote,
       globalNotePlacement,
       receiptNumber: receiptNumberFromBody,
-      testsIds 
+      testsIds,
+      insuranceProvider,
+      insuranceNumber,
+      insuranceCoverage,
     } = body;
 
     // Determine Patient UUID and Daily ID (handling naming inconsistencies)
@@ -203,7 +229,9 @@ export async function POST(request: NextRequest) {
            birthDate: birthDateObj,
            phoneNumber: patientPhone,
            email: patientEmail,
-           address: patientAddress
+           address: patientAddress,
+           insuranceProvider: insuranceProvider || null,
+           insuranceNumber: insuranceNumber || null,
          }
        });
        finalPatientId = newPatient.id;
@@ -217,6 +245,10 @@ export async function POST(request: NextRequest) {
       select: { price: true }
     });
     const totalPrice = testsData.reduce((sum, t) => sum + (t.price || 0), 0);
+
+    const coveragePct = typeof insuranceCoverage === 'number' && insuranceCoverage > 0 ? insuranceCoverage : 0;
+    const insuranceShare = coveragePct > 0 ? Math.round((totalPrice * coveragePct / 100) * 100) / 100 : 0;
+    const patientShare = Math.round((totalPrice - insuranceShare) * 100) / 100;
     
     const analysis = await prisma.analysis.create({
       data: {
@@ -235,6 +267,10 @@ export async function POST(request: NextRequest) {
         globalNote: globalNote?.trim() || null,
         globalNotePlacement: ['all', 'first', 'last'].includes(globalNotePlacement) ? globalNotePlacement : 'all',
         status: 'pending',
+        insuranceProvider: insuranceProvider || null,
+        insuranceCoverage: coveragePct > 0 ? coveragePct : null,
+        insuranceShare,
+        patientShare,
         results: {
           create: resolvedTestsIds.map((testId: string) => ({
             testId,
@@ -302,10 +338,11 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(analysis, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
     console.error('Erreur POST /api/analyses:', error);
     return NextResponse.json(
-      { error: 'Erreur lors de la création de l\'analyse', details: error.message },
+      { error: 'Erreur lors de la création de l\'analyse', details: errorMessage },
       { status: 500 }
     );
   }

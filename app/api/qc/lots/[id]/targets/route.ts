@@ -63,7 +63,7 @@ export async function POST(
           acceptanceMode &&
           (!Number.isFinite(minAcceptable) ||
             !Number.isFinite(maxAcceptable) ||
-            minAcceptable >= maxAcceptable)
+            (minAcceptable !== null && maxAcceptable !== null && minAcceptable >= maxAcceptable))
         ) {
           throw new Error(`Plage d'acceptation invalide pour ${testCode || testName || 'paramètre inconnu'}`);
         }

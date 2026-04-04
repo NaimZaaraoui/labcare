@@ -1,7 +1,7 @@
 const Database = require('better-sqlite3');
 const bcrypt = require('bcryptjs');
 
-const db = new Database('/app/data/labcare.db');
+const db = new Database('/app/data/nexlab.db');
 
 // Hash password
 const hash = bcrypt.hashSync('admin123', 12);
@@ -20,7 +20,7 @@ const stmt = db.prepare(`
   )
 `);
 
-stmt.run('Administrateur', 'admin@labcare.local', hash);
+stmt.run('Administrateur', 'admin@nexlab.local', hash);
 
 // Confirm insertion
 const users = db.prepare('SELECT email, role FROM users').all();

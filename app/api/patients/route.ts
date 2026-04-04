@@ -21,9 +21,9 @@ export async function GET(request: Request) {
 
     if (query) {
       whereClause.OR = [
-        { firstName: { contains: query, mode: 'insensitive' } },
-        { lastName: { contains: query, mode: 'insensitive' } },
-        { phoneNumber: { contains: query, mode: 'insensitive' } },
+        { firstName: { contains: query } },
+        { lastName: { contains: query } },
+        { phoneNumber: { contains: query } },
       ];
     }
 

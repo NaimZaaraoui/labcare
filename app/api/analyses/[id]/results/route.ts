@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAnyRole } from '@/lib/authz';
 import { createAuditLog, getRequestMeta } from '@/lib/audit';
+import { resolveAnalysisTestIds } from '@/lib/analysis-tests';
+
+interface SaveResultsPayload {
+  results?: Record<string, unknown>;
+  notes?: Record<string, string>;
+}
+
+interface UpdateTestsPayload {
+  testsIds?: string[];
+}
 
 export async function PUT(
   request: NextRequest,
@@ -13,8 +23,8 @@ export async function PUT(
     const meta = getRequestMeta({ headers: request.headers });
 
     const { id } = await params;
-    const body = await request.json();
-    const { results, notes } = body; // results: Record<resultId, value>, notes: Record<resultId, text>
+    const body = (await request.json()) as SaveResultsPayload;
+    const { results, notes } = body;
 
     if (!results || typeof results !== 'object') {
       return NextResponse.json(
@@ -25,7 +35,12 @@ export async function PUT(
 
     // Valider que l'analyse existe
     const analysis = await prisma.analysis.findUnique({
-      where: { id }
+      where: { id },
+      include: {
+        results: {
+          include: { test: true }
+        }
+      }
     });
 
     if (!analysis) {
@@ -44,7 +59,7 @@ export async function PUT(
 
     // Utilisation d'une transaction pour garantir l'intégrité des données
     const updates = Object.entries(results)
-      .map(([resultId, value]) => 
+      .map(([resultId, value]) =>
         prisma.result.update({
           where: { id: resultId },
           data: { 
@@ -66,18 +81,36 @@ export async function PUT(
       }
     });
 
-    await createAuditLog({
-      action: 'analysis.results_save',
-      severity: 'INFO',
-      entity: 'analysis',
-      entityId: id,
-      details: {
-        updatedResults: Object.keys(results).length,
-        hadNotes: Boolean(notes),
-      },
-      ipAddress: meta.ipAddress,
-      userAgent: meta.userAgent,
+    // Construire le delta pour l'audit
+    const changes: Record<string, { oldValue: string | null; newValue: string | null }> = {};
+    Object.entries(results).forEach(([resultId, newValueRaw]) => {
+      const existingResult = analysis.results.find((result) => result.id === resultId);
+      if (existingResult) {
+        const oldVal = existingResult.value || null;
+        const newVal = newValueRaw !== undefined && newValueRaw !== null ? String(newValueRaw).trim() || null : null;
+        if (oldVal !== newVal) {
+          changes[existingResult.test?.code || resultId] = {
+            oldValue: oldVal,
+            newValue: newVal
+          };
+        }
+      }
     });
+
+    if (Object.keys(changes).length > 0) {
+      await createAuditLog({
+        action: 'analysis.results_save',
+        severity: 'INFO',
+        entity: 'analysis',
+        entityId: id,
+        details: {
+          deltas: changes,
+          hadNotes: Boolean(notes),
+        },
+        ipAddress: meta.ipAddress,
+        userAgent: meta.userAgent,
+      });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -100,7 +133,7 @@ export async function PATCH(
     const meta = getRequestMeta({ headers: request.headers });
 
     const { id } = await params;
-    const body = await request.json();
+    const body = (await request.json()) as UpdateTestsPayload;
     const { testsIds } = body;
 
     if (!Array.isArray(testsIds)) {
@@ -123,31 +156,7 @@ export async function PATCH(
       );
     }
 
-    const resolveTests = async (ids: string[]): Promise<string[]> => {
-      const allIds = new Set<string>();
-
-      const fetchChildren = async (testId: string) => {
-        if (allIds.has(testId)) return;
-        allIds.add(testId);
-        const test = await (prisma.test as any).findUnique({
-          where: { id: testId },
-          include: { children: true }
-        });
-        if (test?.children) {
-          for (const child of test.children) {
-            await fetchChildren(child.id);
-          }
-        }
-      };
-
-      for (const testId of ids) {
-        await fetchChildren(testId);
-      }
-
-      return Array.from(allIds);
-    };
-
-    const resolvedTestsIds = await resolveTests(testsIds);
+    const resolvedTestsIds = await resolveAnalysisTestIds(testsIds);
     const currentTestIds = new Set(analysis.results.map(r => r.testId));
     const targetTestIds = new Set(resolvedTestsIds);
 

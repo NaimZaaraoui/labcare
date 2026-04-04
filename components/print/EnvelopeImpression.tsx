@@ -2,14 +2,8 @@
 
 import React, { forwardRef } from 'react';
 import { LucideMicroscope, MapPin, Phone } from 'lucide-react';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { Analysis } from '@/lib/types';
-
-interface EnvelopeImpressionProps {
-  analysis?: Analysis;
-  settings?: Record<string, string>;
-}
+import type { OptionalAnalysisPrintProps } from '@/components/print/types';
+import { resolveEnvelopeRecipient, resolvePrintBranding } from '@/components/print/report-helpers';
 
 /*
   ┌─────────────────────────────────────────────────┐
@@ -28,20 +22,10 @@ interface EnvelopeImpressionProps {
   └─────────────────────────────────────────────────┘
 */
 
-export const EnvelopeImpression = forwardRef<HTMLDivElement, EnvelopeImpressionProps>(
+export const EnvelopeImpression = forwardRef<HTMLDivElement, OptionalAnalysisPrintProps>(
   ({ analysis, settings }, ref) => {
-    const LAB_NAME     = settings?.lab_name     || 'Laboratoire';
-    const LAB_SUBTITLE = settings?.lab_subtitle || 'Service de Laboratoire';
-    const LAB_ADDRESS  = [settings?.lab_address_1, settings?.lab_address_2].filter(Boolean).join(', ');
-    const LAB_PHONE    = settings?.lab_phone    || '';
-    const patientName = analysis
-      ? `${analysis.patientFirstName || ''} ${analysis.patientLastName || ''}`.trim()
-      : '................................................';
-
-    const dailyId = analysis?.dailyId || '........';
-    const dateStr = analysis
-      ? format(new Date(analysis.creationDate), 'dd/MM/yyyy', { locale: fr })
-      : '../../....';
+    const { LAB_NAME, LAB_SUBTITLE, LAB_ADDRESS, LAB_PHONE } = resolvePrintBranding(settings);
+    const { patientName, dailyId, dateStr } = resolveEnvelopeRecipient(analysis);
 
     return (
       <div

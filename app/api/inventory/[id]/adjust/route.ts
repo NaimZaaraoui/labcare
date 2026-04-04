@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAnyRole } from '@/lib/authz';
 import { createAuditLog, getRequestMeta } from '@/lib/audit';
+import { notifyInventoryStatus } from '@/lib/inventory-notifications';
 
 export async function POST(
   request: NextRequest,
@@ -69,6 +70,8 @@ export async function POST(
       ipAddress: meta.ipAddress,
       userAgent: meta.userAgent,
     });
+
+    await notifyInventoryStatus(id, guard.session.user.id);
 
     return NextResponse.json(result);
   } catch (error) {

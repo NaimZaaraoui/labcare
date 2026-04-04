@@ -10,23 +10,11 @@ interface HistogramProps {
   color?: string;
   width?: number;
   height?: number;
-}
-
-interface HistogramProps {
-  data: {
-    bins: number[];
-    markers: number[];
-  };
-  title: string;
-  color?: string;
-  width?: number;
-  height?: number;
   xAxisMax?: number; // Maximum value on X axis (e.g. 400 fL for WBC)
 }
 
 export function HistogramView({ data, title, color = '#3b82f6', width = 300, height = 150, xAxisMax = 250 }: HistogramProps) {
   const { bins, markers } = data;
-  if (!bins || bins.length === 0) return null;
 
   const maxVal = Math.max(...bins, 1);
   const padding = 25;
@@ -35,13 +23,19 @@ export function HistogramView({ data, title, color = '#3b82f6', width = 300, hei
   const chartHeight = height - padding - bottomPadding;
 
   // Generate SVG path for the curve
-  const points = bins.map((val, i) => {
-    const x = padding + (i / bins.length) * chartWidth;
-    const y = height - bottomPadding - (val / maxVal) * chartHeight;
-    return `${x},${y}`;
-  });
+  const pathData = React.useMemo(() => {
+    if (!bins || bins.length === 0) {
+      return '';
+    }
+    const pts = bins.map((val, i) => {
+      const x = padding + (i / bins.length) * chartWidth;
+      const y = height - bottomPadding - (val / maxVal) * chartHeight;
+      return `${x},${y}`;
+    });
+    return `M ${pts[0]} ${pts.slice(1).map(p => `L ${p}`).join(' ')} L ${padding + chartWidth},${height - bottomPadding} L ${padding},${height - bottomPadding} Z`;
+  }, [bins, maxVal, chartWidth, chartHeight, padding, height, bottomPadding]);
 
-  const pathData = `M ${points[0]} ${points.slice(1).map(p => `L ${p}`).join(' ')} L ${padding + chartWidth},${height - bottomPadding} L ${padding},${height - bottomPadding} Z`;
+  if (!bins || bins.length === 0) return null;
 
   return (
     <div className="bg-white p-4 rounded-2xl border border-slate-100 overflow-hidden">
