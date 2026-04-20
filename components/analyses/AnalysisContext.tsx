@@ -9,7 +9,8 @@ import { useDiatronImport } from './useDiatronImport';
 import { useResultatsUi } from './useResultatsUi';
 import { useResultatsPersistence } from './useResultatsPersistence';
 import { sortAnalysisResults } from './resultats-sorting';
-import { calculateResultMetrics, performHematologyCalculations } from './resultats-metrics';
+import { calculateResultMetrics } from './resultats-metrics';
+import { performHematologyCalculations } from '@/lib/calculations';
 import type { AnalysisInputsMap, AnalysisNotification } from './types';
 import type { Analysis, Result } from '@/lib/types';
 

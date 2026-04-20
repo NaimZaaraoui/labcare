@@ -2,7 +2,7 @@ import { Beaker } from 'lucide-react';
 import { AnalysisChartsTab } from './AnalysisChartsTab';
 import { AnalysisResultRow } from './AnalysisResultRow';
 import { AnalysisResultsToolbar } from './AnalysisResultsToolbar';
-import { isResultAbnormal } from './resultats-metrics';
+import { isResultAbnormal } from '@/lib/calculations';
 
 import { useAnalysisContext } from './AnalysisContext';
 

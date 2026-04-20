@@ -3,9 +3,9 @@ import { format } from 'date-fns';
 import { AlertCircle, Calculator, CheckCircle, History, MessageSquare, NotepadTextIcon } from 'lucide-react';
 import { formatReferenceRange, getTestReferenceValues } from '@/lib/utils';
 import { getCategoryIcon } from '@/lib/category-icons';
+import { isResultAbnormal } from '@/lib/calculations';
 import type { Analysis } from '@/lib/types';
 import type { ResultWithRenderCategory } from './types';
-import { isResultAbnormal } from './resultats-metrics';
 
 import { useAnalysisContext } from './AnalysisContext';
 

@@ -2,7 +2,7 @@
 import React from 'react';
 import { Sparkles, Activity } from 'lucide-react';
 import { HistogramView } from './HistogramView';
-import { getHematologyInterpretations } from '@/lib/interpretations';
+import { getHematologyFlags } from '@/lib/calculations';
 
 interface AnalysisChartsTabProps {
   analysis: any;
@@ -19,7 +19,7 @@ export function AnalysisChartsTab({ analysis, results }: AnalysisChartsTabProps)
       markers: data.rbc.markers.filter((m: number) => m < 60),
     };
 
-    const interpretations = getHematologyInterpretations(analysis, results);
+    const interpretations = getHematologyFlags(analysis, results);
 
     return (
       <div className="flex flex-col gap-6 py-4">

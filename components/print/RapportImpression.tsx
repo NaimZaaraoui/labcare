@@ -1,6 +1,6 @@
 import React, { forwardRef, useMemo } from 'react';
 import { HistogramView } from '../analyses/HistogramView';
-import { getHematologyInterpretations } from '@/lib/interpretations';
+import { getHematologyFlags } from '@/lib/calculations';
 import { ReportPrintProps } from '@/components/print/types';
 import {
   buildReportReferenceMap,
@@ -127,7 +127,7 @@ export const RapportImpression = forwardRef<HTMLDivElement, ReportPrintProps>(
 
                             {(() => {
                                 try {
-                                    const interpretations = getHematologyInterpretations(analysis, results);
+                                    const interpretations = getHematologyFlags(analysis, results);
                                     if (interpretations.length === 0) return (
                           <p className="my-8 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Conclusion Morphologique : Absence d&apos;anomalies majeures détectables</p>
                                     );
