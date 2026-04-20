@@ -69,6 +69,7 @@ export interface Analysis {
   drawingDate: Date | null;
   status: string | null;
   printedAt: Date | null;
+  emailedAt?: Date | null;
   histogramData: string | null;
   previousResults?: Record<string, string>;
   patient?: Patient;

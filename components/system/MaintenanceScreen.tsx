@@ -10,7 +10,7 @@ export function MaintenanceScreen({
 }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[var(--color-page)] px-4 py-10">
-      <div className="w-full max-w-2xl rounded-[2rem] border bg-white p-8 shadow-[0_20px_60px_rgba(15,31,51,0.08)]">
+      <div className="w-full max-w-2xl rounded-[2rem] border bg-[var(--color-surface)] p-8 shadow-[0_20px_60px_rgba(15,31,51,0.08)]">
         <div className="flex items-start gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-amber-50 text-amber-700">
             {isAdmin ? <Wrench className="h-6 w-6" /> : <ShieldAlert className="h-6 w-6" />}

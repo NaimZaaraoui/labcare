@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { requireAnyRole } from '@/lib/authz';
 import { createAuditLog, getRequestMeta } from '@/lib/audit';
 import { createRecoveryBundle, restoreRecoveryBundle } from '@/lib/recovery-bundles';
+import { validateActiveDatabase } from '@/lib/database-backups';
 
 export const runtime = 'nodejs';
 
@@ -22,6 +23,7 @@ export async function POST(request: Request, context: RouteContext) {
 
     await prisma.$disconnect();
     const restored = await restoreRecoveryBundle(fileName);
+    const validation = validateActiveDatabase();
 
     await createAuditLog({
       action: 'database.recovery_bundle_restore',
@@ -32,6 +34,7 @@ export async function POST(request: Request, context: RouteContext) {
         restoredFrom: restored.bundle.fileName,
         restoredUploads: restored.restoredUploads,
         safetyBundle: safetyBundle.fileName,
+        validation,
       },
       ipAddress: meta.ipAddress,
       userAgent: meta.userAgent,
@@ -42,6 +45,7 @@ export async function POST(request: Request, context: RouteContext) {
       restoredFrom: restored.bundle.fileName,
       restoredUploads: restored.restoredUploads,
       safetyBundle,
+      validation,
     });
   } catch (error) {
     console.error('Error restoring recovery bundle:', error);

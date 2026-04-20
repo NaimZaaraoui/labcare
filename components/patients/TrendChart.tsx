@@ -45,19 +45,19 @@ export function TrendChart({ testName, data, unit }: TrendChartProps) {
   const diff = prevValue !== null ? lastValue - prevValue : 0;
 
   return (
-    <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all group">
+    <div className="bg-[var(--color-surface)] p-5 rounded-2xl border border-[var(--color-border)] shadow-sm hover:shadow-md transition-all group">
       <div className="flex justify-between items-start mb-4">
         <div>
           <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{testName}</h4>
           <div className="flex items-baseline gap-1">
-            <span className="text-xl font-black text-slate-900">{lastValue}</span>
+            <span className="text-xl font-black text-[var(--color-text)]">{lastValue}</span>
             <span className="text-[10px] font-bold text-slate-400 uppercase">{unit}</span>
           </div>
         </div>
         
         {prevValue !== null && (
           <div className={`flex items-center gap-1 text-[10px] font-black px-2 py-1 rounded-lg ${
-            diff > 0 ? 'bg-indigo-50 text-indigo-600' : diff < 0 ? 'bg-rose-50 text-rose-600' : 'bg-slate-50 text-slate-400'
+            diff > 0 ? 'bg-indigo-50 text-[var(--color-accent)]' : diff < 0 ? 'bg-rose-50 text-rose-600' : 'bg-[var(--color-surface-muted)] text-slate-400'
           }`}>
             {diff > 0 ? <TrendingUp size={12} /> : diff < 0 ? <TrendingDown size={12} /> : <Minus size={12} />}
             {Math.abs(diff).toFixed(2)}

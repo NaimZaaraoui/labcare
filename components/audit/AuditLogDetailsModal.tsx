@@ -24,13 +24,13 @@ export function AuditLogDetailsModal({ selectedLog, detailsContent, onClose }: A
           </div>
           <button
             onClick={onClose}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-xl border bg-[var(--color-surface-muted)] text-[var(--color-text-soft)] hover:text-[var(--color-text)]"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border bg-[var(--color-surface-muted)] text-[var(--color-text-soft)] hover:text-[var(--color-text)]"
             aria-label="Fermer"
           >
             <X size={16} />
           </button>
         </div>
-        <div className="rounded-2xl border bg-[var(--color-surface-muted)] p-4">
+        <div className="rounded-xl border bg-[var(--color-surface-muted)] p-4">
           <pre className="max-h-[50vh] overflow-auto whitespace-pre-wrap break-words text-xs text-[var(--color-text-secondary)]">{detailsContent}</pre>
         </div>
       </div>

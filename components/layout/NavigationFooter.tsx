@@ -10,10 +10,10 @@ interface NavigationFooterProps {
 
 export function NavigationFooter({ sidebarOpen, mobile = false, onLogout }: NavigationFooterProps) {
   return (
-    <div className={`${mobile ? 'mt-auto space-y-2 border-t p-4 pb-[max(1rem,env(safe-area-inset-bottom))]' : 'mt-auto space-y-2 p-3'}`}>
+    <div className={`${mobile ? 'mt-auto space-y-2 border-t p-4 pb-[max(1rem,env(safe-area-inset-bottom))]' : 'mt-auto space-y-2 border-t p-3'}`}>
       <button
         onClick={onLogout}
-        className={`group rounded-2xl py-2.5 font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-rose-50 hover:text-rose-700 ${
+        className={`group rounded-lg py-2.5 font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-rose-50 hover:text-rose-700 ${
           mobile ? 'flex w-full items-center gap-3 px-3' : `w-full ${!sidebarOpen ? 'px-0' : 'px-4'}`
         }`}
       >

@@ -1,12 +1,20 @@
 import { PrismaClient } from '../app/generated/prisma';
-import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
+import { PrismaLibSql } from '@prisma/adapter-libsql';
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
-export const prisma =
-  globalForPrisma.prisma ||
-  new PrismaClient({
-    adapter: new PrismaBetterSqlite3({ url: process.env.DATABASE_URL }),
+function createPrismaClient() {
+  const url = process.env.DATABASE_URL;
+  if (!url) throw new Error('DATABASE_URL environment variable is not set.');
+
+  const adapter = new PrismaLibSql({
+    url,
+    authToken: process.env.DATABASE_AUTH_TOKEN,
   });
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;   
+  return new PrismaClient({ adapter });
+}
+
+export const prisma = globalForPrisma.prisma || createPrismaClient();
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;

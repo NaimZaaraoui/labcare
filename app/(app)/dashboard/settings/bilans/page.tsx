@@ -3,19 +3,17 @@
 import { useState, useEffect, useCallback } from 'react';
 import { 
   Plus, 
-  Sparkles,
-  ArrowLeft,
+  FolderKanban,
   RefreshCw,
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { BilanCard } from '@/components/bilans/BilanCard';
 import { BilanEditorModal } from '@/components/bilans/BilanEditorModal';
 import type { BilanItem, BilanTest } from '@/components/bilans/types';
 import { NotificationToast } from '@/components/ui/notification-toast';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
+import { PageBackLink } from '@/components/ui/PageBackLink';
 
 export default function BilansPage() {
-  const router = useRouter();
   const [bilans, setBilans] = useState<BilanItem[]>([]);
   const [mounted, setMounted] = useState(false);
   const [tests, setTests] = useState<BilanTest[]>([]);
@@ -155,37 +153,30 @@ export default function BilansPage() {
 
   return (
     <div className="space-y-8 pb-24">
-      {/* Header */}
-      <div className="bento-panel p-5 sm:p-6 flex flex-col md:flex-row md:items-end justify-between gap-5">
-        <div className="flex flex-col gap-4">
-          <button 
-            onClick={() => router.push('/dashboard/settings')}
-            className="group flex items-center gap-2 text-[var(--color-text-soft)] font-medium hover:text-[var(--color-accent)] transition-all w-fit"
-          >
-            <div className="w-8 h-8 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] flex items-center justify-center group-hover:bg-[var(--color-accent-soft)] transition-all">
-               <ArrowLeft size={16} />
-            </div>
-            <span className="text-xs uppercase tracking-wide">Paramètres</span>
-          </button>
-          
+      <section className="rounded-2xl border bg-[var(--color-surface)] p-5 shadow-[0_6px_18px_rgba(15,31,51,0.04)]">
+        <PageBackLink href="/dashboard/settings" />
+        <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-semibold text-[var(--color-text)] tracking-tight">Raccourcis et Bilans</h1>
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl border bg-[var(--color-surface-muted)] text-[var(--color-text-secondary)]">
+              <FolderKanban size={18} />
+            </div>
+            <h1 className="text-2xl font-semibold text-[var(--color-text)] tracking-tight">Raccourcis et Bilans</h1>
             <p className="text-[var(--color-text-secondary)] mt-1">Gérez vos groupes de tests rapides et bilans standards.</p>
           </div>
-        </div>
 
-        <button
-          onClick={() => handleOpenModal()}
-          className="btn-primary-md"
-        >
-          <Plus size={16} />
-          <span>Nouveau Bilan</span>
-        </button>
-      </div>
+          <button
+            onClick={() => handleOpenModal()}
+            className="btn-secondary-md bg-slate-900 text-white hover:bg-slate-800"
+          >
+            <Plus size={16} />
+            <span>Nouveau Bilan</span>
+          </button>
+        </div>
+      </section>
 
       {loading ? (
-        <div className="bento-panel p-20 flex flex-col items-center justify-center text-slate-400 gap-4">
-          <RefreshCw size={40} className="animate-spin text-indigo-500" />
+        <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border bg-[var(--color-surface)] p-20 text-slate-400 shadow-[0_6px_18px_rgba(15,31,51,0.04)]">
+          <RefreshCw size={34} className="animate-spin text-slate-500" />
           <p className="font-bold uppercase tracking-widest text-xs">Chargement des bilans...</p>
         </div>
       ) : (
@@ -195,8 +186,8 @@ export default function BilansPage() {
           ))}
 
           {bilans.length === 0 && (
-            <div className="col-span-full bento-panel p-20 flex flex-col items-center justify-center text-slate-400 gap-4">
-               <Sparkles size={40} className="text-slate-200" />
+            <div className="col-span-full flex flex-col items-center justify-center gap-4 rounded-2xl border bg-[var(--color-surface)] p-20 text-slate-400 shadow-[0_6px_18px_rgba(15,31,51,0.04)]">
+               <FolderKanban size={40} className="text-slate-300" />
                <p className="font-bold uppercase tracking-widest text-xs text-center">Aucun bilan configuré.<br/>Commencez par en créer un nouveau.</p>
             </div>
           )}

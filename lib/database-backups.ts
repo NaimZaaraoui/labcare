@@ -9,6 +9,11 @@ export type DatabaseBackupFile = {
   absolutePath: string;
 };
 
+export type DatabaseBackupValidation = {
+  valid: boolean;
+  issues: string[];
+};
+
 const BACKUP_DIR = path.join(process.cwd(), 'backups', 'database');
 
 function normalizeSqlitePath(input: string) {
@@ -58,6 +63,34 @@ export async function createDatabaseBackup() {
     size: stat.size,
     createdAt: stat.birthtime.toISOString(),
   } satisfies DatabaseBackupFile;
+}
+
+export function validateDatabaseBackupFile(absolutePath: string): DatabaseBackupValidation {
+  let db: InstanceType<typeof Database> | null = null;
+
+  try {
+    db = new Database(absolutePath, { fileMustExist: true, readonly: true });
+    const rows = db.pragma('integrity_check') as Array<{ integrity_check: string }>;
+    const issues = rows
+      .map((row) => String(row.integrity_check))
+      .filter((issue) => issue !== 'ok');
+
+    return {
+      valid: issues.length === 0,
+      issues,
+    };
+  } catch (error) {
+    return {
+      valid: false,
+      issues: [error instanceof Error ? error.message : 'Validation SQLite impossible'],
+    };
+  } finally {
+    db?.close();
+  }
+}
+
+export function validateActiveDatabase(): DatabaseBackupValidation {
+  return validateDatabaseBackupFile(getDatabaseFilePath());
 }
 
 export async function createNamedDatabaseBackup(prefix: string) {

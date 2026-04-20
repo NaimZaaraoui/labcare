@@ -29,14 +29,14 @@ export function NotificationsMenu({
       success: <Check className="h-4 w-4 text-emerald-600" />,
       warning: <Clock className="h-4 w-4 text-amber-600" />,
       error: <X className="h-4 w-4 text-rose-600" />,
-      info: <Bell className="h-4 w-4 text-indigo-600" />,
+      info: <Bell className="h-4 w-4 text-[var(--color-accent)]" />,
     };
     return icons[type] || icons.info;
   };
 
   return (
     <div className="relative" ref={notifRef}>
-      <button onClick={onToggle} className="group relative rounded-2xl border bg-white p-2.5 transition-colors hover:bg-[var(--color-surface-muted)]">
+      <button onClick={onToggle} className="group relative rounded-lg border bg-[var(--color-surface)] p-2.5 transition-colors hover:bg-[var(--color-surface-muted)]">
         <Bell className="h-[18px] w-[18px] text-[var(--color-text-soft)] transition-colors group-hover:text-[var(--color-accent)]" />
         {unreadCount > 0 && (
           <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-white bg-rose-500 px-1 text-[10px] font-bold text-white">
@@ -46,7 +46,7 @@ export function NotificationsMenu({
       </button>
 
       {showNotifications && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-96 rounded-2xl border bg-white shadow-xl">
+        <div className="absolute right-0 top-full z-50 mt-2 w-96 rounded-lg border bg-[var(--color-surface)] shadow-[0_10px_24px_rgba(15,31,51,0.08)]">
           <div className="flex items-center justify-between border-b px-4 py-3">
             <h3 className="text-sm font-semibold text-[var(--color-text)]">Notifications</h3>
             <div className="flex items-center gap-2">

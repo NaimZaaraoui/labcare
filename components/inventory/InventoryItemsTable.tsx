@@ -13,7 +13,7 @@ interface InventoryItemsTableProps {
 
 export function InventoryItemsTable({ items, loading, isAdmin, onCreate }: InventoryItemsTableProps) {
   return (
-    <section className="bento-panel overflow-hidden">
+    <section className="overflow-hidden rounded-[2rem] border border-[var(--color-border)]/50 bg-[var(--color-surface)] shadow-sm ring-1 ring-slate-900/5">
       <div className="grid grid-cols-12 border-b bg-[var(--color-surface-muted)] px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--color-text-soft)]">
         <div className="col-span-3">Réactif</div>
         <div className="col-span-2">Catégorie</div>
@@ -26,7 +26,7 @@ export function InventoryItemsTable({ items, loading, isAdmin, onCreate }: Inven
       {loading && (
         <div className="space-y-3 p-5">
           {Array.from({ length: 6 }).map((_, index) => (
-            <div key={index} className="h-10 w-full animate-pulse rounded-2xl bg-[var(--color-surface-muted)]" />
+            <div key={index} className="h-10 w-full animate-pulse rounded-md bg-[var(--color-surface-muted)]" />
           ))}
         </div>
       )}
@@ -89,10 +89,10 @@ export function InventoryItemsTable({ items, loading, isAdmin, onCreate }: Inven
                     <div
                       className={`h-full ${
                         item.status === 'critical' || item.status === 'expired'
-                          ? 'bg-rose-500'
+                            ? 'bg-slate-700'
                           : item.status === 'low'
-                            ? 'bg-amber-400'
-                            : 'bg-emerald-500'
+                              ? 'bg-slate-500'
+                              : 'bg-slate-300'
                       }`}
                       style={{ width: `${ratio}%` }}
                     />

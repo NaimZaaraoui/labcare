@@ -1,6 +1,7 @@
 'use client';
 
 import { Layers, Plus, Save, Settings2, X } from 'lucide-react';
+import { useScrollLock } from '@/hooks/useScrollLock';
 import { RESULT_TYPES, type CategoryOption, type TestFormState, type TestWithInventory, type TestsLabSettings } from '@/components/tests/types';
 
 interface TestEditorModalProps {
@@ -30,24 +31,42 @@ export function TestEditorModal({
   onFormChange,
   onSexBasedChange,
 }: TestEditorModalProps) {
+  useScrollLock(open);
   if (!open) {
     return null;
   }
 
+  const handleSubmit = (event: React.FormEvent | React.MouseEvent) => {
+    event.preventDefault();
+    if (form.unit && form.resultType === 'numeric' && !form.isGroup) {
+      const currentUnits = labSettings.clinical_units?.split(',').map(s => s.trim()) || [];
+      const newUnit = form.unit.trim();
+      if (newUnit && !currentUnits.includes(newUnit)) {
+        const updatedUnits = [...currentUnits, newUnit].join(', ');
+        fetch('/api/settings', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ settings: { clinical_units: updatedUnits } }),
+        }).catch(() => {});
+      }
+    }
+    onSubmit(event as React.FormEvent);
+  };
+
   return (
-    <div className="modal-overlay z-[60] animate-in fade-in duration-300">
+    <div className="modal-overlay z-[60]">
       <div
-        className="modal-shell flex w-full max-w-2xl max-h-[90vh] flex-col overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300"
+        className="modal-shell flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-start justify-between border-b border-[var(--color-border)] p-6">
           <div className="flex items-start gap-4">
-            <div className={`flex h-12 w-12 items-center justify-center rounded-2xl shrink-0 ${editingTestId ? 'bg-[var(--color-accent-soft)] text-[var(--color-accent)]' : 'bg-[var(--color-surface-muted)] text-[var(--color-text-secondary)]'}`}>
+            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${editingTestId ? 'bg-[var(--color-surface-muted)] text-[var(--color-text)]' : 'bg-[var(--color-surface-muted)] text-[var(--color-text-secondary)]'}`}>
               {editingTestId ? <Settings2 size={22} /> : <Plus size={22} />}
             </div>
             <div>
-              <h3 className="text-xl sm:text-2xl font-semibold text-[var(--color-text)] tracking-tight">
-                {editingTestId ? 'Modifier' : 'Ajouter'} <span className="text-[var(--color-accent)]">test</span>
+              <h3 className="text-xl font-semibold tracking-tight text-[var(--color-text)] sm:text-2xl">
+                {editingTestId ? 'Modifier' : 'Ajouter'} test
               </h3>
               <p className="mt-1 text-sm text-[var(--color-text-secondary)]">Configurez les parametres de l&apos;analyse biologique.</p>
             </div>
@@ -60,32 +79,32 @@ export function TestEditorModal({
           </button>
         </div>
 
-        <form onSubmit={onSubmit} className="custom-scrollbar flex-1 space-y-6 overflow-y-auto bg-white p-6">
+        <form onSubmit={handleSubmit} className="custom-scrollbar flex-1 space-y-6 overflow-y-auto bg-[var(--color-surface)] p-6">
           <div className="grid grid-cols-2 gap-4">
             <button
               type="button"
               onClick={() => onFormChange({ ...form, isGroup: false })}
-              className={`p-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all border ${!form.isGroup ? 'bg-indigo-50 border-indigo-200 text-indigo-600 shadow-sm' : 'border-slate-50 text-slate-400 hover:bg-slate-50'}`}
+              className={`rounded-xl border p-4 text-xs font-black uppercase tracking-widest transition-all ${!form.isGroup ? 'border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text)]' : 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-soft)] hover:bg-[var(--color-surface-muted)]'}`}
             >
               Individuel
             </button>
             <button
               type="button"
               onClick={() => onFormChange({ ...form, isGroup: true, resultType: 'text', unit: '', minValue: '', maxValue: '' })}
-              className={`p-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all border ${form.isGroup ? 'bg-indigo-50 border-indigo-200 text-indigo-600 shadow-sm' : 'border-slate-50 text-slate-400 hover:bg-slate-50'}`}
+              className={`rounded-xl border p-4 text-xs font-black uppercase tracking-widest transition-all ${form.isGroup ? 'border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text)]' : 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-soft)] hover:bg-[var(--color-surface-muted)]'}`}
             >
               Panel / Bilan
             </button>
           </div>
 
-          <div className="grid grid-cols-1 gap-5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-5 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-5 md:grid-cols-2">
             <div className="space-y-2">
               <label className="ml-1 text-[11px] font-medium uppercase tracking-wide text-[var(--color-text-soft)]">Code</label>
               <input
                 value={form.code}
                 onChange={(event) => onFormChange({ ...form, code: event.target.value.toUpperCase() })}
                 placeholder="Ex: HEMO"
-                className="input-premium h-11 bg-white uppercase"
+                className="input-premium h-11 bg-[var(--color-surface)] uppercase"
                 required
               />
             </div>
@@ -95,16 +114,16 @@ export function TestEditorModal({
                 value={form.name}
                 onChange={(event) => onFormChange({ ...form, name: event.target.value })}
                 placeholder="Ex: Hemoglobine Glyquee"
-                className="input-premium h-11 bg-white"
+                className="input-premium h-11 bg-[var(--color-surface)]"
                 required
               />
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Categorie</label>
+              <label className="ml-1 text-[10px] font-black uppercase tracking-widest text-slate-400">Categorie</label>
               <select
                 value={form.categoryId}
                 onChange={(event) => onFormChange({ ...form, categoryId: event.target.value })}
-                className="input-premium h-11 bg-white"
+                className="input-premium h-11 bg-[var(--color-surface)]"
               >
                 <option value="">Selectionner...</option>
                 {categories.map((category) => (
@@ -113,11 +132,11 @@ export function TestEditorModal({
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Panel Parent</label>
+              <label className="ml-1 text-[10px] font-black uppercase tracking-widest text-slate-400">Panel Parent</label>
               <select
                 value={form.parentId}
                 onChange={(event) => onFormChange({ ...form, parentId: event.target.value })}
-                className="input-premium h-11 bg-white"
+                className="input-premium h-11 bg-[var(--color-surface)]"
               >
                 <option value="">-- Racine (Catalogue principal) --</option>
                 {tests.filter((test) => test.isGroup).map((panel) => (
@@ -129,11 +148,11 @@ export function TestEditorModal({
             </div>
             {!form.isGroup && (
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Type de Resultat</label>
+                <label className="ml-1 text-[10px] font-black uppercase tracking-widest text-slate-400">Type de Resultat</label>
                 <select
                   value={form.resultType}
                   onChange={(event) => onFormChange({ ...form, resultType: event.target.value })}
-                  className="input-premium h-11 bg-white"
+                  className="input-premium h-11 bg-[var(--color-surface)]"
                 >
                   {RESULT_TYPES.map((resultType) => (
                     <option key={resultType.value} value={resultType.value}>{resultType.label}</option>
@@ -143,21 +162,21 @@ export function TestEditorModal({
             )}
             {form.resultType === 'dropdown' && !form.isGroup && (
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Options (separees par virgule)</label>
+                <label className="ml-1 text-[10px] font-black uppercase tracking-widest text-slate-400">Options (separees par virgule)</label>
                 <input
                   value={form.options}
                   onChange={(event) => onFormChange({ ...form, options: event.target.value })}
                   placeholder="Ex: Positif, Negatif"
-                  className="input-premium h-11 bg-white"
+                  className="input-premium h-11 bg-[var(--color-surface)]"
                 />
               </div>
             )}
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Echantillon</label>
+              <label className="ml-1 text-[10px] font-black uppercase tracking-widest text-slate-400">Echantillon</label>
               <select
                 value={form.sampleType}
                 onChange={(event) => onFormChange({ ...form, sampleType: event.target.value })}
-                className="input-premium h-11 bg-white"
+                className="input-premium h-11 bg-[var(--color-surface)]"
               >
                 <option value="">Selectionner...</option>
                 {labSettings.sample_types.split(',').map((sample) => {
@@ -167,13 +186,13 @@ export function TestEditorModal({
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Montant ({labSettings.amount_unit})</label>
+              <label className="ml-1 text-[10px] font-black uppercase tracking-widest text-slate-400">Montant ({labSettings.amount_unit})</label>
               <input
                 type="number"
                 value={form.price}
                 onChange={(event) => onFormChange({ ...form, price: event.target.value })}
                 placeholder="0"
-                className="input-premium h-11 bg-white text-[var(--color-accent)]"
+                className="input-premium h-11 bg-[var(--color-surface)] text-[var(--color-accent)]"
               />
             </div>
           </div>
@@ -181,33 +200,39 @@ export function TestEditorModal({
           {!form.isGroup && form.resultType === 'numeric' && (
             <div className="space-y-6">
               <div className="flex items-center justify-between px-4">
-                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Parametres Physico-chimiques</h4>
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Parametres Physico-chimiques</h4>
                 <button
                   type="button"
                   onClick={() => onSexBasedChange(!isSexBased)}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[10px] font-semibold uppercase tracking-wide transition-all ${isSexBased ? 'bg-[var(--color-accent)] border-[var(--color-accent)] text-white shadow-md' : 'bg-white border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-200'}`}
+                  className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-all ${isSexBased ? 'border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text)]' : 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-soft)] hover:bg-[var(--color-surface-muted)]'}`}
                 >
                   <Layers size={12} />
                   Plages par sexe
                 </button>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-indigo-50/50 rounded-2xl border border-indigo-100 items-end">
+              <div className="grid grid-cols-2 items-end gap-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 md:grid-cols-4">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest ml-1 text-center block">Unite</label>
-                  <input value={form.unit} onChange={(event) => onFormChange({ ...form, unit: event.target.value })} placeholder="g/L" className="input-premium h-12 bg-white text-center font-black" />
+                  <label className="text-[10px] font-black text-[var(--color-accent)] uppercase tracking-widest ml-1 text-center block">Unite</label>
+                  <input list="clinical-units" value={form.unit} onChange={(event) => onFormChange({ ...form, unit: event.target.value })} placeholder="g/L" className="input-premium h-12 bg-[var(--color-surface)] text-center font-black" />
+                  <datalist id="clinical-units">
+                    {labSettings.clinical_units?.split(',').map((u) => {
+                      const val = u.trim();
+                      return val ? <option key={val} value={val} /> : null;
+                    })}
+                  </datalist>
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-emerald-600 uppercase tracking-widest ml-1 text-center block">Min Std</label>
-                  <input step="0.01" type="number" value={form.minValue} onChange={(event) => onFormChange({ ...form, minValue: event.target.value })} placeholder="0.00" className="input-premium h-12 bg-white text-center font-black" />
+                  <input step="0.01" type="number" value={form.minValue} onChange={(event) => onFormChange({ ...form, minValue: event.target.value })} placeholder="0.00" className="input-premium h-12 bg-[var(--color-surface)] text-center font-black" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-rose-600 uppercase tracking-widest ml-1 text-center block">Max Std</label>
-                  <input step="0.01" type="number" value={form.maxValue} onChange={(event) => onFormChange({ ...form, maxValue: event.target.value })} placeholder="∞" className="input-premium h-12 bg-white text-center font-black" />
+                  <input step="0.01" type="number" value={form.maxValue} onChange={(event) => onFormChange({ ...form, maxValue: event.target.value })} placeholder="∞" className="input-premium h-12 bg-[var(--color-surface)] text-center font-black" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 text-center block">Dec</label>
-                  <select value={form.decimals} onChange={(event) => onFormChange({ ...form, decimals: event.target.value })} className="input-premium h-12 bg-white text-center font-black">
+                  <select value={form.decimals} onChange={(event) => onFormChange({ ...form, decimals: event.target.value })} className="input-premium h-12 bg-[var(--color-surface)] text-center font-black">
                     <option value="0">0</option>
                     <option value="1">1</option>
                     <option value="2">2</option>
@@ -218,19 +243,19 @@ export function TestEditorModal({
                   <div className="col-span-2 md:col-span-4 grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-indigo-100/50">
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest ml-1 text-center block">H Min</label>
-                      <input step="0.01" type="number" value={form.minValueM} onChange={(event) => onFormChange({ ...form, minValueM: event.target.value })} placeholder="Min H" className="input-premium h-12 bg-white text-center font-black" />
+                      <input step="0.01" type="number" value={form.minValueM} onChange={(event) => onFormChange({ ...form, minValueM: event.target.value })} placeholder="Min H" className="input-premium h-12 bg-[var(--color-surface)] text-center font-black" />
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest ml-1 text-center block">H Max</label>
-                      <input step="0.01" type="number" value={form.maxValueM} onChange={(event) => onFormChange({ ...form, maxValueM: event.target.value })} placeholder="Max H" className="input-premium h-12 bg-white text-center font-black" />
+                      <input step="0.01" type="number" value={form.maxValueM} onChange={(event) => onFormChange({ ...form, maxValueM: event.target.value })} placeholder="Max H" className="input-premium h-12 bg-[var(--color-surface)] text-center font-black" />
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-rose-400 uppercase tracking-widest ml-1 text-center block">F Min</label>
-                      <input step="0.01" type="number" value={form.minValueF} onChange={(event) => onFormChange({ ...form, minValueF: event.target.value })} placeholder="Min F" className="input-premium h-12 bg-white text-center font-black" />
+                      <input step="0.01" type="number" value={form.minValueF} onChange={(event) => onFormChange({ ...form, minValueF: event.target.value })} placeholder="Min F" className="input-premium h-12 bg-[var(--color-surface)] text-center font-black" />
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-rose-400 uppercase tracking-widest ml-1 text-center block">F Max</label>
-                      <input step="0.01" type="number" value={form.maxValueF} onChange={(event) => onFormChange({ ...form, maxValueF: event.target.value })} placeholder="Max F" className="input-premium h-12 bg-white text-center font-black" />
+                      <input step="0.01" type="number" value={form.maxValueF} onChange={(event) => onFormChange({ ...form, maxValueF: event.target.value })} placeholder="Max F" className="input-premium h-12 bg-[var(--color-surface)] text-center font-black" />
                     </div>
                   </div>
                 )}
@@ -239,11 +264,11 @@ export function TestEditorModal({
           )}
         </form>
 
-        <div className="mt-auto flex justify-end gap-3 border-t border-[var(--color-border)] bg-white p-6">
+        <div className="mt-auto flex justify-end gap-3 border-t border-[var(--color-border)] bg-[var(--color-surface)] p-6">
           <button onClick={onClose} className="btn-secondary-md">
             Annuler
           </button>
-          <button onClick={onSubmit} className="btn-primary-md min-w-[160px] justify-center">
+          <button onClick={handleSubmit} className="btn-primary-md min-w-[160px] justify-center">
             <Save size={16} /> <span>Enregistrer</span>
           </button>
         </div>

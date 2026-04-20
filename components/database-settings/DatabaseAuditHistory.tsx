@@ -15,12 +15,14 @@ function formatDatabaseAction(action: string) {
     'database.backup_create': 'Sauvegarde créée',
     'database.backup_download': 'Sauvegarde téléchargée',
     'database.backup_restore': 'Base restaurée',
+    'database.backup_test': 'Sauvegarde testée',
     'database.backup_prune': 'Nettoyage des sauvegardes',
     'database.full_export': 'Export complet généré',
     'database.recovery_bundle_create': 'Bundle de reprise créé',
     'database.recovery_bundle_download': 'Bundle de reprise téléchargé',
     'database.recovery_bundle_import': 'Bundle de reprise importé',
     'database.recovery_bundle_restore': 'Bundle de reprise restauré',
+    'database.recovery_bundle_test': 'Bundle de reprise testé',
   };
   return labels[action] || action;
 }
@@ -51,14 +53,14 @@ export function DatabaseAuditHistory({ history }: Props) {
 
       <div className="mt-4 space-y-3">
         {history.length === 0 ? (
-          <div className="rounded-2xl border bg-white px-4 py-5 text-sm text-[var(--color-text-soft)]">
+          <div className="rounded-2xl border bg-[var(--color-surface)] px-4 py-5 text-sm text-[var(--color-text-soft)]">
             Aucun événement base de données récent.
           </div>
         ) : (
           history.map((item) => (
             <div
               key={item.id}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-white px-4 py-3"
+              className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-[var(--color-surface)] px-4 py-3"
             >
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">

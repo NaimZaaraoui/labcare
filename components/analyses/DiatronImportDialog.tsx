@@ -13,21 +13,21 @@ interface DiatronImportDialogProps {
 export function DiatronImportDialog({ preview, onCancel, onSelect }: DiatronImportDialogProps) {
   return (
     <Dialog open={!!preview} onOpenChange={(open) => !open && onCancel()}>
-      <DialogContent className="sm:max-w-2xl bg-white border-slate-200 shadow-2xl p-0 overflow-hidden flex flex-col max-h-[85vh]">
-        <DialogHeader className="p-6 pb-4 border-b border-slate-100">
+      <DialogContent className="flex max-h-[85vh] overflow-hidden border-[var(--color-border)] bg-[var(--color-surface)] p-0 shadow-[0_10px_26px_rgba(15,31,51,0.10)] sm:max-w-2xl">
+        <DialogHeader className="border-b border-[var(--color-border)] p-6 pb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl border bg-[var(--color-surface-muted)] text-[var(--color-text-secondary)]">
               <Microscope size={20} />
             </div>
             <div>
-              <DialogTitle className="text-lg font-bold text-slate-800">Sélectionner un Résultat</DialogTitle>
-              <p className="text-sm text-slate-500">Fichier importé : Diatron Abacus 380</p>
+              <DialogTitle className="text-lg font-bold text-[var(--color-text)]">Sélectionner un Résultat</DialogTitle>
+              <p className="text-sm text-[var(--color-text-soft)]">Fichier importé : Diatron Abacus 380</p>
             </div>
           </div>
         </DialogHeader>
 
-        <div className="p-6 overflow-y-auto flex-1">
-          <div className="mb-5 flex items-center gap-2.5 p-4 bg-indigo-50 text-indigo-700 rounded-xl border border-indigo-100">
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="mb-5 flex items-center gap-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4 text-[var(--color-text-secondary)]">
             <AlertCircle size={18} className="shrink-0" />
             <p className="text-sm font-medium">Plusieurs analyses ont été détectées dans ce fichier. Choisissez celle qui correspond à votre patient.</p>
           </div>
@@ -37,19 +37,19 @@ export function DiatronImportDialog({ preview, onCancel, onSelect }: DiatronImpo
               <button
                 key={record.index}
                 onClick={() => onSelect(record.index)}
-                className="group w-full flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-white hover:border-indigo-300 hover:shadow-md transition-all text-left"
+                className="group flex w-full items-center justify-between rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 text-left transition-all hover:border-[var(--color-text-soft)] hover:bg-[var(--color-surface-muted)]"
               >
                 <div className="flex items-center gap-4">
-                  <div className="flex flex-col items-center justify-center w-12 h-12 rounded-xl bg-slate-50 group-hover:bg-indigo-600 transition-colors">
-                    <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400 group-hover:text-indigo-200">ID</span>
-                    <span className="text-base font-bold text-slate-700 group-hover:text-white">{record.sampleId || '?'}</span>
+                  <div className="flex h-12 w-12 flex-col items-center justify-center rounded-xl border bg-[var(--color-surface-muted)] transition-colors group-hover:border-[var(--color-text-soft)]">
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">ID</span>
+                    <span className="text-base font-bold text-slate-700">{record.sampleId || '?'}</span>
                   </div>
 
                   <div>
-                    <div className="font-semibold text-slate-800 group-hover:text-indigo-700 transition-colors">
+                    <div className="font-semibold text-[var(--color-text)] transition-colors group-hover:text-[var(--color-text)]">
                       Analyse du {record.date}
                     </div>
-                    <div className="text-sm text-slate-500 flex items-center gap-2 mt-0.5">
+                    <div className="text-sm text-[var(--color-text-soft)] flex items-center gap-2 mt-0.5">
                       <span className="flex items-center gap-1 text-xs">
                         <History size={12} /> {record.time}
                       </span>
@@ -59,14 +59,14 @@ export function DiatronImportDialog({ preview, onCancel, onSelect }: DiatronImpo
                   </div>
                 </div>
 
-                <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-500 transition-all">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface-muted)] text-slate-300 transition-all group-hover:bg-[var(--color-surface)] group-hover:text-[var(--color-text)]">
                   <ChevronRight size={16} />
                 </div>
               </button>
             ))}
           </div>
         </div>
-        <DialogFooter className="p-5 border-t border-slate-100">
+        <DialogFooter className="border-t border-[var(--color-border)] p-5">
           <button onClick={onCancel} className="btn-secondary">
             Annuler l&apos;importation
           </button>

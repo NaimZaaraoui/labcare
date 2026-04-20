@@ -1,58 +1,77 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+
+export interface QcTarget {
+  id: string;
+  testId: string | null;
+  testCode: string;
+  testName: string;
+  controlMode: 'STATISTICAL' | 'ACCEPTANCE_RANGE';
+  mean: number;
+  sd: number | null;
+  minAcceptable: number | null;
+  maxAcceptable: number | null;
+  unit: string | null;
+}
+
+export interface QcValue {
+  id: string;
+  testCode: string;
+  testName: string;
+  measured: number;
+  mean: number;
+  sd: number | null;
+  flag: string;
+  zScore: number | null;
+  unit: string | null;
+  controlMode?: 'STATISTICAL' | 'ACCEPTANCE_RANGE';
+  minAcceptable?: number | null;
+  maxAcceptable?: number | null;
+  inAcceptanceRange?: boolean | null;
+  rule?: string | null;
+}
+
+export interface QcResult {
+  id: string;
+  performedAt: string;
+  performedByName: string | null;
+  status: string;
+  values: QcValue[];
+}
+
+export interface QcLotPoint extends QcValue {
+  performedAt: string;
+  performedByName: string | null;
+  status: string;
+  resultId: string;
+}
 
 export interface LotDetails {
   id: string;
   lotNumber: string;
-  test: {
+  materialId: string;
+  material: {
     id: string;
-    code: string;
     name: string;
+    level: string;
+    manufacturer: string | null;
   };
-  level: string | null;
-  targetMean: number;
-  targetSd: number;
-  expirationDate: string;
   isActive: boolean;
-  points: QcPoint[];
-  dailyAverages?: DailyAverage[];
-}
-
-export interface QcPoint {
-  id: string;
-  value: number;
-  createdAt: string;
-  isValid: boolean;
-  cancelMotive: string | null;
-  operator: { id: string; name: string } | null;
+  expiryDate: string;
+  targets: QcTarget[];
+  results: QcResult[];
 }
 
 export interface DailyAverage {
   date: string;
   mean: number;
-  count: number;
-  points: QcPoint[];
+  points: QcLotPoint[];
 }
 
 export function useQcLot(lotId: string) {
-  const router = useRouter();
-  
   const [lot, setLot] = useState<LotDetails | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedTestCode, setSelectedTestCode] = useState<string | null>(null);
   const [notification, setNotification] = useState<{type: 'success'|'error', message: string} | null>(null);
-
-  const [cancelState, setCancelState] = useState<{
-    isOpen: boolean;
-    targetId: string | null;
-    motive: string;
-  }>({
-    isOpen: false,
-    targetId: null,
-    motive: '',
-  });
-  const [savingCancel, setSavingCancel] = useState(false);
-  const [activeTargetId, setActiveTargetId] = useState<string | null>(null);
-  
   const [settings, setSettings] = useState<Record<string, string>>({
     lab_name: 'NexLab CSSB',
   });
@@ -69,12 +88,17 @@ export function useQcLot(lotId: string) {
       if (!response.ok) throw new Error('Erreur de chargement');
       const data = await response.json();
       setLot(data);
+      
+      // Auto-select first test code if none selected
+      if (!selectedTestCode && data.targets && data.targets.length > 0) {
+        setSelectedTestCode(data.targets[0].testCode);
+      }
     } catch {
       showNotification('error', 'Impossible de charger les données du lot');
     } finally {
       setLoading(false);
     }
-  }, [lotId, showNotification]);
+  }, [lotId, selectedTestCode, showNotification]);
 
   const loadSettings = useCallback(async () => {
     try {
@@ -95,85 +119,55 @@ export function useQcLot(lotId: string) {
     loadSettings();
   }, [loadLot, loadSettings]);
 
-  const grouped = useMemo(() => {
-    if (!lot?.dailyAverages) return { activeArray: [], pointsMap: new Map() };
+  // Derived state for the specific selected test
+  const activeData = useMemo(() => {
+    if (!lot || !selectedTestCode) return null;
     
-    const activeArray = [...lot.dailyAverages].reverse();
-    const pointsMap = new Map();
-    
-    activeArray.forEach((day, index) => {
-      pointsMap.set(index, day.points.filter(p => p.isValid));
+    const target = lot.targets.find(t => t.testCode === selectedTestCode);
+    if (!target) return null;
+
+    // Filter results to only include points for this test
+    const points: QcLotPoint[] = lot.results.flatMap(result => 
+      result.values
+        .filter(v => v.testCode === selectedTestCode)
+        .map(v => ({
+          ...v,
+          performedAt: result.performedAt,
+          performedByName: result.performedByName,
+          status: result.status,
+          resultId: result.id
+        }))
+    );
+
+    // Group by day for the historical table
+    const dailyMap = new Map<string, QcLotPoint[]>();
+    points.forEach(p => {
+      const day = p.performedAt.split('T')[0];
+      if (!dailyMap.has(day)) dailyMap.set(day, []);
+      dailyMap.get(day)!.push(p);
     });
-    
-    return { activeArray, pointsMap };
-  }, [lot?.dailyAverages]);
 
-  const handlePrint = useCallback(() => {
-    window.print();
-  }, []);
+    const activeArray = Array.from(dailyMap.entries()).map(([date, pts]) => ({
+      date,
+      points: pts,
+      mean: pts.reduce((sum, p) => sum + p.measured, 0) / pts.length
+    })).sort((a, b) => b.date.localeCompare(a.date));
 
-  const handleToggleValid = (point: QcPoint) => {
-    if (point.isValid) {
-      setCancelState({
-        isOpen: true,
-        targetId: point.id,
-        motive: ''
-      });
-    } else {
-      setActiveTargetId(point.id);
-      submitInvalidate(point.id, true, null);
-    }
-  };
-
-  const submitInvalidate = async (pointId: string, isValid: boolean, cancelMotive: string | null) => {
-    setSavingCancel(true);
-    try {
-      const url = `/api/qc/points/${pointId}`;
-      const response = await fetch(url, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isValid, cancelMotive }),
-      });
-      if (!response.ok) throw new Error();
-      await loadLot();
-      showNotification('success', isValid ? 'Point réactivé' : 'Point invalidé');
-      setCancelState({ isOpen: false, targetId: null, motive: '' });
-    } catch {
-      showNotification('error', 'Erreur lors de l\'opération');
-    } finally {
-      setSavingCancel(false);
-      setActiveTargetId(null);
-    }
-  };
-
-  const handleConfirmCancel = () => {
-    if (cancelState.targetId) {
-      submitInvalidate(cancelState.targetId, false, cancelState.motive);
-    }
-  };
-
-  const closeCancelModal = () => {
-    setCancelState({ isOpen: false, targetId: null, motive: '' });
-  };
-
-  const setMotive = (motive: string) => {
-    setCancelState(prev => ({ ...prev, motive }));
-  };
+    return {
+      target,
+      points,
+      activeArray
+    };
+  }, [lot, selectedTestCode]);
 
   return {
-    router,
     lot,
+    activeData,
     loading,
+    selectedTestCode,
+    setSelectedTestCode,
     notification,
-    cancelState,
-    savingCancel,
-    activeTargetId,
     settings,
-    grouped,
-    handlePrint,
-    handleToggleValid,
-    handleConfirmCancel,
-    closeCancelModal,
-    setMotive,
+    showNotification
   };
 }

@@ -6,6 +6,24 @@ const ADMIN_ONLY = ['/dashboard/settings', '/dashboard/users', '/tests', '/dashb
 const BLOCKED_MEDECIN = ['/analyses/nouvelle', '/dashboard/settings', '/dashboard/users', '/tests'];
 const BLOCKED_RECEPTIONNISTE = ['/dashboard/settings', '/dashboard/users', '/tests'];
 
+const PUBLIC_PREFIXES = [
+  '/login',
+  '/setup',
+  '/api/setup',
+  '/api/diagnostic',
+  '/api/auth',
+  '/api/notifications',
+  '/_next',
+  '/favicon.ico',
+  '/public',
+  '/uploads',
+  '/diagnostic',
+];
+
+function isPublicPath(pathname: string): boolean {
+  return PUBLIC_PREFIXES.some(prefix => pathname.startsWith(prefix));
+}
+
 export async function proxy(req: NextRequest) {
   const { nextUrl } = req;
   const pathname = nextUrl.pathname;
@@ -16,15 +34,7 @@ export async function proxy(req: NextRequest) {
     nextUrl.searchParams.get('printToken') === internalPrintToken;
 
   // 1. Allow public routes
-  if (
-    pathname.startsWith('/login') ||
-    pathname.startsWith('/api/auth') ||
-    pathname.startsWith('/api/notifications') ||
-    (isInternalExportRoute && hasValidInternalPrintToken) ||
-    pathname.startsWith('/_next') ||
-    pathname.startsWith('/favicon') ||
-    pathname.startsWith('/public')
-  ) {
+  if (isPublicPath(pathname) || (isInternalExportRoute && hasValidInternalPrintToken)) {
     return NextResponse.next();
   }
 
@@ -60,5 +70,5 @@ export async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|public).*)'],
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|public|uploads).*)'],
 };

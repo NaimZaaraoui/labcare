@@ -133,13 +133,13 @@ export function PrintSettingsForm({ initialSettings }: Props) {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Section 0 — Cachet Officiel */}
-        <div className="rounded-3xl border bg-white p-6 space-y-4 shadow-[0_8px_24px_rgba(15,31,51,0.05)]">
+        <div className="rounded-xl border bg-[var(--color-surface)] p-6 space-y-4 shadow-[0_2px_8px_rgba(15,31,51,0.03)]">
           <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-[0.12em] mb-2 flex items-center gap-3">
-            <span className="w-6 h-[1px] bg-slate-100" />
+            <span className="w-6 h-[1px] bg-[var(--color-surface-muted)]" />
             Cachet officiel du laboratoire
-            <span className="flex-1 h-[1px] bg-slate-100" />
+            <span className="flex-1 h-[1px] bg-[var(--color-surface-muted)]" />
           </h2>
 
           <div className="flex flex-col gap-6 items-center">
@@ -149,18 +149,18 @@ export function PrintSettingsForm({ initialSettings }: Props) {
                   <img 
                     src={stampUrl} 
                     alt="Cachet actuel"
-                    className="w-48 h-48 object-contain bg-slate-50 border border-slate-200 rounded-2xl p-2 shadow-inner"
+                    className="h-48 w-48 rounded-md border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-2 object-contain"
                   />
                   <button
                     onClick={handleStampDelete}
-                    className="absolute -top-2 -right-2 p-1.5 bg-rose-100 text-rose-600 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-rose-200"
+                    className="absolute -right-2 -top-2 rounded-full bg-rose-100 p-1.5 text-rose-600 opacity-0 transition-opacity hover:bg-rose-200 group-hover:opacity-100"
                     title="Supprimer le cachet"
                   >
                     <Trash2 size={14} />
                   </button>
                 </div>
               ) : (
-                <div className="w-48 h-48 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center text-slate-300 gap-2">
+                <div className="flex h-48 w-48 flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-[var(--color-border)] bg-[var(--color-surface-muted)] text-slate-300">
                   <ImageIcon size={32} strokeWidth={1.5} />
                   <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-center px-4">Aucun cachet configuré</span>
                 </div>
@@ -170,8 +170,8 @@ export function PrintSettingsForm({ initialSettings }: Props) {
             <div className="w-full space-y-4">
               <div 
                 className={`
-                  relative border-2 border-dashed rounded-2xl p-6 text-center transition-all cursor-pointer
-                  ${uploadingStamp ? 'bg-slate-50 border-indigo-200' : 'bg-white border-slate-100 hover:border-indigo-400 hover:bg-indigo-50/30'}
+                  relative cursor-pointer rounded-md border-2 border-dashed p-6 text-center transition-all
+                  ${uploadingStamp ? 'border-slate-300 bg-[var(--color-surface-muted)]' : 'border-[var(--color-border)] bg-[var(--color-surface)] hover:border-slate-400 hover:bg-slate-50'}
                 `}
                 onClick={() => document.getElementById('stamp-upload')?.click()}
               >
@@ -188,13 +188,13 @@ export function PrintSettingsForm({ initialSettings }: Props) {
                 <div className="flex flex-col items-center gap-2">
                   {uploadingStamp ? (
                     <>
-                      <Loader2 size={24} className="text-indigo-600 animate-spin" />
-                      <p className="text-xs font-semibold text-indigo-600">Chargement en cours...</p>
+                      <Loader2 size={24} className="animate-spin text-slate-600" />
+                      <p className="text-xs font-semibold text-slate-700">Chargement en cours...</p>
                     </>
                   ) : (
                     <>
                       <UploadCloud size={24} className="text-slate-400" />
-                      <p className="text-xs font-semibold text-slate-900">Cliquez ou glissez votre cachet ici</p>
+                      <p className="text-xs font-semibold text-[var(--color-text)]">Cliquez ou glissez votre cachet ici</p>
                       <p className="text-[10px] text-slate-400 font-medium">JPG, PNG ou WebP — Max 2MB</p>
                     </>
                   )}
@@ -202,7 +202,7 @@ export function PrintSettingsForm({ initialSettings }: Props) {
               </div>
               
               {stampError && (
-                <p className="text-[10px] font-semibold text-rose-500 bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-100">
+                <p className="rounded-md border border-rose-100 bg-rose-50 px-3 py-1.5 text-[10px] font-semibold text-rose-500">
                   ⚠️ {stampError}
                 </p>
               )}
@@ -215,11 +215,11 @@ export function PrintSettingsForm({ initialSettings }: Props) {
         </div>
 
         {/* Section 0.5 — Signature Officielle */}
-        <div className="rounded-3xl border bg-white p-6 space-y-4 shadow-[0_8px_24px_rgba(15,31,51,0.05)]">
+        <div className="rounded-xl border bg-[var(--color-surface)] p-6 space-y-4 shadow-[0_2px_8px_rgba(15,31,51,0.03)]">
           <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-[0.12em] mb-2 flex items-center gap-3">
-            <span className="w-6 h-[1px] bg-slate-100" />
+            <span className="w-6 h-[1px] bg-[var(--color-surface-muted)]" />
             Signature du biologiste
-            <span className="flex-1 h-[1px] bg-slate-100" />
+            <span className="flex-1 h-[1px] bg-[var(--color-surface-muted)]" />
           </h2>
 
           <div className="flex flex-col gap-6 items-center">
@@ -229,18 +229,18 @@ export function PrintSettingsForm({ initialSettings }: Props) {
                   <img 
                     src={signatureUrl} 
                     alt="Signature actuelle"
-                    className="w-48 h-48 object-contain bg-slate-50 border border-slate-200 rounded-2xl p-2 shadow-inner"
+                    className="h-48 w-48 rounded-md border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-2 object-contain"
                   />
                   <button
                     onClick={handleSignatureDelete}
-                    className="absolute -top-2 -right-2 p-1.5 bg-rose-100 text-rose-600 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-rose-200"
+                    className="absolute -right-2 -top-2 rounded-full bg-rose-100 p-1.5 text-rose-600 opacity-0 transition-opacity hover:bg-rose-200 group-hover:opacity-100"
                     title="Supprimer la signature"
                   >
                     <Trash2 size={14} />
                   </button>
                 </div>
               ) : (
-                <div className="w-48 h-48 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center text-slate-300 gap-2">
+                <div className="flex h-48 w-48 flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-[var(--color-border)] bg-[var(--color-surface-muted)] text-slate-300">
                   <ImageIcon size={32} strokeWidth={1.5} />
                   <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-center px-4">Aucune signature configurée</span>
                 </div>
@@ -250,8 +250,8 @@ export function PrintSettingsForm({ initialSettings }: Props) {
             <div className="w-full space-y-4">
               <div 
                 className={`
-                  relative border-2 border-dashed rounded-2xl p-6 text-center transition-all cursor-pointer
-                  ${uploadingSignature ? 'bg-slate-50 border-indigo-200' : 'bg-white border-slate-100 hover:border-indigo-400 hover:bg-indigo-50/30'}
+                  relative cursor-pointer rounded-md border-2 border-dashed p-6 text-center transition-all
+                  ${uploadingSignature ? 'border-slate-300 bg-[var(--color-surface-muted)]' : 'border-[var(--color-border)] bg-[var(--color-surface)] hover:border-slate-400 hover:bg-slate-50'}
                 `}
                 onClick={() => document.getElementById('signature-upload')?.click()}
               >
@@ -268,13 +268,13 @@ export function PrintSettingsForm({ initialSettings }: Props) {
                 <div className="flex flex-col items-center gap-2">
                   {uploadingSignature ? (
                     <>
-                      <Loader2 size={24} className="text-indigo-600 animate-spin" />
-                      <p className="text-xs font-semibold text-indigo-600">Chargement en cours...</p>
+                      <Loader2 size={24} className="animate-spin text-slate-600" />
+                      <p className="text-xs font-semibold text-slate-700">Chargement en cours...</p>
                     </>
                   ) : (
                     <>
                       <UploadCloud size={24} className="text-slate-400" />
-                      <p className="text-xs font-semibold text-slate-900">Cliquez ou glissez votre signature ici</p>
+                      <p className="text-xs font-semibold text-[var(--color-text)]">Cliquez ou glissez votre signature ici</p>
                       <p className="text-[10px] text-slate-400 font-medium">JPG, PNG ou WebP — Max 2MB</p>
                     </>
                   )}
@@ -282,7 +282,7 @@ export function PrintSettingsForm({ initialSettings }: Props) {
               </div>
               
               {signatureError && (
-                <p className="text-[10px] font-semibold text-rose-500 bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-100">
+                <p className="rounded-md border border-rose-100 bg-rose-50 px-3 py-1.5 text-[10px] font-semibold text-rose-500">
                   ⚠️ {signatureError}
                 </p>
               )}
@@ -296,14 +296,14 @@ export function PrintSettingsForm({ initialSettings }: Props) {
       </div>
 
       {/* Section 4 — Rapport */}
-      <div className="rounded-3xl border bg-white p-6 space-y-4 shadow-[0_8px_24px_rgba(15,31,51,0.05)]">
+      <div className="rounded-xl border bg-[var(--color-surface)] p-6 space-y-4 shadow-[0_2px_8px_rgba(15,31,51,0.03)]">
         <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-[0.12em] mb-2 flex items-center gap-3">
-          <span className="w-6 h-[1px] bg-slate-100" />
+          <span className="w-6 h-[1px] bg-[var(--color-surface-muted)]" />
           Rapport
-          <span className="flex-1 h-[1px] bg-slate-100" />
+          <span className="flex-1 h-[1px] bg-[var(--color-surface-muted)]" />
         </h2>
         <div>
-          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-[0.12em] mb-1.5">Pied de page global</label>
+          <label className="block text-xs font-semibold text-[var(--color-text-soft)] uppercase tracking-[0.12em] mb-1.5">Pied de page global</label>
           <textarea
             className={`${inputClass} resize-none h-32`}
             value={values.lab_footer_text ?? ''}
@@ -316,16 +316,16 @@ export function PrintSettingsForm({ initialSettings }: Props) {
       {/* Save bar */}
       <div className="flex flex-col gap-3 sticky bottom-6">
         {isDirty && !success && (
-          <div className="self-start rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-700 flex items-center gap-2">
+          <div className="flex items-center gap-2 self-start rounded-md border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-700">
             <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
             Modifications non enregistrées
           </div>
         )}
         {error && (
-          <p className="rounded-2xl border border-rose-100 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-600">{error}</p>
+          <p className="rounded-md border border-rose-100 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-600">{error}</p>
         )}
         {success && (
-          <p className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-600">
+          <p className="rounded-md border border-emerald-100 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-600">
             ✓ Paramètres d&apos;impression enregistrés
           </p>
         )}

@@ -1,6 +1,7 @@
 'use client';
 
 import { X } from 'lucide-react';
+import { useScrollLock } from '@/hooks/useScrollLock';
 import { getQcZone } from '@/lib/qc';
 import type { QcLot } from '@/components/qc/types';
 
@@ -31,6 +32,7 @@ export function QcEntryModal({
   onInstrumentNameChange,
   onValueChange,
 }: QcEntryModalProps) {
+  useScrollLock(showEntry);
   if (!showEntry || !selectedLot) return null;
 
   return (
@@ -43,7 +45,7 @@ export function QcEntryModal({
               Lot {selectedLot.lotNumber} · {selectedLot.targets.length} paramètre(s)
             </p>
           </div>
-          <button onClick={onClose} className="rounded-full border px-3 py-1 text-xs font-semibold text-[var(--color-text-soft)] hover:bg-[var(--color-surface-muted)]">
+          <button onClick={onClose} className="rounded-lg border px-3 py-1 text-xs font-semibold text-[var(--color-text-soft)] transition-colors hover:bg-[var(--color-surface-muted)]">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -54,7 +56,7 @@ export function QcEntryModal({
               <label className="grid gap-1">
                 <span className="form-label">Automate / instrument</span>
                 <input
-                  className="input-premium h-11 bg-white"
+                  className="input-premium h-11 bg-[var(--color-surface)]"
                   value={instrumentName}
                   onChange={(event) => onInstrumentNameChange(event.target.value)}
                   placeholder="Ex: Sysmex XP-300"
@@ -63,7 +65,7 @@ export function QcEntryModal({
               <label className="grid gap-1">
                 <span className="form-label">Commentaire</span>
                 <input
-                  className="input-premium h-11 bg-white"
+                  className="input-premium h-11 bg-[var(--color-surface)]"
                   value={comment}
                   onChange={(event) => onCommentChange(event.target.value)}
                   placeholder="Observation optionnelle"
@@ -102,19 +104,19 @@ export function QcEntryModal({
                         : 'bg-rose-500';
 
                 return (
-                  <div key={target.id} className="grid gap-3 rounded-2xl border bg-[var(--color-surface-muted)] px-4 py-4 lg:grid-cols-[1.1fr_0.8fr_0.8fr_auto] lg:items-center">
+                  <div key={target.id} className="grid gap-3 rounded-xl border bg-[var(--color-surface-muted)] px-4 py-4 lg:grid-cols-[1.1fr_0.8fr_0.8fr_auto] lg:items-center">
                     <div>
                       <div className="text-sm font-semibold text-[var(--color-text)]">{target.testName}</div>
                       <div className="mt-1 text-xs text-[var(--color-text-soft)]">
                         {target.testCode} · Cible {formatQcNumber(target.mean)} {target.unit || ''}
                       </div>
                       <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
-                        <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 font-medium text-slate-700">
+                        <span className="rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1 font-medium text-slate-700">
                           Mode: {target.controlMode === 'STATISTICAL' ? 'Statistique' : 'Plage'}
                         </span>
                         {target.controlMode === 'STATISTICAL' && target.sd ? (
                           <>
-                            <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 font-medium text-slate-700">
+                            <span className="rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1 font-medium text-slate-700">
                               1 SD: {formatQcNumber(target.mean - target.sd)} - {formatQcNumber(target.mean + target.sd)}
                             </span>
                             <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 font-medium text-amber-800">
@@ -134,7 +136,7 @@ export function QcEntryModal({
                     <input
                       type="number"
                       step="0.01"
-                      className="input-premium h-11 bg-white"
+                      className="input-premium h-11 bg-[var(--color-surface)]"
                       value={raw || ''}
                       onChange={(event) => onValueChange(target.testCode, event.target.value)}
                       placeholder="Valeur mesurée"

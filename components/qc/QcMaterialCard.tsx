@@ -50,7 +50,7 @@ export function QcMaterialCard({ material, canWrite, onOpenEntry }: QcMaterialCa
                     </div>
                     <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
                       {lotStatisticalCount > 0 && (
-                        <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 font-medium text-slate-700">
+                        <span className="rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1 font-medium text-slate-700">
                           {lotStatisticalCount} statistique{lotStatisticalCount > 1 ? 's' : ''}
                         </span>
                       )}

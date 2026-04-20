@@ -109,7 +109,7 @@ export function TestCatalogTable({
                             </span>
                           </td>
                           <td className="px-5 py-3.5 align-middle text-center">
-                            <span className={`status-pill ${test.isGroup ? 'bg-indigo-50 text-indigo-600' : test.resultType === 'numeric' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+                            <span className={`status-pill ${test.isGroup ? 'bg-indigo-50 text-[var(--color-accent)]' : test.resultType === 'numeric' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
                               {test.isGroup ? 'Panel' : test.resultType === 'numeric' ? 'Num' : 'Texte'}
                             </span>
                           </td>
@@ -121,7 +121,7 @@ export function TestCatalogTable({
                                 {test.minValueM !== null || test.maxValueM !== null || test.minValueF !== null || test.maxValueF !== null ? (
                                   <div className="flex gap-4 text-[11px] font-bold">
                                     <div className="flex items-center gap-1.5">
-                                      <span className="w-3 h-3 rounded-[3px] bg-indigo-100 flex items-center justify-center text-[8px] text-indigo-600">H</span>
+                                      <span className="w-3 h-3 rounded-[3px] bg-indigo-100 flex items-center justify-center text-[8px] text-[var(--color-accent)]">H</span>
                                       <span className="text-slate-700">{test.minValueM ?? '0'} — {test.maxValueM ?? '∞'}</span>
                                     </div>
                                     <div className="flex items-center gap-1.5">
@@ -159,21 +159,21 @@ export function TestCatalogTable({
                             <div className="flex items-center justify-end gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                               <button
                                 onClick={() => onOpenInventory(test)}
-                                className="p-2 text-slate-400 hover:text-[var(--color-accent)] hover:bg-white rounded-lg transition-all shadow-sm border border-transparent hover:border-blue-100"
+                                className="p-2 text-slate-400 hover:text-[var(--color-accent)] hover:bg-[var(--color-surface)] rounded-lg transition-all shadow-sm border border-transparent hover:border-blue-100"
                                 title="Configurer consommation"
                               >
                                 <Package size={14} />
                               </button>
                               <button
                                 onClick={() => onEdit(test)}
-                                className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-lg transition-all shadow-sm border border-transparent hover:border-indigo-100"
+                                className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-[var(--color-surface)] rounded-lg transition-all shadow-sm border border-transparent hover:border-indigo-100"
                                 title="Modifier"
                               >
                                 <Pencil size={14} />
                               </button>
                               <button
                                 onClick={() => onDelete(test)}
-                                className="p-2 text-slate-400 hover:text-rose-600 hover:bg-white rounded-lg transition-all shadow-sm border border-transparent hover:border-rose-100"
+                                className="p-2 text-slate-400 hover:text-rose-600 hover:bg-[var(--color-surface)] rounded-lg transition-all shadow-sm border border-transparent hover:border-rose-100"
                                 title="Supprimer"
                               >
                                 <Trash2 size={14} />

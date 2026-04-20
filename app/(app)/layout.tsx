@@ -2,6 +2,7 @@ import ClientLayout from "@/components/layout/ClientLayout";
 import { auth } from "@/lib/auth";
 import { getSettings } from "@/lib/settings";
 import { MaintenanceScreen } from "@/components/system/MaintenanceScreen";
+import { LicenseProvider } from "@/components/providers/LicenseProvider";
 
 export default async function AppLayout({
   children,
@@ -18,8 +19,10 @@ export default async function AppLayout({
   }
 
   return (
-    <ClientLayout>
-      {children}
-    </ClientLayout>
+    <LicenseProvider>
+      <ClientLayout>
+        {children}
+      </ClientLayout>
+    </LicenseProvider>
   );
 }

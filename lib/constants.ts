@@ -1,6 +1,6 @@
 import { 
   Activity, Users, Settings, Files, FlaskConical, 
-  LayoutDashboard, UserCheck, Package, DownloadCloud, TestTube, Thermometer
+  LayoutDashboard, UserCheck, Package, DownloadCloud, TestTube, Thermometer, LineChart
 } from "lucide-react";
 
 export const ROLE_LABELS: Record<string, string> = {
@@ -63,6 +63,7 @@ export const NAVIGATION_GROUPS = [
       { name: 'Contrôle Qualité', href: '/dashboard/qc', icon: Activity },
       { name: 'Températures', href: '/dashboard/temperature', icon: Thermometer },
       { name: 'Inventaire', href: '/dashboard/inventory', icon: Package },
+      { name: 'Statistiques', href: '/dashboard/statistics', icon: LineChart },
       { name: 'Exports Excel', href: '/dashboard/exports', icon: DownloadCloud },
     ]
   },

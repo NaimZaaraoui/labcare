@@ -26,6 +26,8 @@ export interface DiatronResult {
   };
 }
 
+import { MACHINE_ALIASES } from '@/lib/lab-rules';
+
 export function parseDiatronFile(content: string): DiatronResult[] {
   // Split by line and filter empty lines (including those with just whitespace)
   const lines = content.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
@@ -65,25 +67,6 @@ export function parseDiatronFile(content: string): DiatronResult[] {
       }
     });
 
-    const mapping: Record<string, string[]> = {
-      'GB': ['WBC', 'GB'],
-      'GR': ['RBC', 'GR'],
-      'HB': ['HGB', 'HB'],
-      'HT': ['HCT', 'HT'],
-      'VGM': ['MCV', 'VGM'],
-      'TCMH': ['MCH', 'TCMH'],
-      'CCMH': ['MCHC', 'CCMH'],
-      'IDRc': ['IDRc', 'IDR'],
-      'IDR%': ['IDR%'],
-      'PLT': ['PLT'],
-      'LYM': ['LYM', 'LYM%'], 
-      'MID': ['MID', 'MID%'],
-      'GRA': ['GRA', 'GRA%'], 
-      'LYM%': ['LYM%', 'LYM_P'],
-      'MID%': ['MID%', 'MID_P'],
-      'GRA%': ['GRA%', 'GRA_P']
-    };
-
     const mappedResults: Record<string, string> = {};
     
     // Helper to add result if valid
@@ -92,7 +75,7 @@ export function parseDiatronFile(content: string): DiatronResult[] {
         keys.forEach(k => mappedResults[k] = cleanVal);
     };
 
-    Object.entries(mapping).forEach(([diatronKey, appKeys]) => {
+    Object.entries(MACHINE_ALIASES).forEach(([diatronKey, appKeys]) => {
       const val = record[diatronKey];
       if (val) {
         addResult(appKeys, val);

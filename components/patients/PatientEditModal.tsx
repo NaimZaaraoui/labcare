@@ -3,6 +3,7 @@
 import { Save, Trash2, X } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useScrollLock } from '@/hooks/useScrollLock';
 import { type PatientDetails, type PatientListItem } from '@/components/patients/types';
 
 type EditablePatient = PatientListItem | PatientDetails;
@@ -33,15 +34,16 @@ export function PatientEditModal({
   onDeleteRequest,
   onConfirmDialogOpenChange,
 }: PatientEditModalProps) {
+  useScrollLock(Boolean(patient));
   if (!mounted || !patient) return null;
 
   return createPortal(
     <>
-      <div className="modal-overlay animate-in fade-in">
-        <div className="modal-shell flex max-h-[90vh] w-full max-w-2xl flex-col animate-in zoom-in-95" onClick={(event) => event.stopPropagation()}>
+      <div className="modal-overlay">
+        <div className="modal-shell flex max-h-[90vh] w-full max-w-2xl flex-col" onClick={(event) => event.stopPropagation()}>
           <div className="flex items-center justify-between border-b border-[var(--color-border)] p-6">
-            <h3 className="text-xl font-semibold text-[var(--color-text)]">Modifier le patient</h3>
-            <button onClick={onClose} className="rounded-xl p-2 text-[var(--color-text-soft)] transition-colors hover:bg-[var(--color-surface-muted)]">
+            <h3 className="text-lg font-semibold text-[var(--color-text)]">Modifier le patient</h3>
+            <button onClick={onClose} className="rounded-md p-2 text-[var(--color-text-soft)] transition-colors hover:bg-[var(--color-surface-muted)]">
               <X size={20} />
             </button>
           </div>
@@ -85,8 +87,8 @@ export function PatientEditModal({
                 <button
                   type="button"
                   onClick={() => onPatientChange({ ...patient, gender: 'M' })}
-                  className={`flex-1 rounded-xl border py-3 font-medium transition-all ${
-                    patient.gender === 'M' ? 'border-indigo-200 bg-indigo-50 text-indigo-600' : 'border-[var(--color-border)] text-[var(--color-text-soft)]'
+                  className={`flex-1 rounded-md border py-3 font-medium transition-all ${
+                    patient.gender === 'M' ? 'border-indigo-200 bg-indigo-50 text-[var(--color-accent)]' : 'border-[var(--color-border)] text-[var(--color-text-soft)]'
                   }`}
                 >
                   Homme
@@ -94,7 +96,7 @@ export function PatientEditModal({
                 <button
                   type="button"
                   onClick={() => onPatientChange({ ...patient, gender: 'F' })}
-                  className={`flex-1 rounded-xl border py-3 font-medium transition-all ${
+                  className={`flex-1 rounded-md border py-3 font-medium transition-all ${
                     patient.gender === 'F' ? 'border-rose-200 bg-rose-50 text-rose-600' : 'border-[var(--color-border)] text-[var(--color-text-soft)]'
                   }`}
                 >
@@ -134,7 +136,7 @@ export function PatientEditModal({
               <button
                 type="button"
                 onClick={() => onDeleteRequest(patient)}
-                className="flex items-center gap-2 rounded-xl px-4 py-2 font-medium text-rose-500 transition-colors hover:bg-rose-50"
+                className="flex items-center gap-2 rounded-md px-4 py-2 font-medium text-rose-500 transition-colors hover:bg-rose-50"
               >
                 <Trash2 size={16} /> Supprimer
               </button>

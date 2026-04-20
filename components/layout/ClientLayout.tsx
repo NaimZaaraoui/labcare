@@ -19,11 +19,11 @@ function RightContentPane() {
                 <Command className="h-4 w-4 text-[var(--color-accent)]" />
                 Recherche globale
               </span>
-              <span className="rounded-lg border bg-white px-2 py-0.5 text-xs font-semibold text-[var(--color-text-soft)]">Ctrl + K</span>
+              <span className="rounded-lg border bg-[var(--color-surface)] px-2 py-0.5 text-xs font-semibold text-[var(--color-text-soft)]">Ctrl + K</span>
             </div>
             <div className="flex items-center justify-between rounded-2xl border bg-[var(--color-surface-muted)] px-3 py-2">
               <span>Passer au champ suivant</span>
-              <span className="rounded-lg border bg-white px-2 py-0.5 text-xs font-semibold text-[var(--color-text-soft)]">Entrée</span>
+              <span className="rounded-lg border bg-[var(--color-surface)] px-2 py-0.5 text-xs font-semibold text-[var(--color-text-soft)]">Entrée</span>
             </div>
           </div>
         </section>

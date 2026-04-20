@@ -48,7 +48,7 @@ export function AuditFiltersPanel(props: AuditFiltersPanelProps) {
   } = props;
 
   return (
-    <section className="bento-panel p-5">
+    <section className="rounded-2xl border bg-[var(--color-surface)] p-5 shadow-[0_6px_18px_rgba(15,31,51,0.04)]">
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-8">
         <label className="xl:col-span-2">
           <span className="form-label mb-1.5">Recherche</span>
@@ -99,7 +99,7 @@ export function AuditFiltersPanel(props: AuditFiltersPanelProps) {
         </label>
       </div>
 
-      <div className="mt-4 flex items-center gap-3">
+      <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-[var(--color-border)] pt-4">
         <label className="flex items-center gap-2">
           <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--color-text-soft)]">Par page</span>
           <select value={pageSize} onChange={(event) => onPageSizeChange(Number(event.target.value))} className="input-premium h-10 w-24">
@@ -110,7 +110,7 @@ export function AuditFiltersPanel(props: AuditFiltersPanelProps) {
             ))}
           </select>
         </label>
-        <button onClick={onFilter} className="btn-primary-sm">
+        <button onClick={onFilter} className="btn-secondary-sm bg-slate-900 text-white hover:bg-slate-800">
           <Search size={16} />
           Filtrer
         </button>

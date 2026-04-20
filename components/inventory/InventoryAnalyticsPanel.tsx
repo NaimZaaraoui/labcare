@@ -12,7 +12,7 @@ interface InventoryAnalyticsPanelProps {
 export function InventoryAnalyticsPanel({ analytics, categories }: InventoryAnalyticsPanelProps) {
   return (
     <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-      <article className="bento-panel p-5">
+      <article className="rounded-[2rem] border border-[var(--color-border)]/50 bg-[var(--color-surface)] p-6 shadow-sm ring-1 ring-slate-900/5">
         <div className="flex items-center justify-between gap-3">
           <div>
             <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-[var(--color-text-secondary)]">
@@ -22,25 +22,25 @@ export function InventoryAnalyticsPanel({ analytics, categories }: InventoryAnal
               Vue consolidée de la consommation réelle et des pertes enregistrées.
             </p>
           </div>
-          <span className="status-pill status-pill-info">{analytics.windowDays} jours</span>
+          <span className="status-pill rounded-md border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-2.5 py-1 text-[var(--color-text-secondary)]">{analytics.windowDays} jours</span>
         </div>
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          <div className="rounded-2xl border bg-[var(--color-surface-muted)] px-4 py-3">
+          <div className="rounded-md border bg-[var(--color-surface-muted)] px-4 py-3">
             <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--color-text-soft)]">Consommé</div>
             <div className="mt-1 text-xl font-semibold text-[var(--color-text)]">{analytics.totals.consumption30d}</div>
           </div>
-          <div className="rounded-2xl border bg-[var(--color-surface-muted)] px-4 py-3">
+          <div className="rounded-md border bg-[var(--color-surface-muted)] px-4 py-3">
             <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--color-text-soft)]">Rebut</div>
             <div className="mt-1 text-xl font-semibold text-[var(--color-text)]">{analytics.totals.waste30d}</div>
           </div>
-          <div className="rounded-2xl border bg-[var(--color-surface-muted)] px-4 py-3">
+          <div className="rounded-md border bg-[var(--color-surface-muted)] px-4 py-3">
             <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--color-text-soft)]">Moyenne / jour</div>
             <div className="mt-1 text-xl font-semibold text-[var(--color-text)]">{analytics.totals.avgDailyConsumption30d}</div>
           </div>
         </div>
         <div className="mt-5 space-y-3">
           {analytics.topConsumedItems.length === 0 ? (
-            <div className="rounded-2xl border border-dashed px-4 py-6 text-sm text-[var(--color-text-soft)]">
+            <div className="rounded-md border border-dashed px-4 py-6 text-sm text-[var(--color-text-soft)]">
               Pas encore assez de mouvements pour afficher une tendance.
             </div>
           ) : (
@@ -48,7 +48,7 @@ export function InventoryAnalyticsPanel({ analytics, categories }: InventoryAnal
               <Link
                 key={entry.itemId}
                 href={`/dashboard/inventory/${entry.itemId}`}
-                className="flex items-center justify-between gap-3 rounded-2xl border bg-[var(--color-surface-muted)] px-4 py-3 transition-colors hover:bg-slate-50"
+                className="flex items-center justify-between gap-3 rounded-md border bg-[var(--color-surface-muted)] px-4 py-3 transition-colors hover:bg-[var(--color-surface-muted)]"
               >
                 <div>
                   <div className="text-sm font-semibold text-[var(--color-text)]">{entry.name}</div>
@@ -57,7 +57,7 @@ export function InventoryAnalyticsPanel({ analytics, categories }: InventoryAnal
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm font-semibold text-[var(--color-accent)]">{entry.consumption30d}</div>
+                  <div className="text-sm font-semibold text-[var(--color-text)]">{entry.consumption30d}</div>
                   <div className="text-[11px] text-[var(--color-text-soft)]">{entry.unit}</div>
                 </div>
               </Link>
@@ -66,7 +66,7 @@ export function InventoryAnalyticsPanel({ analytics, categories }: InventoryAnal
         </div>
       </article>
 
-      <article className="bento-panel p-5">
+      <article className="rounded-[2rem] border border-[var(--color-border)]/50 bg-[var(--color-surface)] p-6 shadow-sm ring-1 ring-slate-900/5">
         <div className="flex items-center justify-between gap-3">
           <div>
             <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-[var(--color-text-secondary)]">
@@ -78,7 +78,7 @@ export function InventoryAnalyticsPanel({ analytics, categories }: InventoryAnal
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
           {categories.filter((category) => category.isActive).map((category) => (
-            <span key={category.id} className="status-pill status-pill-info">
+            <span key={category.id} className="status-pill rounded-md border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-2.5 py-1 text-[var(--color-text-secondary)]">
               {category.name}
             </span>
           ))}
@@ -91,7 +91,7 @@ export function InventoryAnalyticsPanel({ analytics, categories }: InventoryAnal
                 <Link
                   key={entry.itemId}
                   href={`/dashboard/inventory/${entry.itemId}`}
-                  className="flex items-center justify-between rounded-2xl border bg-[var(--color-surface-muted)] px-3 py-2 text-sm hover:bg-slate-50"
+                  className="flex items-center justify-between rounded-md border bg-[var(--color-surface-muted)] px-3 py-2 text-sm hover:bg-[var(--color-surface-muted)]"
                 >
                   <span className="font-medium text-[var(--color-text)]">{entry.name}</span>
                   <span className="text-[var(--color-text-soft)]">

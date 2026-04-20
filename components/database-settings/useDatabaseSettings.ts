@@ -10,6 +10,7 @@ import type {
   HealthResponse,
   RecoveryBundlesResponse,
   RestoreModalState,
+  RestoreSummary,
 } from './types';
 
 export function useDatabaseSettings() {
@@ -23,6 +24,8 @@ export function useDatabaseSettings() {
   const [importingRecovery, setImportingRecovery] = useState(false);
   const [restoringFile, setRestoringFile] = useState<string | null>(null);
   const [restoringRecoveryFile, setRestoringRecoveryFile] = useState<string | null>(null);
+  const [testingFile, setTestingFile] = useState<string | null>(null);
+  const [testingRecoveryFile, setTestingRecoveryFile] = useState<string | null>(null);
   const [savingMaintenance, setSavingMaintenance] = useState(false);
   const [savingRetention, setSavingRetention] = useState(false);
   const [pruning, setPruning] = useState(false);
@@ -33,8 +36,11 @@ export function useDatabaseSettings() {
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [maintenanceMessage, setMaintenanceMessage] = useState('');
   const [backupRetentionCount, setBackupRetentionCount] = useState('10');
+  const [recoveryRetentionCount, setRecoveryRetentionCount] = useState('10');
   const [externalTarget, setExternalTarget] = useState('');
   const [recoveryImportFile, setRecoveryImportFile] = useState<File | null>(null);
+  const [uploadBackupFile, setUploadBackupFile] = useState<File | null>(null);
+  const [uploadingBackup, setUploadingBackup] = useState(false);
   const [savingExternalTarget, setSavingExternalTarget] = useState(false);
   const [restoreModal, setRestoreModal] = useState<RestoreModalState>({
     isOpen: false,
@@ -42,6 +48,7 @@ export function useDatabaseSettings() {
     fileName: null,
   });
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [restoreSummary, setRestoreSummary] = useState<RestoreSummary | null>(null);
 
   const showNotification = useCallback((type: 'success' | 'error', message: string) => {
     setNotification({ type, message });
@@ -85,6 +92,7 @@ export function useDatabaseSettings() {
       setMaintenanceMode(settingsJson.maintenance_mode === 'true');
       setMaintenanceMessage(settingsJson.maintenance_message || '');
       setBackupRetentionCount(settingsJson.database_backup_retention_count || '10');
+      setRecoveryRetentionCount(settingsJson.database_recovery_retention_count || '10');
       setExternalTarget(settingsJson.database_backup_external_target || '');
     } catch (error) {
       console.error('Database backups load error:', error);
@@ -163,6 +171,30 @@ export function useDatabaseSettings() {
     setRestoreModal({ isOpen: true, kind: 'backup', fileName });
   }, []);
 
+  const handleValidateBackup = useCallback(
+    async (fileName: string) => {
+      setTestingFile(fileName);
+      try {
+        const response = await fetch(`/api/database/backups/${encodeURIComponent(fileName)}/validate`, { method: 'POST' });
+        const json = await response.json();
+        if (!response.ok) throw new Error(json.error || 'Erreur lors du test du backup');
+        showNotification(
+          json.validation?.valid === false ? 'error' : 'success',
+          json.validation?.valid === false
+            ? `Le backup ${fileName} a échoué au test de validation.`
+            : `Le backup ${fileName} est valide.`
+        );
+        await loadBackups();
+      } catch (error) {
+        console.error('Database backup validation error:', error);
+        showNotification('error', error instanceof Error ? error.message : 'Erreur lors du test du backup');
+      } finally {
+        setTestingFile(null);
+      }
+    },
+    [loadBackups, showNotification]
+  );
+
   const executeRestoreBackup = useCallback(
     async (fileName: string) => {
       setRestoringFile(fileName);
@@ -170,7 +202,19 @@ export function useDatabaseSettings() {
         const response = await fetch(`/api/database/backups/${encodeURIComponent(fileName)}/restore`, { method: 'POST' });
         const json = await response.json();
         if (!response.ok) throw new Error(json.error || 'Erreur lors de la restauration');
-        showNotification('success', `Base restauree depuis ${fileName}`);
+        setRestoreSummary({
+          kind: 'backup',
+          restoredFrom: json.restoredFrom,
+          safetyFileName: json.safetyBackup?.fileName ?? 'inconnu',
+          validation: json.validation ?? null,
+          restoredAt: new Date().toISOString(),
+        });
+        showNotification(
+          json.validation?.valid === false ? 'error' : 'success',
+          json.validation?.valid === false
+            ? `Restauration terminée, mais la validation a détecté des problèmes.`
+            : `Base restaurée et validée depuis ${fileName}`
+        );
         await loadBackups();
       } catch (error) {
         console.error('Database backup restore error:', error);
@@ -186,6 +230,32 @@ export function useDatabaseSettings() {
     setRestoreModal({ isOpen: true, kind: 'bundle', fileName });
   }, []);
 
+  const handleValidateRecoveryBundle = useCallback(
+    async (fileName: string) => {
+      setTestingRecoveryFile(fileName);
+      try {
+        const response = await fetch(`/api/database/recovery-bundles/${encodeURIComponent(fileName)}/validate`, {
+          method: 'POST',
+        });
+        const json = await response.json();
+        if (!response.ok) throw new Error(json.error || 'Erreur lors du test du bundle');
+        showNotification(
+          json.validation?.valid === false ? 'error' : 'success',
+          json.validation?.valid === false
+            ? `Le bundle ${fileName} a échoué au test de validation.`
+            : `Le bundle ${fileName} est valide.`
+        );
+        await loadBackups();
+      } catch (error) {
+        console.error('Recovery bundle validation error:', error);
+        showNotification('error', error instanceof Error ? error.message : 'Erreur lors du test du bundle');
+      } finally {
+        setTestingRecoveryFile(null);
+      }
+    },
+    [loadBackups, showNotification]
+  );
+
   const executeRestoreRecoveryBundle = useCallback(
     async (fileName: string) => {
       setRestoringRecoveryFile(fileName);
@@ -195,7 +265,20 @@ export function useDatabaseSettings() {
         });
         const json = await response.json();
         if (!response.ok) throw new Error(json.error || 'Erreur lors de la restauration du bundle');
-        showNotification('success', `Bundle restauré depuis ${fileName}`);
+        setRestoreSummary({
+          kind: 'bundle',
+          restoredFrom: json.restoredFrom,
+          safetyFileName: json.safetyBundle?.fileName ?? 'inconnu',
+          restoredUploads: Boolean(json.restoredUploads),
+          validation: json.validation ?? null,
+          restoredAt: new Date().toISOString(),
+        });
+        showNotification(
+          json.validation?.valid === false ? 'error' : 'success',
+          json.validation?.valid === false
+            ? `Bundle restauré, mais la validation a détecté des problèmes.`
+            : `Bundle restauré et validé depuis ${fileName}`
+        );
         await loadBackups();
       } catch (error) {
         console.error('Recovery bundle restore error:', error);
@@ -247,7 +330,12 @@ export function useDatabaseSettings() {
       const response = await fetch('/api/settings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ settings: { database_backup_retention_count: backupRetentionCount } }),
+        body: JSON.stringify({
+          settings: {
+            database_backup_retention_count: backupRetentionCount,
+            database_recovery_retention_count: recoveryRetentionCount,
+          },
+        }),
       });
       const json = await response.json();
       if (!response.ok) throw new Error(json.error || 'Erreur lors de la mise a jour de la retention');
@@ -258,7 +346,7 @@ export function useDatabaseSettings() {
     } finally {
       setSavingRetention(false);
     }
-  }, [backupRetentionCount, showNotification]);
+  }, [backupRetentionCount, recoveryRetentionCount, showNotification]);
 
   const handleSaveExternalTarget = useCallback(async () => {
     setSavingExternalTarget(true);
@@ -295,6 +383,29 @@ export function useDatabaseSettings() {
       setPruning(false);
     }
   }, [loadBackups, showNotification]);
+
+  const handleUploadBackup = useCallback(async () => {
+    if (!uploadBackupFile) {
+      showNotification('error', 'Choisissez d\'abord un fichier de sauvegarde .sqlite');
+      return;
+    }
+    setUploadingBackup(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', uploadBackupFile);
+      const response = await fetch('/api/database/backups/upload', { method: 'POST', body: formData });
+      const json = await response.json();
+      if (!response.ok) throw new Error(json.error || 'Erreur lors de l\'import du backup');
+      setUploadBackupFile(null);
+      showNotification('success', 'Fichier de sauvegarde importé avec succès');
+      await loadBackups();
+    } catch (error) {
+      console.error('Backup upload error:', error);
+      showNotification('error', error instanceof Error ? error.message : 'Erreur lors de l\'import');
+    } finally {
+      setUploadingBackup(false);
+    }
+  }, [loadBackups, showNotification, uploadBackupFile]);
 
   const newestBackup = useMemo(() => data?.items?.[0] ?? null, [data]);
 
@@ -356,6 +467,8 @@ export function useDatabaseSettings() {
     importingRecovery,
     restoringFile,
     restoringRecoveryFile,
+    testingFile,
+    testingRecoveryFile,
     savingMaintenance,
     savingRetention,
     pruning,
@@ -366,11 +479,13 @@ export function useDatabaseSettings() {
     maintenanceMode,
     maintenanceMessage,
     backupRetentionCount,
+    recoveryRetentionCount,
     externalTarget,
     recoveryImportFile,
     savingExternalTarget,
     restoreModal,
     notification,
+    restoreSummary,
     newestBackup,
     lastBackupStatus,
     warningItems,
@@ -379,17 +494,25 @@ export function useDatabaseSettings() {
     handleCreateRecoveryBundle,
     handleImportRecoveryBundle,
     handleRestoreBackup,
+    handleValidateBackup,
     handleRestoreRecoveryBundle,
+    handleValidateRecoveryBundle,
     handleConfirmRestore,
     handleSaveMaintenance,
     handleSaveRetention,
     handleSaveExternalTarget,
     handlePruneBackups,
+    handleUploadBackup,
     setRecoveryImportFile,
     setMaintenanceMode,
     setMaintenanceMessage,
     setBackupRetentionCount,
+    setRecoveryRetentionCount,
     setExternalTarget,
     setRestoreModal,
+    uploadBackupFile,
+    uploadingBackup,
+    setUploadBackupFile,
+    setRestoreSummary,
   };
 }

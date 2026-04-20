@@ -30,18 +30,18 @@ export function AnalysisChartsTab({ analysis, results }: AnalysisChartsTabProps)
         </div>
 
         {interpretations.length === 0 ? (
-          <div className="p-5 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center gap-2">
+          <div className="p-5 bg-[var(--color-surface-muted)] border border-[var(--color-border)] rounded-2xl flex items-center justify-center gap-2">
             <Sparkles className="text-indigo-500" size={16} />
-            <p className="text-sm font-semibold text-slate-500">Aucune anomalie morphologique majeure détectée</p>
+            <p className="text-sm font-semibold text-[var(--color-text-soft)]">Aucune anomalie morphologique majeure détectée</p>
           </div>
         ) : (
           <div className="p-5 bg-indigo-50/50 border border-indigo-100 rounded-2xl">
-            <h4 className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest mb-3 flex items-center gap-2">
+            <h4 className="text-[10px] font-bold text-[var(--color-accent)] uppercase tracking-widest mb-3 flex items-center gap-2">
               <Activity size={12} /> Interprétations Diagnostiques
             </h4>
             <div className="flex flex-wrap gap-2">
               {interpretations.map((flag: string) => (
-                <span key={flag} className="status-pill bg-white border border-indigo-200 text-indigo-700 shadow-sm">
+                <span key={flag} className="status-pill bg-[var(--color-surface)] border border-indigo-200 text-indigo-700 shadow-sm">
                   {flag}
                 </span>
               ))}

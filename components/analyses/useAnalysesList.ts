@@ -3,16 +3,17 @@ import { useSearchParams } from 'next/navigation';
 import { isThisWeek } from 'date-fns';
 import { Analysis } from '@/lib/types';
 
-export type StatusFilter = 'all' | 'pending' | 'in_progress' | 'validated_tech' | 'validated_bio' | 'completed';
+import { ANALYSIS_STATUSES, AnalysisStatus, isAnalysisFinalValidated } from '@/lib/analysis-status';
+
+export type StatusFilter = 'all' | AnalysisStatus;
 export type DateFilter = 'today' | 'yesterday' | 'week' | 'custom' | 'all';
 
 export const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
   { value: 'all', label: 'Tous les statuts' },
-  { value: 'pending', label: 'En attente' },
-  { value: 'in_progress', label: 'En cours' },
-  { value: 'validated_tech', label: 'Validé technique' },
-  { value: 'validated_bio', label: 'Validé bio' },
-  { value: 'completed', label: 'Validé (legacy)' },
+  ...(Object.entries(ANALYSIS_STATUSES) as [AnalysisStatus, {label: string}][]).map(([key, meta]) => ({
+    value: key,
+    label: meta.label,
+  })),
 ];
 
 export const DATE_OPTIONS: { value: DateFilter; label: string }[] = [
@@ -36,9 +37,11 @@ export function useAnalysesList() {
   const [customDate, setCustomDate] = useState('');
   const [itemsPerPage, setItemsPerPage] = useState<number>(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [tatThresholds, setTatThresholds] = useState({ warnMinutes: 45, alertMinutes: 60 });
   const [currencyUnit, setCurrencyUnit] = useState('DA');
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [sendingEmailId, setSendingEmailId] = useState<string | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; id: string | null }>({
     open: false,
     id: null,
@@ -53,16 +56,59 @@ export function useAnalysesList() {
   }, [searchParams]);
 
   useEffect(() => {
+    let start = '';
+    let end = '';
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (dateFilter === 'today') {
+      start = today.toISOString();
+    } else if (dateFilter === 'yesterday') {
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      start = yesterday.toISOString();
+      const yesterdayEnd = new Date(yesterday);
+      yesterdayEnd.setHours(23, 59, 59, 999);
+      end = yesterdayEnd.toISOString();
+    } else if (dateFilter === 'week') {
+      const monday = new Date(today);
+      const day = monday.getDay() || 7;
+      monday.setHours(-24 * (day - 1));
+      start = monday.toISOString();
+    } else if (dateFilter === 'custom' && customDate) {
+      const selected = new Date(customDate);
+      selected.setHours(0, 0, 0, 0);
+      start = selected.toISOString();
+      const selectedEnd = new Date(selected);
+      selectedEnd.setHours(23, 59, 59, 999);
+      end = selectedEnd.toISOString();
+    }
+
     const loadAnalyses = async () => {
+      setLoading(true);
       try {
+        const params = new URLSearchParams({
+          paginated: 'true',
+          page: String(currentPage),
+          limit: String(itemsPerPage),
+          q: searchValue,
+          status: statusFilter,
+        });
+
+        if (start) params.set('start', start);
+        if (end) params.set('end', end);
+
         const [response, tatResponse, settingsResponse] = await Promise.all([
-          fetch('/api/analyses', { cache: 'no-store' }),
+          fetch(`/api/analyses?${params.toString()}`, { cache: 'no-store' }),
           fetch('/api/tat-settings', { cache: 'no-store' }),
           fetch('/api/settings', { cache: 'no-store' }),
         ]);
+
         if (!response.ok) throw new Error('Erreur API');
         const data = await response.json();
-        setAnalyses(Array.isArray(data) ? data : []);
+        
+        setAnalyses(data.items || []);
+        setTotalPages(data.pagination?.pages || 1);
 
         if (tatResponse.ok) {
           const tatData = await tatResponse.json();
@@ -83,51 +129,22 @@ export function useAnalysesList() {
         setLoading(false);
       }
     };
-    loadAnalyses();
-  }, []);
+    
+    // Debounce to avoid querying every keystroke in search
+    const timer = setTimeout(() => {
+      loadAnalyses();
+    }, 300);
 
-  const filteredAnalyses = useMemo(() => {
-    return analyses
-      .filter((analysis) => {
-        const analysisDate = new Date(analysis.creationDate);
-        const day = new Date(analysisDate);
-        day.setHours(0, 0, 0, 0);
-
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        if (dateFilter === 'today') return day.getTime() === today.getTime();
-        if (dateFilter === 'yesterday') {
-          const yesterday = new Date(today);
-          yesterday.setDate(yesterday.getDate() - 1);
-          return day.getTime() === yesterday.getTime();
-        }
-        if (dateFilter === 'week') return isThisWeek(day, { weekStartsOn: 1 });
-        if (dateFilter === 'custom' && customDate) {
-          const selected = new Date(customDate);
-          selected.setHours(0, 0, 0, 0);
-          return day.getTime() === selected.getTime();
-        }
-        return true;
-      })
-      .filter((analysis) => statusFilter === 'all' || analysis.status === statusFilter)
-      .filter((analysis) => {
-        if (!searchValue) return true;
-        const query = searchValue.toLowerCase();
-        return (
-          analysis.patientId?.toLowerCase().includes(query) ||
-          analysis.orderNumber?.toLowerCase().includes(query) ||
-          `${analysis.patientFirstName ?? ''} ${analysis.patientLastName ?? ''}`.toLowerCase().includes(query)
-        );
-      });
-  }, [analyses, customDate, dateFilter, searchValue, statusFilter]);
+    return () => clearTimeout(timer);
+  }, [searchValue, dateFilter, customDate, statusFilter, itemsPerPage, currentPage]);
 
   useEffect(() => {
+    // Reset to page 1 only if filters change, not itemsPerPage (though that could be reset too)
     setCurrentPage(1);
   }, [searchValue, dateFilter, customDate, statusFilter, itemsPerPage]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredAnalyses.length / itemsPerPage));
-  const paginatedAnalyses = filteredAnalyses.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const paginatedAnalyses = analyses;
+  const filteredAnalyses = analyses; // for UI reference if it uses length
 
   const handleDeleteRequest = (event: React.MouseEvent, analysisId: string) => {
     event.preventDefault();
@@ -151,6 +168,54 @@ export function useAnalysesList() {
     }
   };
 
+  const handlePrintRequest = (event: React.MouseEvent, analysisId: string) => {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    // Silent Iframe Print
+    const iframeId = `print-iframe-${analysisId}`;
+    let iframe = document.getElementById(iframeId) as HTMLIFrameElement;
+    if (!iframe) {
+      iframe = document.createElement('iframe');
+      iframe.id = iframeId;
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
+    }
+    // Navigating to the export page with autoprint=1 will trigger window.print() inside it
+    iframe.src = `/analyses/${analysisId}/export?autoprint=1`;
+  };
+
+  const handleEmailRequest = async (event: React.MouseEvent, analysis: Analysis) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const recipientEmail = analysis.patient?.email;
+    if (!recipientEmail) {
+      alert("Ce patient n'a pas d'adresse email configurée.");
+      return;
+    }
+    
+    setSendingEmailId(analysis.id);
+    try {
+      const response = await fetch(`/api/analyses/${analysis.id}/email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recipientEmail }),
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Erreur lors de l’envoi de l’email');
+      }
+      
+      // Optimistic UI update
+      setAnalyses((prev) => prev.map((a) => a.id === analysis.id ? { ...a, emailedAt: new Date() } : a));
+      alert(`Email envoyé avec succès à ${recipientEmail}`);
+    } catch (error: any) {
+      alert(error.message || 'Une erreur est survenue.');
+    } finally {
+      setSendingEmailId(null);
+    }
+  };
+
   return {
     loading,
     searchValue,
@@ -171,9 +236,12 @@ export function useAnalysesList() {
     paginatedAnalyses,
     totalPages,
     deletingId,
+    sendingEmailId,
     confirmDialog,
     setConfirmDialog,
     handleDeleteRequest,
     handleConfirmDelete,
+    handlePrintRequest,
+    handleEmailRequest,
   };
 }

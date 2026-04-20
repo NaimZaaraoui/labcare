@@ -14,7 +14,7 @@ export default async function PrintSettingsPage() {
 
   return (
     <div className="mx-auto max-w-[1100px] space-y-6 pb-16">
-      <section className="rounded-3xl border bg-white px-5 py-4 shadow-[0_8px_28px_rgba(15,31,51,0.06)]">
+      <section className="rounded-xl border bg-[var(--color-surface)] px-5 py-4 shadow-[0_2px_8px_rgba(15,31,51,0.03)]">
         <PageBackLink href="/dashboard/settings" />
         <h1 className="text-xl font-semibold text-[var(--color-text)]">Modèles d&apos;impression</h1>
         <p className="mt-1 text-sm text-[var(--color-text-soft)]">

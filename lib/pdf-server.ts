@@ -64,12 +64,30 @@ export async function generateAnalysisPDF(analysisId: string, origin?: string, p
       page.on('requestfailed', (request) => console.log('PAGE REQUEST FAILED:', request.url(), request.failure()?.errorText));
 
       await page.goto(url, {
-        waitUntil: 'domcontentloaded',
+        waitUntil: 'networkidle0', // Better for fonts and external assets
         timeout: 30000,
       });
 
       await page.waitForSelector('#render-complete', { timeout: 20000 });
-      await new Promise((resolve) => setTimeout(resolve, 1200));
+      // Ensure all custom fonts (like Inter) are fully loaded and rendered
+      await page.evaluateHandle('document.fonts.ready');
+      
+      // Ensure all images (Signature, Stamp, Logos) are fully downloaded and decoded
+      await page.evaluate(async () => {
+        const images = Array.from(document.querySelectorAll('img'));
+        await Promise.all(images.map(img => {
+          if (img.complete) return;
+          return new Promise((resolve) => {
+            img.addEventListener('load', resolve);
+            img.addEventListener('error', resolve); // Resolve on error to avoid infinite hang
+          });
+        }));
+      });
+
+      // Force white background globally to prevent gray background artifacts
+      await page.addStyleTag({ content: 'body, html, main { background: white !important; background-color: white !important; }' });
+      
+      await new Promise((resolve) => setTimeout(resolve, 1500));
 
       const pdfBuffer = await page.pdf({
         format: 'A4',

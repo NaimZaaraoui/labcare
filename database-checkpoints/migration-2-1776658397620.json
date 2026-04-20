@@ -1,0 +1,8 @@
+{
+  "timestamp": "2026-04-20T04:13:17.619Z",
+  "migrationName": "migration-2",
+  "backupPath": "./test-backups/test.db",
+  "schemaHash": "ef306803935ebcc24813c7faeeccecd0412b1b1f2211db06b2488502964c0a9c",
+  "status": "completed",
+  "rowCounts": {}
+}

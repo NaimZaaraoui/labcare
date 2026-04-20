@@ -49,21 +49,21 @@ export default function AuditDashboard() {
     setLoading(true);
     try {
       const params = new URLSearchParams({
-        skip: (page * limit).toString(),
+        page: (page + 1).toString(), // api/audit-logs expects 1-indexed page
         limit: limit.toString(),
       });
       if (query) params.append('query', query);
       if (severityFilter !== 'ALL') params.append('severity', severityFilter);
       if (dateFilter) {
-        params.append('start', dateFilter);
-        params.append('end', dateFilter);
+        params.append('from', dateFilter); // api/audit-logs expects 'from' and 'to'
+        params.append('to', dateFilter);
       }
 
-      const res = await fetch(`/api/audit?${params.toString()}`);
+      const res = await fetch(`/api/audit-logs?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
-        setLogs(data.logs);
-        setTotalCount(data.totalCount);
+        setLogs(data.items); // api/audit-logs returns 'items' instead of 'logs'
+        setTotalCount(data.total); // api/audit-logs returns 'total' instead of 'totalCount'
       }
     } catch (e) {
       console.error(e);
@@ -104,7 +104,7 @@ export default function AuditDashboard() {
             {tests.map(testCode => {
               const { oldValue, newValue } = parsed.deltas[testCode];
               return (
-                <div key={testCode} className="text-[10px] font-mono bg-slate-50 px-2 py-1 rounded inline-block mr-2 border">
+                <div key={testCode} className="text-[10px] font-mono bg-[var(--color-surface-muted)] px-2 py-1 rounded inline-block mr-2 border">
                   <span className="font-bold text-slate-700">{testCode}:</span>{' '}
                   <span className="text-rose-600 line-through mr-1">{oldValue || 'vide'}</span> 
                   <span className="text-slate-400">→</span>{' '}
@@ -117,12 +117,12 @@ export default function AuditDashboard() {
       }
       
       return (
-        <pre className="text-[10px] bg-slate-50 p-1.5 rounded border text-slate-600 mt-1 max-w-full overflow-x-auto">
+        <pre className="text-[10px] bg-[var(--color-surface-muted)] p-1.5 rounded border text-[var(--color-text-secondary)] mt-1 max-w-full overflow-x-auto">
           {JSON.stringify(parsed, null, 2)}
         </pre>
       );
     } catch {
-      return <div className="text-[10px] text-slate-500 mt-1">{detailsStr}</div>;
+      return <div className="text-[10px] text-[var(--color-text-soft)] mt-1">{detailsStr}</div>;
     }
   };
 
@@ -132,7 +132,7 @@ export default function AuditDashboard() {
     <div className="flex h-full flex-col gap-6">
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-bold tracking-tight text-[var(--color-text)] flex items-center gap-2">
-          <ShieldAlert className="text-indigo-600" />
+          <ShieldAlert className="text-[var(--color-accent)]" />
           Audit & Traçabilité
         </h1>
         <p className="text-sm text-[var(--color-text-soft)]">
@@ -142,7 +142,7 @@ export default function AuditDashboard() {
 
       <div className="app-content flex-1 flex flex-col min-h-0 !p-0 overflow-hidden">
         {/* Toolbar */}
-        <div className="border-b border-[var(--color-border)] p-4 flex flex-col sm:flex-row gap-4 items-center justify-between bg-white">
+        <div className="border-b border-[var(--color-border)] p-4 flex flex-col sm:flex-row gap-4 items-center justify-between bg-[var(--color-surface)]">
           <div className="relative w-full sm:w-80 shrink-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input 
@@ -187,9 +187,9 @@ export default function AuditDashboard() {
         </div>
 
         {/* Table */}
-        <div className="flex-1 overflow-auto bg-slate-50/30">
+        <div className="flex-1 overflow-auto bg-[var(--color-surface-muted)]/30">
           <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="sticky top-0 bg-slate-100/80 backdrop-blur-md text-xs uppercase tracking-wider text-slate-500 shadow-sm z-10">
+            <thead className="sticky top-0 bg-[var(--color-surface-muted)]/80  text-xs uppercase tracking-wider text-[var(--color-text-soft)] shadow-sm z-10">
               <tr>
                 <th className="px-6 py-4 font-semibold">Date & Heure</th>
                 <th className="px-6 py-4 font-semibold">Utilisateur</th>
@@ -231,7 +231,7 @@ export default function AuditDashboard() {
                     </td>
                     <td className="px-6 py-3">
                       <div className="flex flex-col">
-                        <span className="font-semibold text-slate-800">{log.userName || 'Système'}</span>
+                        <span className="font-semibold text-[var(--color-text)]">{log.userName || 'Système'}</span>
                         <span className="text-[10px] font-bold text-slate-400 tracking-wider">
                           {log.userRole || 'AUTO'}
                         </span>
@@ -264,8 +264,8 @@ export default function AuditDashboard() {
         </div>
 
         {/* Pagination footer */}
-        <div className="border-t border-[var(--color-border)] p-4 flex items-center justify-between bg-white">
-          <span className="text-sm font-medium text-slate-500">
+        <div className="border-t border-[var(--color-border)] p-4 flex items-center justify-between bg-[var(--color-surface)]">
+          <span className="text-sm font-medium text-[var(--color-text-soft)]">
             Affichage de {logs.length} sur {totalCount} logs
           </span>
           <div className="flex gap-2">

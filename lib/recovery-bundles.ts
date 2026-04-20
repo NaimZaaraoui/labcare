@@ -15,6 +15,12 @@ export type RecoveryBundleFile = {
   absolutePath: string;
 };
 
+export type RecoveryBundleValidation = {
+  valid: boolean;
+  issues: string[];
+  entries: string[];
+};
+
 const RECOVERY_DIR = path.join(process.cwd(), 'backups', 'recovery');
 
 async function copyIfExists(sourcePath: string, destinationPath: string) {
@@ -119,12 +125,48 @@ export async function createRecoveryBundle() {
 
   const stat = await fs.stat(destinationPath);
 
+  const validation = await validateRecoveryBundleFile(destinationPath);
+  if (!validation.valid) {
+    await fs.rm(destinationPath, { force: true });
+    throw new Error(`Bundle cree mais invalide: ${validation.issues.join(', ')}`);
+  }
+
   return {
     fileName,
     absolutePath: destinationPath,
     size: stat.size,
     createdAt: stat.birthtime.toISOString(),
   } satisfies RecoveryBundleFile;
+}
+
+export async function validateRecoveryBundleFile(absolutePath: string): Promise<RecoveryBundleValidation> {
+  try {
+    const { stdout } = await execFileAsync('tar', ['-tzf', absolutePath]);
+    const entries = stdout
+      .split('\n')
+      .map((entry) => entry.trim())
+      .filter(Boolean);
+
+    const requiredEntries = [
+      'nexlab-recovery/data/database.sqlite',
+      'nexlab-recovery/manifest.json',
+      'nexlab-recovery/RESTORE.txt',
+    ];
+
+    const missingEntries = requiredEntries.filter((entry) => !entries.includes(entry));
+
+    return {
+      valid: missingEntries.length === 0,
+      issues: missingEntries.map((entry) => `Manquant: ${entry}`),
+      entries,
+    };
+  } catch (error) {
+    return {
+      valid: false,
+      issues: [error instanceof Error ? error.message : 'Archive invalide ou illisible'],
+      entries: [],
+    };
+  }
 }
 
 export async function listRecoveryBundles() {
@@ -176,11 +218,10 @@ export async function importRecoveryBundle(fileName: string, source: Buffer | Ui
 
   await fs.writeFile(destinationPath, source);
 
-  try {
-    await execFileAsync('tar', ['-tzf', destinationPath]);
-  } catch {
+  const validation = await validateRecoveryBundleFile(destinationPath);
+  if (!validation.valid) {
     await fs.rm(destinationPath, { force: true });
-    throw new Error('Le bundle importé est invalide ou corrompu.');
+    throw new Error(`Le bundle importé est invalide ou corrompu: ${validation.issues.join(', ')}`);
   }
 
   const stat = await fs.stat(destinationPath);
@@ -257,4 +298,26 @@ export async function restoreRecoveryBundle(fileName: string) {
   } finally {
     await removeDirectorySafe(stagingPath);
   }
+}
+
+export async function pruneRecoveryBundles(retainCount: number) {
+  const safeRetainCount = Math.max(0, Math.floor(retainCount));
+  const bundles = await listRecoveryBundles();
+
+  if (safeRetainCount <= 0) {
+    return { deleted: [] as RecoveryBundleFile[], retained: bundles };
+  }
+
+  const toDelete = bundles.slice(safeRetainCount);
+  const deleted: RecoveryBundleFile[] = [];
+
+  for (const bundle of toDelete) {
+    await fs.unlink(bundle.absolutePath);
+    deleted.push(bundle);
+  }
+
+  return {
+    deleted,
+    retained: bundles.slice(0, safeRetainCount),
+  };
 }

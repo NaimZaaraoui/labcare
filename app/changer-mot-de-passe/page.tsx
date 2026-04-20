@@ -67,7 +67,7 @@ export default function ChangePasswordPage() {
           <div className="w-20 h-20 bg-amber-500 rounded-3xl flex items-center justify-center shadow-2xl shadow-amber-100/70 mb-6 rotate-3">
             <ShieldCheck size={40} className="text-white" />
           </div>
-          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight text-center">Sécurité de votre compte</h1>
+          <h1 className="text-2xl font-semibold text-[var(--color-text)] tracking-tight text-center">Sécurité de votre compte</h1>
           <p className="text-sm font-medium text-slate-400 uppercase tracking-widest mt-2 text-center">
             Mise à jour obligatoire
           </p>
@@ -75,8 +75,8 @@ export default function ChangePasswordPage() {
 
         <div className="auth-card">
           <div className="mb-8">
-            <h2 className="text-xl font-semibold text-slate-900 mb-2">Changer votre mot de passe</h2>
-            <p className="text-slate-500 font-medium text-sm">
+            <h2 className="text-xl font-semibold text-[var(--color-text)] mb-2">Changer votre mot de passe</h2>
+            <p className="text-[var(--color-text-soft)] font-medium text-sm">
               Pour des raisons de sécurité, vous devez définir un nouveau mot de passe lors de votre première connexion.
             </p>
           </div>
@@ -103,7 +103,7 @@ export default function ChangePasswordPage() {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-slate-400 hover:text-indigo-500 transition-colors rounded-xl hover:bg-white"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-slate-400 hover:text-indigo-500 transition-colors rounded-xl hover:bg-[var(--color-surface)]"
                 >
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>

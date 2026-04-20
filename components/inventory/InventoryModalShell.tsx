@@ -22,7 +22,7 @@ export function InventoryModalShell({ title, onClose, children }: InventoryModal
           </div>
           <button
             onClick={onClose}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-xl border bg-[var(--color-surface-muted)] text-[var(--color-text-soft)]"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border bg-[var(--color-surface-muted)] text-[var(--color-text-soft)] transition-colors hover:text-[var(--color-text)]"
           >
             <ArrowLeft className="h-4 w-4 rotate-45" />
           </button>

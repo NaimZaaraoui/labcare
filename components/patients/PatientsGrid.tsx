@@ -16,44 +16,46 @@ interface PatientsGridProps {
 export function PatientsGrid({ patients, loading, role, onEdit, onNewAnalysis }: PatientsGridProps) {
   if (loading && patients.length === 0) {
     return (
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {[1, 2, 3, 4, 5, 6].map((index) => (
-          <div key={index} className="skeleton-card h-[320px]" />
+          <div key={index} className="skeleton-card h-[260px]" />
         ))}
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
       {patients.map((patient) => (
         <div
           key={patient.id}
-          className="group flex h-[320px] flex-col bento-panel p-5 transition-colors hover:bg-[var(--color-surface-muted)]"
+          className="group flex flex-col rounded-lg border bg-[var(--color-surface)] p-4 shadow-[0_2px_8px_rgba(15,31,51,0.03)] transition-colors hover:bg-[var(--color-surface-muted)]"
         >
           <div className="mb-4 flex flex-col gap-3">
             <div className="flex items-center gap-3">
               <div
-                className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-lg font-semibold shadow-inner ${
-                  patient.gender === 'F' ? 'bg-rose-50 text-rose-500' : 'bg-indigo-50 text-indigo-500'
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md border text-sm font-semibold ${
+                  patient.gender === 'F' ? 'border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text)]' : 'border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text)]'
                 }`}
               >
                 {patient.firstName[0]}
                 {patient.lastName[0]}
               </div>
               <div className="min-w-0">
-                <h3 className="truncate text-base font-semibold leading-tight text-slate-900 transition-colors group-hover:text-indigo-600">
+                <h3 className="truncate text-base font-semibold leading-tight text-[var(--color-text)]">
                   {patient.lastName} {patient.firstName}
                 </h3>
                 <div className="mt-1 flex items-center gap-2">
                   <span
-                    className={`rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
-                      patient.gender === 'M' ? 'bg-indigo-100 text-indigo-700' : 'bg-rose-100 text-rose-700'
+                    className={`rounded-sm border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                      patient.gender === 'M'
+                        ? 'border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text-secondary)]'
+                        : 'border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text-secondary)]'
                     }`}
                   >
                     {patient.gender === 'M' ? 'Homme' : 'Femme'}
                   </span>
-                  <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                  <span className="rounded-sm bg-[var(--color-surface-muted)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-soft)]">
                     {calculatePatientAge(patient.birthDate)} ans
                   </span>
                 </div>
@@ -63,7 +65,7 @@ export function PatientsGrid({ patients, loading, role, onEdit, onNewAnalysis }:
               {role !== 'MEDECIN' && (
                 <button
                   onClick={() => onNewAnalysis(patient.id)}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-100 bg-white text-indigo-600 shadow-sm transition-all hover:bg-indigo-50"
+                  className="flex h-9 w-9 items-center justify-center rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-muted)]"
                   title="Nouvelle Analyse"
                 >
                   <Plus size={18} />
@@ -72,7 +74,7 @@ export function PatientsGrid({ patients, loading, role, onEdit, onNewAnalysis }:
 
               <button
                 onClick={() => onEdit(patient)}
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-100 bg-white text-slate-400 shadow-sm transition-all hover:bg-indigo-50 hover:text-indigo-600"
+                className="flex h-9 w-9 items-center justify-center rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-soft)] transition-colors hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
               >
                 <Edit2 size={16} />
               </button>
@@ -81,13 +83,13 @@ export function PatientsGrid({ patients, loading, role, onEdit, onNewAnalysis }:
 
           <div className="flex-1 space-y-3">
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-3">
+              <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-3">
                 <div className="mb-1 flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-slate-400">
                   <Phone size={10} /> Téléphone
                 </div>
                 <div className="truncate text-xs font-semibold text-slate-700">{patient.phoneNumber || '—'}</div>
               </div>
-              <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-3">
+              <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-3">
                 <div className="mb-1 flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-slate-400">
                   <Calendar size={10} /> Naissance
                 </div>
@@ -104,11 +106,11 @@ export function PatientsGrid({ patients, loading, role, onEdit, onNewAnalysis }:
             </div>
 
             {patient.email && (
-              <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-3">
+              <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-3">
                 <div className="mb-1 flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-slate-400">
                   <Mail size={10} /> Email
                 </div>
-                <div className="truncate text-xs font-medium text-slate-600">{patient.email}</div>
+                <div className="truncate text-xs font-medium text-[var(--color-text-secondary)]">{patient.email}</div>
               </div>
             )}
           </div>

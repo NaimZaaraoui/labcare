@@ -40,7 +40,34 @@ export async function PATCH(
       }
       if (analysis.status !== 'in_progress') {
         return NextResponse.json(
-          { error: 'Validation technique impossible: saisissez et sauvegardez d’abord les résultats (statut "En analyse").' },
+          { error: "Validation technique impossible: saisissez et sauvegardez d'abord les résultats (statut En analyse)." },
+          { status: 400 }
+        );
+      }
+
+      const analysisResults = await prisma.result.findMany({
+        where: { analysisId: id },
+        include: { test: { select: { isGroup: true, name: true } } },
+      });
+
+      const nonGroupResults = analysisResults.filter(r => !r.test?.isGroup);
+      const emptyResults = nonGroupResults.filter(r => !r.value || r.value.trim() === '');
+
+      if (nonGroupResults.length === 0) {
+        return NextResponse.json(
+          { error: 'Aucun résultat trouvé. Ajoutez des analyses et saisissez les résultats avant de valider.' },
+          { status: 400 }
+        );
+      }
+
+      if (emptyResults.length > 0) {
+        const missingNames = emptyResults
+          .map(r => r.test?.name || 'Inconnu')
+          .slice(0, 5)
+          .join(', ');
+        const suffix = emptyResults.length > 5 ? ` et ${emptyResults.length - 5} autre(s)` : '';
+        return NextResponse.json(
+          { error: `Résultats manquants ou non sauvegardés: ${missingNames}${suffix}. Saisissez et sauvegardez tous les résultats avant la validation.` },
           { status: 400 }
         );
       }
@@ -49,7 +76,7 @@ export async function PATCH(
       if (!qcReadiness.ready) {
         const details = qcReadiness.blockers
           .map((lot) => {
-            const statusLabel = lot.status === 'fail' ? 'QC en échec' : 'QC manquant aujourd’hui';
+            const statusLabel = lot.status === 'fail' ? 'QC en échec' : "QC manquant aujourd'hui";
             return `${lot.materialName} / lot ${lot.lotNumber} (${lot.tests.join(', ')}) : ${statusLabel}`;
           })
           .join(' ; ');

@@ -1,5 +1,5 @@
-
 import { Analysis } from '@/lib/types';
+import { HEMATOLOGY_THRESHOLDS as H_THRESH } from '@/lib/lab-rules';
 
 export function getHematologyInterpretations(analysis: Analysis, results: Record<string, string>) {
   const flags: string[] = [];
@@ -21,40 +21,40 @@ export function getHematologyInterpretations(analysis: Analysis, results: Record
   
   // Clinical Interpretations (Adult typical thresholds - simplified)
   if (gb !== null) {
-    if (gb < 4.0) flags.push("LEUCOPÉNIE");
-    if (gb > 10.0) flags.push("HYPERLEUCOCYTOSE");
+    if (gb < H_THRESH.GB.LEUCOPENIA) flags.push("LEUCOPÉNIE");
+    if (gb > H_THRESH.GB.HYPERLEUKOCYTOSIS) flags.push("HYPERLEUCOCYTOSE");
   }
 
   if (hgb !== null) {
     const isMale = (analysis as any).patientGender === 'M';
-    if (isMale && hgb < 13.0) flags.push("ANÉMIE");
-    if (!isMale && hgb < 12.0) flags.push("ANÉMIE");
+    if (isMale && hgb < H_THRESH.HGB.ANEMIA_MALE) flags.push("ANÉMIE");
+    if (!isMale && hgb < H_THRESH.HGB.ANEMIA_FEMALE) flags.push("ANÉMIE");
   }
 
   if (plt !== null) {
-    if (plt < 150) flags.push("THROMBOPÉNIE");
-    if (plt > 450) flags.push("THROMBOCYTOSE");
+    if (plt < H_THRESH.PLT.THROMBOPENIA) flags.push("THROMBOPÉNIE");
+    if (plt > H_THRESH.PLT.THROMBOCYTOSIS) flags.push("THROMBOCYTOSE");
   }
 
   if (lymPercent !== null && gb !== null) {
     const lymAbs = (lymPercent * gb) / 100;
-    if (lymAbs > 4.0) flags.push("LYMPHOCYTOSE");
-    if (lymAbs < 1.0) flags.push("LYMPHOPÉNIE");
+    if (lymAbs > H_THRESH.LYM_ABS.LYMPHOCYTOSIS) flags.push("LYMPHOCYTOSE");
+    if (lymAbs < H_THRESH.LYM_ABS.LYMPHOPENIA) flags.push("LYMPHOPÉNIE");
   }
 
   if (graPercent !== null && gb !== null) {
     const pnnAbs = (graPercent * gb) / 100;
-    if (pnnAbs > 7.5) flags.push("POLYNUCLÉOSE NEUTROPHILE");
-    if (pnnAbs < 1.5) flags.push("NEUTROPÉNIE");
+    if (pnnAbs > H_THRESH.PNN_ABS.NEUTROPHILIA) flags.push("POLYNUCLÉOSE NEUTROPHILE");
+    if (pnnAbs < H_THRESH.PNN_ABS.NEUTROPENIA) flags.push("NEUTROPÉNIE");
   }
 
   if (vgm !== null && hgb !== null) {
-    if (vgm < 80) flags.push("MICROCYTOSE");
-    if (vgm > 100) flags.push("MACROCYTOSE");
+    if (vgm < H_THRESH.VGM.MICROCYTOSIS) flags.push("MICROCYTOSE");
+    if (vgm > H_THRESH.VGM.MACROCYTOSIS) flags.push("MACROCYTOSE");
   }
 
   // Morphology from Histogram Data (RDW/IDW check)
-  if (rdw !== null && rdw > 16.0) {
+  if (rdw !== null && rdw > H_THRESH.RDW.ANISOCYTOSIS) {
       flags.push("ANISOCYTOSE");
   }
 

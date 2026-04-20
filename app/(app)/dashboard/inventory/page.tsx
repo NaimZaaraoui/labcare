@@ -215,8 +215,8 @@ export default function InventoryPage() {
   };
 
   return (
-    <div className="mx-auto max-w-[1500px] space-y-5 pb-16">
-      <section className="rounded-3xl border bg-white px-5 py-4 shadow-[0_8px_28px_rgba(15,31,51,0.06)]">
+    <div className="mx-auto max-w-[1500px] space-y-6 pb-16">
+      <section className="rounded-[2rem] border border-[var(--color-border)]/50 bg-[var(--color-surface)] px-6 py-5 shadow-sm ring-1 ring-slate-900/5 md:px-8">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h1 className="text-xl font-semibold text-[var(--color-text)]">Inventaire des réactifs</h1>
@@ -227,19 +227,19 @@ export default function InventoryPage() {
           <div className="flex flex-wrap items-center gap-2">
             <Link
               href="/api/inventory?format=csv&mode=inventory"
-              className="inline-flex h-11 items-center gap-2 rounded-2xl border bg-white px-4 text-sm font-semibold text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-muted)]"
+              className="inline-flex h-11 items-center gap-2 rounded-md border bg-[var(--color-surface)] px-4 text-sm font-medium text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-muted)]"
             >
               <Download className="h-4 w-4" />
               Export inventaire
             </Link>
             <Link
               href="/api/inventory?format=csv&mode=reorder"
-              className="inline-flex h-11 items-center gap-2 rounded-2xl border bg-[var(--color-accent-soft)] px-4 text-sm font-semibold text-[var(--color-accent)] transition-colors hover:bg-[#d9ebff]"
+              className="inline-flex h-11 items-center gap-2 rounded-md border bg-[var(--color-surface-muted)] px-4 text-sm font-medium text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-muted)]"
             >
               <Download className="h-4 w-4" />
               Export réappro.
             </Link>
-            <div className="rounded-2xl border bg-[var(--color-surface-muted)] px-3 py-2 text-right">
+            <div className="rounded-md border bg-[var(--color-surface-muted)] px-3 py-2 text-right">
               <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--color-text-soft)]">Total</div>
               <div className="text-lg font-semibold text-[var(--color-text)]">{items.length}</div>
             </div>
@@ -282,7 +282,7 @@ export default function InventoryPage() {
               className={`rounded-2xl border px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] transition-colors ${
                 filter === tab.key
                   ? 'border-blue-600/30 bg-[var(--color-accent-soft)] text-[var(--color-accent)]'
-                  : 'bg-white text-[var(--color-text-soft)] hover:bg-[var(--color-surface-muted)]'
+                  : 'bg-[var(--color-surface)] text-[var(--color-text-soft)] hover:bg-[var(--color-surface-muted)]'
               }`}
             >
               {tab.label}

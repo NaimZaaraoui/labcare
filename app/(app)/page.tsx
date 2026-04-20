@@ -172,14 +172,14 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-5 pb-8">
-      <section className="rounded-3xl border bg-white px-5 py-4 shadow-[0_8px_28px_rgba(15,31,51,0.06)]">
+      <section className="rounded-xl border bg-[var(--color-surface)] px-5 py-4 shadow-[0_2px_8px_rgba(15,31,51,0.03)]">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 className="text-xl font-semibold text-[var(--color-text)]">
+            <h1 className="text-lg font-semibold text-[var(--color-text)]">
               Tableau de bord laboratoire
             </h1>
             <p className="mt-1 text-sm text-[var(--color-text-soft)]">
-              Bonjour {session?.user?.name || 'Utilisateur'}, suivi opérationnel de la paillasse en temps réel.
+              Bonjour {session?.user?.name || 'Utilisateur'}, suivi opérationnel du laboratoire.
             </p>
           </div>
           <button onClick={loadDashboard} className="btn-secondary">
@@ -189,7 +189,7 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         <KpiCard title="Dossiers du jour" value={totalToday} icon={ClipboardList} tone="default" />
         <KpiCard title="En attente" value={state.stats.pending} icon={Clock} tone="warning" />
         <KpiCard title="Résultats anormaux" value={state.stats.urgent} icon={AlertCircle} tone="critical" />
@@ -197,7 +197,7 @@ export default function DashboardPage() {
       </section>
 
       {qcToday && (qcToday.fail > 0 || qcToday.missing > 0) && (
-        <section className={`rounded-3xl px-5 py-4 shadow-[0_8px_22px_rgba(180,120,20,0.08)] ${
+        <section className={`rounded-xl px-5 py-4 ${
           qcToday.fail > 0
             ? 'border border-rose-200/70 bg-rose-50/85'
             : 'border border-amber-200/70 bg-amber-50/85'
@@ -226,7 +226,7 @@ export default function DashboardPage() {
       )}
 
       {inventoryAlerts.length > 0 && (
-        <section className="rounded-3xl border border-amber-200/70 bg-amber-50/80 px-5 py-4 shadow-[0_8px_22px_rgba(180,120,20,0.08)]">
+        <section className="rounded-xl border border-amber-200/70 bg-amber-50/80 px-5 py-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-amber-800">
@@ -245,7 +245,7 @@ export default function DashboardPage() {
             {inventoryAlerts.slice(0, 3).map((item) => (
               <div
                 key={item.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-amber-200/60 bg-white/80 px-3 py-2"
+                className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-amber-200/60 bg-[var(--color-surface)]/80 px-3 py-2"
               >
                 <span className="text-sm font-medium text-[var(--color-text)]">{item.name}</span>
                 <span className="text-xs text-[var(--color-text-soft)]">
@@ -259,7 +259,7 @@ export default function DashboardPage() {
 
       {temperatureToday &&
         (temperatureToday.alertCount > 0 || temperatureToday.missingCount > 0) && (
-          <section className="rounded-3xl border border-sky-200/70 bg-sky-50/80 px-5 py-4 shadow-[0_8px_22px_rgba(40,120,180,0.08)]">
+          <section className="rounded-xl border border-sky-200/70 bg-sky-50/80 px-5 py-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-sky-800">
@@ -279,7 +279,7 @@ export default function DashboardPage() {
         )}
 
       {role === 'ADMIN' && backupAlert && (backupAlert.isStale || !backupAlert.hasBackups) && (
-        <section className="rounded-3xl border border-rose-200/70 bg-rose-50/85 px-5 py-4 shadow-[0_8px_22px_rgba(190,50,70,0.08)]">
+        <section className="rounded-xl border border-rose-200/70 bg-rose-50/85 px-5 py-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-rose-800">
@@ -299,7 +299,7 @@ export default function DashboardPage() {
         </section>
       )}
 
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+      <section className="grid grid-cols-1 gap-3 lg:grid-cols-3">
         {role !== 'MEDECIN' && (
           <ActionCard href="/analyses/nouvelle" label="Nouvelle analyse" icon={Plus} primary />
         )}
@@ -308,7 +308,7 @@ export default function DashboardPage() {
       </section>
 
       <section className="grid grid-cols-1 gap-4 2xl:grid-cols-[1fr_340px]">
-        <div className="overflow-hidden rounded-3xl border bg-white shadow-[0_10px_30px_rgba(15,31,51,0.06)]">
+        <div className="overflow-hidden rounded-xl border bg-[var(--color-surface)] shadow-[0_2px_8px_rgba(15,31,51,0.03)]">
           <div className="flex items-center justify-between border-b px-5 py-4">
             <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-[var(--color-text-secondary)]">
               Dossiers récents
@@ -339,7 +339,7 @@ export default function DashboardPage() {
               activeAnalyses.map((analysis, index) => {
                 const status = STATUS_MAP[analysis.status ?? ''] ?? {
                   label: analysis.status ?? 'Inconnu',
-                  classes: 'bg-slate-50 text-slate-700 border border-slate-200/70',
+                  classes: 'bg-[var(--color-surface-muted)] text-slate-700 border border-[var(--color-border)]/70',
                 };
 
                 return (
@@ -378,7 +378,7 @@ export default function DashboardPage() {
         </div>
 
         <aside className="space-y-4">
-          <div className="rounded-3xl border bg-white p-5 shadow-[0_10px_30px_rgba(15,31,51,0.06)]">
+          <div className="rounded-xl border bg-[var(--color-surface)] p-5 shadow-[0_2px_8px_rgba(15,31,51,0.03)]">
             <h3 className="text-sm font-semibold text-[var(--color-text)]">Flux opérationnel</h3>
             <div className="mt-4 space-y-3 text-sm">
               <StatRow label="Total en attente" value={state.stats.pending} />
@@ -388,7 +388,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="rounded-3xl border bg-white p-5 shadow-[0_10px_30px_rgba(15,31,51,0.06)]">
+          <div className="rounded-xl border bg-[var(--color-surface)] p-5 shadow-[0_2px_8px_rgba(15,31,51,0.03)]">
             <h3 className="text-sm font-semibold text-[var(--color-text)]">Actions rapides</h3>
             <div className="mt-4 space-y-2">
               <QuickLink href="/dashboard/patients">Rechercher patient</QuickLink>
@@ -417,21 +417,21 @@ function formatInventoryAlertReason(item: InventoryAlertItem) {
 
 function KpiCard({ title, value, icon: Icon, tone }: KpiCardProps) {
   const toneClasses: Record<KpiCardProps['tone'], string> = {
-    default: 'bg-blue-50 text-blue-700',
+    default: 'bg-[var(--color-surface-muted)] text-[var(--color-text-secondary)]',
     warning: 'bg-amber-50 text-amber-700',
     critical: 'bg-rose-50 text-rose-700',
     success: 'bg-emerald-50 text-emerald-700',
   };
 
   return (
-    <article className="rounded-3xl border bg-white p-5 shadow-[0_8px_26px_rgba(15,31,51,0.05)]">
+    <article className="rounded-xl border bg-[var(--color-surface)] px-4 py-3 shadow-[0_2px_8px_rgba(15,31,51,0.03)]">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--color-text-soft)]">{title}</p>
-          <p className="mt-2 text-3xl font-semibold tracking-tight text-[var(--color-text)]">{value}</p>
+          <p className="mt-1.5 text-2xl font-semibold tracking-tight text-[var(--color-text)]">{value}</p>
         </div>
-        <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${toneClasses[tone]}`}>
-          <Icon className="h-5 w-5" />
+        <div className={`flex h-9 w-9 items-center justify-center rounded-md ${toneClasses[tone]}`}>
+          <Icon className="h-4.5 w-4.5" />
         </div>
       </div>
     </article>
@@ -442,16 +442,16 @@ function ActionCard({ label, href, icon: Icon, primary = false }: ActionCardProp
   return (
     <Link
       href={href}
-      className={`group flex items-center justify-between rounded-3xl border px-4 py-3.5 transition-colors ${
+      className={`group flex items-center justify-between rounded-xl border px-4 py-3 transition-colors ${
         primary
           ? 'border-blue-700/20 bg-[var(--color-accent)] text-white'
-          : 'bg-white text-[var(--color-text)] hover:bg-[var(--color-surface-muted)]'
+          : 'bg-[var(--color-surface)] text-[var(--color-text)] hover:bg-[var(--color-surface-muted)]'
       }`}
     >
       <span className="inline-flex items-center gap-2.5 text-sm font-medium">
         <span
-          className={`flex h-8 w-8 items-center justify-center rounded-xl ${
-            primary ? 'bg-white/20' : 'bg-[var(--color-surface-muted)]'
+          className={`flex h-8 w-8 items-center justify-center rounded-md ${
+            primary ? 'bg-[var(--color-surface)]/15' : 'bg-[var(--color-surface-muted)]'
           }`}
         >
           <Icon className="h-4 w-4" />
@@ -465,7 +465,7 @@ function ActionCard({ label, href, icon: Icon, primary = false }: ActionCardProp
 
 function StatRow({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="flex items-center justify-between rounded-xl border bg-[var(--color-surface-muted)] px-3 py-2">
+    <div className="flex items-center justify-between rounded-lg border bg-[var(--color-surface-muted)] px-3 py-2">
       <span className="text-[13px] text-[var(--color-text-secondary)]">{label}</span>
       <span className="text-sm font-semibold text-[var(--color-text)]">{value}</span>
     </div>
@@ -476,7 +476,7 @@ function QuickLink({ href, children }: { href: string; children: string }) {
   return (
     <Link
       href={href}
-      className="flex items-center justify-between rounded-xl border bg-[var(--color-surface-muted)] px-3 py-2 text-[13px] font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-slate-100"
+      className="flex items-center justify-between rounded-lg border bg-[var(--color-surface-muted)] px-3 py-2 text-[13px] font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-surface-muted)]"
     >
       {children}
       <ArrowRight className="h-4 w-4 text-[var(--color-text-soft)]" />
@@ -489,14 +489,14 @@ function LoadingRows() {
     <>
       {Array.from({ length: 6 }).map((_, index) => (
         <div key={index} className="grid grid-cols-12 items-center px-5 py-3">
-          <div className="col-span-1 mx-auto h-3 w-4 animate-pulse rounded bg-slate-100" />
+          <div className="col-span-1 mx-auto h-3 w-4 animate-pulse rounded bg-[var(--color-surface-muted)]" />
           <div className="col-span-5 space-y-1">
-            <div className="h-3.5 w-2/5 animate-pulse rounded bg-slate-100" />
-            <div className="h-3 w-1/4 animate-pulse rounded bg-slate-100" />
+            <div className="h-3.5 w-2/5 animate-pulse rounded bg-[var(--color-surface-muted)]" />
+            <div className="h-3 w-1/4 animate-pulse rounded bg-[var(--color-surface-muted)]" />
           </div>
-          <div className="col-span-2 mx-auto h-3 w-14 animate-pulse rounded bg-slate-100" />
-          <div className="col-span-2 mx-auto h-3 w-12 animate-pulse rounded bg-slate-100" />
-          <div className="col-span-2 ml-auto h-5 w-16 animate-pulse rounded-full bg-slate-100" />
+          <div className="col-span-2 mx-auto h-3 w-14 animate-pulse rounded bg-[var(--color-surface-muted)]" />
+          <div className="col-span-2 mx-auto h-3 w-12 animate-pulse rounded bg-[var(--color-surface-muted)]" />
+          <div className="col-span-2 ml-auto h-5 w-16 animate-pulse rounded-full bg-[var(--color-surface-muted)]" />
         </div>
       ))}
     </>

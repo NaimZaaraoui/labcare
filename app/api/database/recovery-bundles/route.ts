@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 import { requireAnyRole } from '@/lib/authz';
 import { createAuditLog, getRequestMeta } from '@/lib/audit';
 import {
   createRecoveryBundle,
   getRecoveryBundleDirectory,
   listRecoveryBundles,
+  pruneRecoveryBundles,
+  validateRecoveryBundleFile,
 } from '@/lib/recovery-bundles';
 
 export const runtime = 'nodejs';
@@ -36,6 +39,13 @@ export async function POST(request: Request) {
 
   try {
     const bundle = await createRecoveryBundle();
+    const validation = await validateRecoveryBundleFile(bundle.absolutePath);
+    const retentionSetting = await prisma.setting.findUnique({
+      where: { key: 'database_recovery_retention_count' },
+      select: { value: true },
+    });
+    const retainCount = Math.max(0, parseInt(retentionSetting?.value || '10', 10) || 10);
+    const pruneResult = await pruneRecoveryBundles(retainCount);
 
     await createAuditLog({
       action: 'database.recovery_bundle_create',
@@ -45,6 +55,9 @@ export async function POST(request: Request) {
       details: {
         fileName: bundle.fileName,
         size: bundle.size,
+        validation,
+        retainCount,
+        deletedAfterCreate: pruneResult.deleted.map((item) => item.fileName),
       },
       ipAddress: meta.ipAddress,
       userAgent: meta.userAgent,
@@ -53,6 +66,11 @@ export async function POST(request: Request) {
     return NextResponse.json({
       message: 'Bundle de reprise créé avec succès.',
       item: bundle,
+      validation,
+      retention: {
+        retainCount,
+        deletedCount: pruneResult.deleted.length,
+      },
     });
   } catch (error) {
     console.error('Error creating recovery bundle:', error);

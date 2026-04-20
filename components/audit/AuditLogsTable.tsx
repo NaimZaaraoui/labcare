@@ -18,7 +18,7 @@ export function AuditLogsTable({
   onSelectLog,
 }: AuditLogsTableProps) {
   return (
-    <section className="overflow-hidden rounded-3xl border bg-white shadow-[0_8px_24px_rgba(15,31,51,0.05)]">
+    <section className="overflow-hidden rounded-2xl border bg-[var(--color-surface)] shadow-[0_6px_18px_rgba(15,31,51,0.04)]">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[980px]">
           <thead>
@@ -49,7 +49,7 @@ export function AuditLogsTable({
             )}
             {!loading &&
               visibleItems.map((item) => (
-                <tr key={item.id} className="hover:bg-[var(--color-surface-muted)]/50">
+                <tr key={item.id} className="hover:bg-[var(--color-surface-muted)]/60">
                   <td className="px-4 py-3 text-xs text-[var(--color-text-secondary)]">{new Date(item.createdAt).toLocaleString('fr-FR')}</td>
                   <td className="px-4 py-3 text-xs">
                     <span className={severityBadgeClass(item.severity)}>{item.severity}</span>
@@ -66,7 +66,7 @@ export function AuditLogsTable({
                   <td className="max-w-[340px] px-4 py-3 text-xs text-[var(--color-text-soft)]">
                     <div className="truncate">{detailsPreview(item.details)}</div>
                     {item.details && (
-                      <button onClick={() => onSelectLog(item)} className="mt-1 text-[11px] font-semibold text-[var(--color-accent)] hover:underline">
+                      <button onClick={() => onSelectLog(item)} className="mt-1 text-[11px] font-semibold text-[var(--color-text)] hover:text-[var(--color-text-secondary)] hover:underline">
                         Voir
                       </button>
                     )}

@@ -1,6 +1,7 @@
 'use client';
 
 import { createPortal } from 'react-dom';
+import { useScrollLock } from '@/hooks/useScrollLock';
 import { Edit2, PlusCircle, Save, X } from 'lucide-react';
 import { AVAILABLE_ICONS } from './ordering-helpers';
 import type { Category } from './types';
@@ -35,18 +36,19 @@ export function CategoryFormModal({
   onParentChange,
   onClose,
   onSubmit,
-}: Props) {
+  }: Props) {
+  useScrollLock(showCreateModal || showEditModal);
   if (!mounted || (!showCreateModal && !showEditModal)) return null;
 
   return createPortal(
-    <div className="modal-overlay z-[100] animate-in fade-in duration-200">
+    <div className="modal-overlay z-[100]">
       <div
-        className="modal-shell h-[90vh] w-full max-w-md space-y-6 overflow-y-auto p-6 animate-in zoom-in-95 duration-200"
+        className="modal-shell h-[90vh] w-full max-w-md space-y-6 overflow-y-auto p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--color-accent-soft)] text-[var(--color-accent)]">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl border bg-[var(--color-surface-muted)] text-[var(--color-text-secondary)]">
               {showEditModal ? <Edit2 size={20} /> : <PlusCircle size={20} />}
             </div>
             <h3 className="text-xl font-semibold text-[var(--color-text)] tracking-tight">
@@ -80,15 +82,15 @@ export function CategoryFormModal({
             <label className="px-1 text-[11px] font-medium uppercase tracking-wide text-[var(--color-text-soft)]">
               Icône
             </label>
-            <div className="grid grid-cols-4 gap-2 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-3">
+            <div className="grid grid-cols-4 gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-3">
               {AVAILABLE_ICONS.map(({ name, icon: Icon }) => (
                 <button
                   key={name}
                   onClick={() => onIconChange(name)}
                   className={`p-3 rounded-xl transition-all ${
                     newCategoryIcon === name
-                      ? 'bg-[var(--color-accent)] text-white shadow-md scale-105'
-                      : 'bg-white text-[var(--color-text-soft)] border border-[var(--color-border)] hover:border-blue-200 hover:text-[var(--color-accent)]'
+                    ? 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] shadow-sm'
+                    : 'border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-soft)] hover:bg-[var(--color-surface-muted)]'
                   }`}
                   title={name}
                 >
@@ -105,7 +107,7 @@ export function CategoryFormModal({
             <select
               value={newCategoryParent}
               onChange={(e) => onParentChange(e.target.value)}
-              className="input-premium h-11 bg-white appearance-none cursor-pointer"
+              className="input-premium h-11 bg-[var(--color-surface)] appearance-none cursor-pointer"
             >
               <option value="">📂 Catégorie principale (Racine)</option>
               {categories

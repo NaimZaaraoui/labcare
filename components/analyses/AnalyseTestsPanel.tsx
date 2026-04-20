@@ -22,15 +22,15 @@ export function AnalyseTestsPanel({
   toggleTest,
 }: AnalyseTestsPanelProps) {
   return (
-    <div className="bento-panel flex h-full flex-col p-6 lg:p-7">
+    <div className="bento-panel flex h-full flex-col p-5 lg:p-6">
       <div className="mb-6 flex flex-col items-start justify-between gap-4">
-        <div className="input-premium flex h-11 w-full max-w-sm items-center gap-2 bg-slate-50">
-          <Search className="w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+        <div className="input-premium flex h-11 w-full max-w-sm items-center gap-2 rounded-md bg-[var(--color-surface-muted)]">
+          <Search className="h-4 w-4 text-slate-400 transition-colors" />
           <input
             placeholder="Chercher analyse..."
             value={searchTest}
             onChange={(e) => setSearchTest(e.target.value)}
-            className="h-full w-full bg-slate-50 pr-4 text-sm font-medium outline-none"
+            className="h-full w-full bg-[var(--color-surface-muted)] pr-4 text-sm font-medium outline-none"
           />
         </div>
 
@@ -43,10 +43,10 @@ export function AnalyseTestsPanel({
                 key={bilan.id}
                 type="button"
                 onClick={() => toggleBilan(bilan)}
-                className={`flex items-center gap-1.5 whitespace-nowrap rounded-xl border px-4 py-2 text-xs font-medium uppercase tracking-wide transition-all ${
+                className={`flex items-center gap-1.5 whitespace-nowrap rounded-md border px-4 py-2 text-xs font-medium uppercase tracking-wide transition-colors ${
                   isSelected
-                    ? 'border-indigo-600 bg-indigo-600 text-white'
-                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                    ? 'border-slate-900 bg-slate-900 text-white'
+                    : 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-muted)]'
                 }`}
               >
                 {bilan.name}
@@ -59,9 +59,9 @@ export function AnalyseTestsPanel({
       <div className="custom-scrollbar flex-1 max-h-[560px] space-y-8 overflow-y-auto pr-1">
         {Object.entries(groupedTests).map(([category, categoryTests]) => (
           <div key={category} className="space-y-3">
-            <div className="sticky top-0 z-10 block flex items-center gap-3 bg-white/95 py-2 backdrop-blur-sm">
-              <h3 className="section-label">{category}</h3>
-              <div className="h-px flex-1 bg-slate-100" />
+            <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-[var(--color-border)] bg-[var(--color-surface)] py-2">
+              <h3 className="section-label text-[var(--color-text-secondary)]">{category}</h3>
+              <div className="h-px flex-1 bg-slate-200" />
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -73,23 +73,23 @@ export function AnalyseTestsPanel({
                     key={test.id}
                     type="button"
                     onClick={() => toggleTest(test.id)}
-                    className={`group relative flex min-h-[88px] flex-col justify-center overflow-hidden rounded-2xl border px-3.5 py-3 text-left transition-all ${
+                    className={`group relative flex min-h-[84px] flex-col justify-center overflow-hidden rounded-md border px-3.5 py-3 text-left transition-colors ${
                       isSelected
-                        ? 'border-indigo-200 bg-indigo-50'
-                        : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-slate-50'
-                    } ${isChild ? 'ml-4 opacity-80 border-dashed' : ''}`}
+                        ? 'border-slate-900 bg-[var(--color-surface-muted)]'
+                        : 'border-[var(--color-border)] bg-[var(--color-surface)] hover:border-slate-300 hover:bg-[var(--color-surface-muted)]'
+                    } ${isChild ? 'ml-4 border-dashed opacity-80' : ''}`}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex flex-col">
-                        <span className={`text-[11px] font-semibold uppercase tracking-wide ${isSelected ? 'text-indigo-600' : 'text-slate-500'}`}>
+                        <span className={`text-[11px] font-semibold uppercase tracking-wide ${isSelected ? 'text-[var(--color-text)]' : 'text-[var(--color-text-soft)]'}`}>
                           {test.code}
                         </span>
-                        <span className={`mt-0.5 text-sm font-medium leading-tight ${isSelected ? 'text-indigo-900' : 'text-slate-700'}`}>
+                        <span className={`mt-0.5 text-sm font-medium leading-tight ${isSelected ? 'text-[var(--color-text)]' : 'text-slate-700'}`}>
                           {test.name}
                         </span>
                       </div>
-                      <div className={`w-4 h-4 shrink-0 rounded border flex items-center justify-center transition-colors ${
-                        isSelected ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 bg-slate-50 group-hover:border-indigo-300'
+                      <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border transition-colors ${
+                        isSelected ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 bg-[var(--color-surface-muted)] group-hover:border-slate-500'
                       }`}>
                         {isSelected && <Check size={10} strokeWidth={4} />}
                       </div>

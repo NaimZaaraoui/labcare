@@ -155,7 +155,7 @@ export default function TemperatureHistoryPage({ params }: { params: Promise<{ i
 
   return (
     <div className="mx-auto max-w-[1500px] space-y-6 pb-16">
-      <section className="rounded-3xl border bg-white px-5 py-4 shadow-[0_8px_28px_rgba(15,31,51,0.06)]">
+      <section className="rounded-xl border bg-[var(--color-surface)] px-5 py-4 shadow-[0_2px_8px_rgba(15,31,51,0.03)]">
         <TemperatureHistoryHeader
           instrumentName={data?.instrument.name}
           month={month}
@@ -171,7 +171,7 @@ export default function TemperatureHistoryPage({ params }: { params: Promise<{ i
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <ThermometerSnowflake className="h-5 w-5 text-[var(--color-accent)]" />
+                <ThermometerSnowflake className="h-5 w-5 text-[var(--color-text-secondary)]" />
                 <h2 className="text-sm font-semibold text-[var(--color-text)]">Plage cible</h2>
               </div>
               <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
@@ -181,12 +181,12 @@ export default function TemperatureHistoryPage({ params }: { params: Promise<{ i
                 <p className="mt-1 text-xs text-[var(--color-text-soft)]">Emplacement: {data.instrument.location}</p>
               )}
             </div>
-            <div className="rounded-2xl border bg-white px-4 py-3 text-xs text-[var(--color-text-soft)]">
+            <div className="rounded-md border bg-[var(--color-surface)] px-4 py-3 text-xs text-[var(--color-text-soft)]">
               {readings.length} relevé(s) sur la période
             </div>
           </div>
 
-          <div className="mt-5 rounded-2xl border bg-white p-4">
+          <div className="mt-5 rounded-md border bg-[var(--color-surface)] p-4">
             <TemperatureHistoryChart
               readings={readings}
               min={data.instrument.targetMin}

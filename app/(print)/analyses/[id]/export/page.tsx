@@ -26,52 +26,41 @@ export default function ExportPage() {
       ...(tokenHeaders || {}),
     };
 
-    const fetchAnalysis = async () => {
+    const loadData = async () => {
       try {
-        const res = await fetch(`/api/analyses/${id}`, {
-          headers: tokenHeaders,
-        });
-        if (res.ok) {
-          const data = await res.json();
+        const [analysisRes, settingsRes] = await Promise.all([
+          fetch(`/api/analyses/${id}`, { headers: tokenHeaders }),
+          fetch('/api/settings', { headers: tokenHeaders })
+        ]);
+
+        if (settingsRes.ok) {
+          const settingsData = await settingsRes.json();
+          setReportSettings(settingsData);
+        }
+
+        if (analysisRes.ok) {
+          const data = await analysisRes.json();
           setAnalysis(data);
           
-          // Mark as printed if not already marked
           if (!data.printedAt) {
-            await fetch(`/api/analyses/${id}`, {
+             fetch(`/api/analyses/${id}`, {
               method: 'PATCH',
               headers: patchHeaders,
               body: JSON.stringify({ printedAt: new Date().toISOString() })
-            });
+            }).catch(console.error);
           }
-
-          setTimeout(() => setReady(true), 500);
-        } else {
-          console.error('API Error: analyses fetch returned', res.status);
-          setTimeout(() => setReady(true), 1000);
         }
+        
+        // Wait for React to render the newly fetched settings (images) into the DOM
+        setTimeout(() => setReady(true), 800);
       } catch (error) {
-        console.error('Error fetching analysis for export:', error);
-        setTimeout(() => setReady(true), 1000);
-      }
-    };
-
-    const fetchSettings = async () => {
-      try {
-        const res = await fetch('/api/settings', {
-          headers: tokenHeaders,
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setReportSettings(data);
-        }
-      } catch (e) {
-        console.error('Error fetching settings for export:', e);
+        console.error('Error fetching data for export:', error);
+        setTimeout(() => setReady(true), 1500);
       }
     };
 
     if (id) {
-      fetchAnalysis();
-      fetchSettings();
+      loadData();
     }
   }, [id, searchParams]);
 
@@ -108,13 +97,18 @@ export default function ExportPage() {
   });
 
   return (
-    <div className="font-sans">
+    <div className="font-sans min-h-screen bg-[var(--color-surface)]">
       <style>{`
         *, body, html {
           font-family: "Segoe UI", "Helvetica Neue", ui-sans-serif, system-ui, sans-serif !important;
         }
         * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-        body { margin: 0 !important; padding: 0 !important; background: white !important; }
+        html, body {
+          margin: 0 !important;
+          padding: 0 !important;
+          background: white !important;
+          min-height: 100% !important;
+        }
       `}</style>
 
       <RapportImpression

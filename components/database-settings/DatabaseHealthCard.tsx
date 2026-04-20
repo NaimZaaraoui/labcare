@@ -11,7 +11,7 @@ interface DatabaseHealthCardProps {
 
 export function DatabaseHealthCard({ title, value, meta, status }: DatabaseHealthCardProps) {
   return (
-    <article className="rounded-2xl border bg-white p-4">
+    <article className="rounded-2xl border bg-[var(--color-surface)] p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-text-soft)]">{title}</p>

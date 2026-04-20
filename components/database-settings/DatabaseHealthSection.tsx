@@ -26,21 +26,21 @@ export function DatabaseHealthSection({ health }: Props) {
         />
         <DatabaseHealthCard
           title="Sauvegardes"
-          status={health?.backups.isFresh ? 'ok' : 'alert'}
+          status={health?.backups.isFresh && health?.backups.latestValidation?.valid !== false ? 'ok' : 'alert'}
           value={health?.backups.count ? `${health.backups.count} fichier(s)` : 'Aucune'}
           meta={
             health?.backups.latestCreatedAt
-              ? `Dernière: ${new Date(health.backups.latestCreatedAt).toLocaleString('fr-FR')}`
+              ? `Dernière: ${new Date(health.backups.latestCreatedAt).toLocaleString('fr-FR')} · ${health.backups.latestValidation?.valid === false ? 'validation échouée' : 'validation OK'}`
               : 'Aucune sauvegarde récente'
           }
         />
         <DatabaseHealthCard
           title="Bundles reprise"
-          status={health?.recoveryBundles.count ? 'ok' : 'alert'}
+          status={health?.recoveryBundles.count && health?.recoveryBundles.latestValidation?.valid !== false ? 'ok' : 'alert'}
           value={health?.recoveryBundles.count ? `${health.recoveryBundles.count} archive(s)` : 'Aucune'}
           meta={
             health?.recoveryBundles.latestCreatedAt
-              ? `Dernière: ${new Date(health.recoveryBundles.latestCreatedAt).toLocaleString('fr-FR')}`
+              ? `Dernière: ${new Date(health.recoveryBundles.latestCreatedAt).toLocaleString('fr-FR')} · ${health.recoveryBundles.latestValidation?.valid === false ? 'validation échouée' : 'validation OK'}`
               : 'Aucune archive de reprise'
           }
         />
@@ -62,9 +62,31 @@ export function DatabaseHealthSection({ health }: Props) {
           }
           meta={health?.externalTarget.configuredPath || 'Aucun dossier distant ou externe défini'}
         />
+        <DatabaseHealthCard
+          title="Derniers tests"
+          status={
+            health?.testHistory.lastBackupTestOk === false || health?.testHistory.lastRecoveryTestOk === false
+              ? 'alert'
+              : health?.testHistory.lastBackupTestAt || health?.testHistory.lastRecoveryTestAt
+                ? 'ok'
+                : 'alert'
+          }
+          value={
+            health?.testHistory.lastBackupTestAt || health?.testHistory.lastRecoveryTestAt
+              ? 'Des tests ont été exécutés'
+              : 'Aucun test manuel'
+          }
+          meta={
+            health?.testHistory.lastRecoveryTestAt
+              ? `Dernier bundle: ${new Date(health.testHistory.lastRecoveryTestAt).toLocaleString('fr-FR')}`
+              : health?.testHistory.lastBackupTestAt
+                ? `Dernier backup: ${new Date(health.testHistory.lastBackupTestAt).toLocaleString('fr-FR')}`
+                : 'Testez un backup ou bundle sans restaurer'
+          }
+        />
       </div>
 
-      <div className="mt-5 rounded-2xl border bg-white p-4">
+      <div className="mt-5 rounded-md border bg-[var(--color-surface)] p-4">
         <div className="flex items-center gap-2">
           <AlertTriangle className="h-4 w-4 text-amber-600" />
           <h3 className="text-sm font-semibold text-[var(--color-text)]">Derniers événements critiques</h3>
@@ -76,7 +98,7 @@ export function DatabaseHealthSection({ health }: Props) {
             health.criticalLogs.map((log) => (
               <div
                 key={log.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border bg-[var(--color-surface-muted)] px-3 py-2"
+                className="flex flex-wrap items-center justify-between gap-2 rounded-md border bg-[var(--color-surface-muted)] px-3 py-2"
               >
                 <div>
                   <p className="text-sm font-semibold text-[var(--color-text)]">{log.action}</p>

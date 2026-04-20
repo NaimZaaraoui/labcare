@@ -9,6 +9,15 @@ export function DatabaseGuideSection() {
             restaurations sont journalisés dans l&apos;audit.
           </p>
         </div>
+        <div className="mt-4 rounded-2xl border bg-[var(--color-surface)] p-4">
+          <h3 className="text-sm font-semibold text-[var(--color-text)]">Checklist opérateur</h3>
+          <div className="mt-3 space-y-2 text-sm text-[var(--color-text-soft)]">
+            <p>1. Vérifier qu&apos;un backup récent existe.</p>
+            <p>2. Vérifier qu&apos;un bundle de reprise récent existe.</p>
+            <p>3. Tester régulièrement un backup ou un bundle sans restaurer.</p>
+            <p>4. Faire une vraie restauration de test à intervalles réguliers sur une machine de validation.</p>
+          </div>
+        </div>
       </section>
 
       <section className="bento-panel p-5">
@@ -21,7 +30,7 @@ export function DatabaseGuideSection() {
         </div>
 
         <div className="mt-4 grid gap-4 xl:grid-cols-3">
-          <article className="rounded-2xl border bg-white p-4">
+          <article className="rounded-2xl border bg-[var(--color-surface)] p-4">
             <h3 className="text-sm font-semibold text-[var(--color-text)]">Linux</h3>
             <p className="mt-2 text-sm text-[var(--color-text-soft)]">
               Utilise <span className="font-semibold text-[var(--color-text)]">cron</span> pour lancer le backup chaque nuit.
@@ -31,7 +40,7 @@ export function DatabaseGuideSection() {
             </code>
           </article>
 
-          <article className="rounded-2xl border bg-white p-4">
+          <article className="rounded-2xl border bg-[var(--color-surface)] p-4">
             <h3 className="text-sm font-semibold text-[var(--color-text)]">Windows</h3>
             <p className="mt-2 text-sm text-[var(--color-text-soft)]">
               Utilise le <span className="font-semibold text-[var(--color-text)]">Planificateur de tâches</span> avec un script{' '}
@@ -42,7 +51,7 @@ export function DatabaseGuideSection() {
             </code>
           </article>
 
-          <article className="rounded-2xl border bg-white p-4">
+          <article className="rounded-2xl border bg-[var(--color-surface)] p-4">
             <h3 className="text-sm font-semibold text-[var(--color-text)]">macOS</h3>
             <p className="mt-2 text-sm text-[var(--color-text-soft)]">
               Utilise <span className="font-semibold text-[var(--color-text)]">launchd</span> ou cron selon le poste

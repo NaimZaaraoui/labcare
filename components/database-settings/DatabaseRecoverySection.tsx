@@ -28,14 +28,14 @@ export function DatabaseRecoverySection({
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-        <div className="rounded-2xl border bg-white p-4">
+        <div className="rounded-2xl border bg-[var(--color-surface)] p-4">
           <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-text-soft)]">Import depuis un autre poste</p>
           <p className="mt-2 text-sm text-[var(--color-text-soft)]">
             Après réinstallation de NexLab, l’admin peut importer un bundle `.tar.gz`, puis utiliser le bouton <span className="font-semibold text-[var(--color-text)]">Restaurer</span> pour relancer le laboratoire sans passer par une commande terminal.
           </p>
         </div>
 
-        <div className="rounded-2xl border bg-white p-4">
+        <div className="rounded-2xl border bg-[var(--color-surface)] p-4">
           <label className="block">
             <span className="form-label mb-1.5">Bundle de reprise à importer</span>
             <input

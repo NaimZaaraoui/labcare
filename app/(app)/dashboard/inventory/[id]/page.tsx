@@ -85,7 +85,7 @@ export default function InventoryDetailPage() {
 
   return (
     <div className="mx-auto max-w-[1500px] space-y-5 pb-16">
-      <section className="rounded-3xl border bg-white px-5 py-4 shadow-[0_8px_28px_rgba(15,31,51,0.06)]">
+      <section className="rounded-xl border bg-[var(--color-surface)] px-5 py-4 shadow-[0_2px_8px_rgba(15,31,51,0.03)]">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <PageBackLink href="/dashboard/inventory" />

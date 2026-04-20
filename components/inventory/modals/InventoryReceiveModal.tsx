@@ -28,7 +28,7 @@ export function InventoryReceiveModal({
           <label className="grid gap-1">
             <span className="form-label">N° de lot</span>
             <input
-              className="input-premium h-11 bg-white"
+              className="input-premium h-11 bg-[var(--color-surface)]"
               value={lotNumber}
               onChange={(e) => onLotNumberChange(e.target.value)}
               required
@@ -38,7 +38,7 @@ export function InventoryReceiveModal({
             <span className="form-label">Date d’expiration</span>
             <input
               type="date"
-              className="input-premium h-11 bg-white"
+              className="input-premium h-11 bg-[var(--color-surface)]"
               value={expiryDate}
               onChange={(e) => onExpiryDateChange(e.target.value)}
               required
@@ -49,7 +49,7 @@ export function InventoryReceiveModal({
             <input
               type="number"
               step="0.01"
-              className="input-premium h-11 bg-white"
+              className="input-premium h-11 bg-[var(--color-surface)]"
               value={quantity}
               onChange={(e) => onQuantityChange(e.target.value)}
               required

@@ -1,6 +1,7 @@
 'use client';
 
 import type React from 'react';
+import { useScrollLock } from '@/hooks/useScrollLock';
 import { X } from 'lucide-react';
 import { PERIOD_LABELS, type Instrument, type TemperaturePeriod } from '@/components/temperature/types';
 
@@ -29,6 +30,7 @@ export function RecordReadingModal({
   onRecordValueChange,
   onCorrectiveActionChange,
 }: RecordReadingModalProps) {
+  useScrollLock(open);
   if (!open || !instrument) return null;
 
   return (

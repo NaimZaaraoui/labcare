@@ -162,7 +162,7 @@ export default function PatientsPage() {
               id="patients-items-per-page"
               value={itemsPerPage}
               onChange={(event) => setItemsPerPage(Number(event.target.value))}
-              className="input-premium h-10 w-[92px] px-3"
+              className="input-premium h-10 w-[92px] rounded-md px-3"
             >
               {[10, 20, 50, 100].map((option) => (
                 <option key={option} value={option}>

@@ -8,6 +8,7 @@ import {
   getDatabaseFilePath,
   listDatabaseBackups,
   pruneDatabaseBackups,
+  validateDatabaseBackupFile,
 } from '@/lib/database-backups';
 
 export const runtime = 'nodejs';
@@ -41,6 +42,7 @@ export async function POST(request: Request) {
 
   try {
     const backup = await createDatabaseBackup();
+    const validation = validateDatabaseBackupFile(backup.absolutePath);
     const retentionSetting = await prisma.setting.findUnique({
       where: { key: 'database_backup_retention_count' },
       select: { value: true },
@@ -56,6 +58,7 @@ export async function POST(request: Request) {
       details: {
         fileName: backup.fileName,
         size: backup.size,
+        validation,
         retainCount,
         deletedAfterCreate: pruneResult.deleted.map((item) => item.fileName),
       },
@@ -66,6 +69,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       message: 'Sauvegarde créée avec succès.',
       item: backup,
+      validation,
       retention: {
         retainCount,
         deletedCount: pruneResult.deleted.length,

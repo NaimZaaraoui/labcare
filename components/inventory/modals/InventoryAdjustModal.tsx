@@ -31,7 +31,7 @@ export function InventoryAdjustModal({
             <input
               type="number"
               step="0.01"
-              className="input-premium h-11 bg-white"
+              className="input-premium h-11 bg-[var(--color-surface)]"
               value={newStock}
               onChange={(e) => onNewStockChange(e.target.value)}
               required
@@ -40,7 +40,7 @@ export function InventoryAdjustModal({
           <label className="grid gap-1">
             <span className="form-label">Motif</span>
             <textarea
-              className="input-premium min-h-[100px] bg-white p-3"
+              className="input-premium min-h-[100px] bg-[var(--color-surface)] p-3"
               value={reason}
               onChange={(e) => onReasonChange(e.target.value)}
               required

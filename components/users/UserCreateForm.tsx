@@ -44,9 +44,9 @@ export function UserCreateForm({ onUserCreated }: Props) {
   };
 
   return (
-    <div className="rounded-3xl border bg-white p-6 shadow-[0_8px_24px_rgba(15,31,51,0.05)]">
-      <h3 className="mb-6 flex items-center gap-2 text-lg font-semibold text-slate-900">
-        <UserPlus size={20} className="text-indigo-500" />
+    <div className="rounded-xl border bg-[var(--color-surface)] p-6 shadow-[0_2px_8px_rgba(15,31,51,0.03)]">
+      <h3 className="mb-6 flex items-center gap-2 text-lg font-semibold text-[var(--color-text)]">
+        <UserPlus size={20} className="text-[var(--color-text-soft)]" />
         Nouveau Compte
       </h3>
 
@@ -108,9 +108,9 @@ export function UserCreateForm({ onUserCreated }: Props) {
         </div>
 
         {error && (
-          <div className="xl:col-span-2 p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-3">
-            <XCircle size={16} className="text-rose-500 shrink-0" />
-            <p className="text-xs font-semibold text-rose-600">{error}</p>
+          <div className="xl:col-span-2 flex items-center gap-3 rounded-md border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4">
+            <XCircle size={16} className="shrink-0 text-[var(--color-text-soft)]" />
+            <p className="text-xs font-semibold text-[var(--color-text)]">{error}</p>
           </div>
         )}
 

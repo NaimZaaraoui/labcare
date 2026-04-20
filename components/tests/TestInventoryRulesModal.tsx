@@ -1,6 +1,7 @@
 'use client';
 
 import { Package, Pencil, Save, Trash2, X } from 'lucide-react';
+import { useScrollLock } from '@/hooks/useScrollLock';
 import type { Test } from '@/lib/types';
 import type { InventoryFormState, InventoryItemOption, InventoryRule } from '@/components/tests/types';
 
@@ -35,19 +36,20 @@ export function TestInventoryRulesModal({
   onDeleteRule,
   onCancelEdit,
 }: TestInventoryRulesModalProps) {
+  useScrollLock(open);
   if (!open) {
     return null;
   }
 
   return (
-    <div className="modal-overlay z-[70] animate-in fade-in duration-300" onClick={onClose}>
+    <div className="modal-overlay z-[70]" onClick={onClose}>
       <div
-        className="modal-shell flex w-full max-w-3xl max-h-[90vh] flex-col overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300"
+        className="modal-shell flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-start justify-between border-b border-[var(--color-border)] p-6">
           <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--color-accent-soft)] text-[var(--color-accent)] shrink-0">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border bg-[var(--color-surface-muted)] text-[var(--color-text-secondary)]">
               <Package size={22} />
             </div>
             <div>
@@ -59,16 +61,13 @@ export function TestInventoryRulesModal({
               </p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="rounded-xl p-2 text-[var(--color-text-soft)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)] transition-all"
-          >
+          <button onClick={onClose} className="rounded-lg p-2 text-[var(--color-text-soft)] transition-colors hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]">
             <X size={20} />
           </button>
         </div>
 
-        <div className="custom-scrollbar flex-1 space-y-6 overflow-y-auto bg-white p-6">
-          <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-5">
+        <div className="custom-scrollbar flex-1 space-y-6 overflow-y-auto bg-[var(--color-surface)] p-6">
+          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-5">
             <div className="mb-4">
               <h4 className="text-sm font-semibold text-[var(--color-text)]">
                 {editingRuleId ? 'Modifier la règle sélectionnée' : 'Ajouter ou mettre à jour une règle'}
@@ -84,7 +83,7 @@ export function TestInventoryRulesModal({
                 <select
                   value={form.itemId}
                   onChange={(event) => onFormChange({ ...form, itemId: event.target.value })}
-                  className="input-premium h-11 bg-white"
+                  className="input-premium h-11 bg-[var(--color-surface)]"
                   disabled={Boolean(editingRuleId)}
                 >
                   {items.map((item) => (
@@ -102,7 +101,7 @@ export function TestInventoryRulesModal({
                   step="0.01"
                   value={form.quantityPerTest}
                   onChange={(event) => onFormChange({ ...form, quantityPerTest: event.target.value })}
-                  className="input-premium h-11 bg-white"
+                  className="input-premium h-11 bg-[var(--color-surface)]"
                   placeholder="0.5"
                   required
                 />
@@ -133,11 +132,11 @@ export function TestInventoryRulesModal({
             {loading ? (
               <div className="space-y-3">
                 {Array.from({ length: 3 }).map((_, index) => (
-                  <div key={index} className="h-16 rounded-2xl border bg-[var(--color-surface-muted)] animate-pulse" />
+                  <div key={index} className="h-16 animate-pulse rounded-xl border bg-[var(--color-surface-muted)]" />
                 ))}
               </div>
             ) : rules.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface-muted)] px-5 py-10 text-center">
+              <div className="rounded-xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface-muted)] px-5 py-10 text-center">
                 <div className="text-sm font-medium text-[var(--color-text)]">Aucune consommation configurée</div>
                 <div className="mt-1 text-xs text-[var(--color-text-soft)]">
                   Liez ici les réactifs ou consommables utilisés par ce test.
@@ -146,7 +145,7 @@ export function TestInventoryRulesModal({
             ) : (
               <div className="space-y-3">
                 {rules.map((rule) => (
-                  <div key={rule.id} className="rounded-2xl border bg-white px-4 py-4 shadow-[0_8px_22px_rgba(15,31,51,0.04)]">
+                  <div key={rule.id} className="rounded-xl border bg-[var(--color-surface)] px-4 py-4 shadow-[0_4px_12px_rgba(15,31,51,0.04)]">
                     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                       <div>
                         <div className="text-sm font-semibold text-[var(--color-text)]">{rule.item.name}</div>
@@ -163,18 +162,10 @@ export function TestInventoryRulesModal({
                         <span className="text-sm font-semibold text-[var(--color-accent)]">
                           {rule.quantityPerTest} {rule.item.unit} / analyse
                         </span>
-                        <button
-                          onClick={() => onEditRule(rule)}
-                          className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-blue-200 bg-blue-50 text-[var(--color-accent)] transition-colors hover:bg-blue-100"
-                          title="Modifier"
-                        >
+                        <button onClick={() => onEditRule(rule)} className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface)]" title="Modifier">
                           <Pencil size={15} />
                         </button>
-                        <button
-                          onClick={() => onDeleteRule(rule.id)}
-                          className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-rose-200 bg-rose-50 text-rose-700 transition-colors hover:bg-rose-100"
-                          title="Supprimer"
-                        >
+                        <button onClick={() => onDeleteRule(rule.id)} className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)] text-rose-700 transition-colors hover:bg-[var(--color-surface)]" title="Supprimer">
                           <Trash2 size={15} />
                         </button>
                       </div>

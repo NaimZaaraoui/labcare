@@ -27,7 +27,7 @@ export function InventoryRuleModal({
           <label className="grid gap-1">
             <span className="form-label">Test</span>
             <select
-              className="input-premium h-11 bg-white"
+              className="input-premium h-11 bg-[var(--color-surface)]"
               value={testId}
               onChange={(e) => onTestIdChange(e.target.value)}
             >
@@ -43,7 +43,7 @@ export function InventoryRuleModal({
             <input
               type="number"
               step="0.01"
-              className="input-premium h-11 bg-white"
+              className="input-premium h-11 bg-[var(--color-surface)]"
               value={quantityPerTest}
               onChange={(e) => onQuantityPerTestChange(e.target.value)}
               required

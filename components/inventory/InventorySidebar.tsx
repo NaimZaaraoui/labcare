@@ -40,10 +40,10 @@ export function InventorySidebar({
           <div
             className={`h-full ${
               item.status === 'critical' || item.status === 'expired'
-                ? 'bg-rose-500'
+                ? 'bg-slate-700'
                 : item.status === 'low'
-                  ? 'bg-amber-400'
-                  : 'bg-emerald-500'
+                  ? 'bg-slate-500'
+                  : 'bg-slate-300'
             }`}
             style={{ width: `${ratio}%` }}
           />
@@ -67,7 +67,7 @@ export function InventorySidebar({
         <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-[var(--color-text-secondary)]">Actions</h2>
         <div className="mt-4 grid gap-2">
           {canWrite && (
-            <button onClick={onReceive} className="btn-primary-md justify-start px-4">
+            <button onClick={onReceive} className="btn-secondary-md justify-start px-4">
               <Plus className="h-4 w-4" />
               Réceptionner un lot
             </button>

@@ -146,7 +146,7 @@ Ces zones ont désormais des composants et types dédiés au lieu de tout laisse
 1. [ResultatsForm.tsx](/home/naim/labcare-cssb/components/analyses/ResultatsForm.tsx)
    - n'est plus monolithique
    - reste un centre d'orchestration important, mais la dette a beaucoup reculé
-   - la prochaine passe serait surtout de calmer les derniers handlers locaux et le flux de notifications
+   - sa priorité a baissé depuis l'extraction de `useResultatsData`, `useResultatsPersistence` et `useResultatsUi`
 
 2. [RapportImpression.tsx](/home/naim/labcare-cssb/components/print/RapportImpression.tsx)
    - beaucoup mieux qu'avant
@@ -158,6 +158,10 @@ Ces zones ont désormais des composants et types dédiés au lieu de tout laisse
 
 4. [page.tsx](/home/naim/labcare-cssb/app/(app)/dashboard/inventory/[id]/page.tsx)
    - toujours riche en logique métier et actions
+
+5. [AnalyseForm.tsx](/home/naim/labcare-cssb/components/analyses/AnalyseForm.tsx)
+   - structure déjà meilleure, mais encore assez volumineuse
+   - prochain bon candidat côté `analyses/` maintenant que `ResultatsForm` a reculé
 
 ### Priorité B
 
@@ -175,7 +179,7 @@ Le prochain ordre rationnel est :
 1. continuer `settings/database`
 2. poursuivre `inventory/[id]`
 3. revenir sur `RapportImpression`
-4. seulement ensuite attaquer les autres composants moyens
+4. puis attaquer `AnalyseForm` ou `AnalysesList`
 
 ## Conclusion honnête
 

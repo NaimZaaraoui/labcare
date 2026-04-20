@@ -56,7 +56,7 @@ export function TestListPanel({
                 {filteredTests.map((test) => (
                   <SortableItem key={test.id} id={test.id}>
                     {({ attributes, listeners }) => (
-                      <div className="p-3 bg-white border border-[var(--color-border)] rounded-xl flex items-center justify-between hover:border-blue-200 hover:shadow-md transition-all group">
+                      <div className="p-3 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl flex items-center justify-between hover:border-blue-200 hover:shadow-md transition-all group">
                         <div className="flex items-center gap-4">
                           <div className="w-8 h-8 rounded-lg bg-[var(--color-surface-muted)] text-[var(--color-text-secondary)] font-mono text-[10px] flex items-center justify-center font-semibold group-hover:bg-[var(--color-accent-soft)] group-hover:text-[var(--color-accent)] transition-colors">
                             {test.code}
@@ -88,11 +88,11 @@ export function TestListPanel({
                     if (!test) return null;
                     return (
                       <div
-                        className="p-3 bg-white border border-indigo-200 rounded-xl flex items-center justify-between shadow-2xl opacity-90 scale-105"
+                        className="p-3 bg-[var(--color-surface)] border border-indigo-200 rounded-xl flex items-center justify-between shadow-2xl opacity-90 scale-105"
                         style={{ width: activeDragWidth ? `${activeDragWidth}px` : 'auto' }}
                       >
                         <div className="flex items-center gap-4">
-                          <div className="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 font-mono text-[10px] flex items-center justify-center font-bold">
+                          <div className="w-8 h-8 rounded-lg bg-indigo-100 text-[var(--color-accent)] font-mono text-[10px] flex items-center justify-center font-bold">
                             {test.code}
                           </div>
                           <span className="font-bold text-slate-700">{test.name}</span>

@@ -22,7 +22,7 @@ export function NotificationToast({ type, message }: NotificationToastProps) {
   }, []);
 
   return (
-    <div className={`fixed bottom-4 right-4 z-[100] flex items-center gap-3 rounded-2xl border border-[var(--color-border)] bg-white/95 px-4 py-3 shadow-[0_14px_40px_rgba(15,31,51,0.18)] backdrop-blur-md transition-all duration-300 lg:bottom-8 lg:right-8 ${
+    <div className={`fixed bottom-4 right-4 z-[100] flex items-center gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/95 px-4 py-3 shadow-[0_14px_40px_rgba(15,31,51,0.18)]  transition-all duration-300 lg:bottom-8 lg:right-8 ${
       isVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0 pointer-events-none'
     } ${
       type === 'success' ? 'text-emerald-900' : 'text-rose-900'

@@ -2,6 +2,7 @@
 
 import { AlertCircle, Calendar, CheckCircle2, CircleCheckBig, Filter } from 'lucide-react';
 import type { ExportConfigItem, ExportType, Category } from '@/components/exports/types';
+import { ANALYSIS_STATUSES, AnalysisStatus } from '@/lib/analysis-status';
 
 interface ExportFiltersPanelProps {
   exportType: ExportType;
@@ -70,8 +71,8 @@ export function ExportFiltersPanel({
                 onClick={() => onQuickRangeChange('today')}
                 className={`rounded-xl px-2 py-2 text-[11px] font-semibold transition-all ${
                   quickPreset === 'today'
-                    ? 'bg-white text-[var(--color-text)] shadow-sm'
-                    : 'text-[var(--color-text-soft)] hover:bg-white/80'
+                    ? 'bg-[var(--color-surface)] text-[var(--color-text)] shadow-sm'
+                    : 'text-[var(--color-text-soft)] hover:bg-[var(--color-surface)]/80'
                 }`}
               >
                 Aujourd&apos;hui
@@ -81,8 +82,8 @@ export function ExportFiltersPanel({
                 onClick={() => onQuickRangeChange('month')}
                 className={`rounded-xl px-2 py-2 text-[11px] font-semibold transition-all ${
                   quickPreset === 'month'
-                    ? 'bg-white text-[var(--color-text)] shadow-sm'
-                    : 'text-[var(--color-text-soft)] hover:bg-white/80'
+                    ? 'bg-[var(--color-surface)] text-[var(--color-text)] shadow-sm'
+                    : 'text-[var(--color-text-soft)] hover:bg-[var(--color-surface)]/80'
                 }`}
               >
                 Mois
@@ -92,8 +93,8 @@ export function ExportFiltersPanel({
                 onClick={() => onQuickRangeChange('year')}
                 className={`rounded-xl px-2 py-2 text-[11px] font-semibold transition-all ${
                   quickPreset === 'year'
-                    ? 'bg-white text-[var(--color-text)] shadow-sm'
-                    : 'text-[var(--color-text-soft)] hover:bg-white/80'
+                    ? 'bg-[var(--color-surface)] text-[var(--color-text)] shadow-sm'
+                    : 'text-[var(--color-text-soft)] hover:bg-[var(--color-surface)]/80'
                 }`}
               >
                 Année
@@ -155,18 +156,18 @@ export function ExportFiltersPanel({
               onChange={(event) => onStatusFilterChange(event.target.value)}
               className="input-premium h-11 !text-sm"
             >
+
               <option value="">Tous les statuts</option>
-              <option value="pending">En attente</option>
-              <option value="validated_tech">Validé Tech</option>
-              <option value="completed">Terminé</option>
-              <option value="validated_bio">Validé Bio</option>
+              {(Object.entries(ANALYSIS_STATUSES) as [AnalysisStatus, {label: string}][]).map(([key, meta]) => (
+                <option key={key} value={key}>{meta.label}</option>
+              ))}
             </select>
           </div>
         )}
 
         {!needsDateRange && !needsCategoryFilter && !needsStatusFilter && (
           <div className="space-y-4">
-            <div className="flex items-center gap-3 rounded-xl bg-slate-50 p-4">
+            <div className="flex items-center gap-3 rounded-xl bg-[var(--color-surface-muted)] p-4">
               <CheckCircle2 size={20} className="text-emerald-500" />
               <div>
                 <p className="text-sm font-bold text-slate-700">Aucune configuration requise</p>
@@ -194,7 +195,7 @@ export function ExportFiltersPanel({
         onClick={onExport}
         disabled={loading}
         className={`btn-primary-md mt-6 h-14 w-full text-sm font-semibold ${
-          loading ? 'cursor-not-allowed border border-[var(--color-border)] bg-slate-100 text-slate-400 shadow-none' : ''
+          loading ? 'cursor-not-allowed border border-[var(--color-border)] bg-[var(--color-surface-muted)] text-slate-400 shadow-none' : ''
         }`}
       >
         {loading ? (

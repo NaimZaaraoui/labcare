@@ -1,6 +1,6 @@
 'use client';
 
-import { Download, RotateCcw } from 'lucide-react';
+import { Download, RotateCcw, ShieldCheck } from 'lucide-react';
 import type { BackupItem } from '@/components/database-settings/types';
 
 interface DatabaseFileTableProps {
@@ -9,7 +9,9 @@ interface DatabaseFileTableProps {
   items: BackupItem[] | null | undefined;
   loading: boolean;
   restoringFile: string | null;
+  testingFile?: string | null;
   onRestore: (fileName: string) => void;
+  onValidate?: (fileName: string) => void;
   getDownloadHref: (fileName: string) => string;
   emptyLabel: string;
   formatBytes: (size: number) => string;
@@ -21,13 +23,15 @@ export function DatabaseFileTable({
   items,
   loading,
   restoringFile,
+  testingFile,
   onRestore,
+  onValidate,
   getDownloadHref,
   emptyLabel,
   formatBytes,
 }: DatabaseFileTableProps) {
   return (
-    <section className="overflow-hidden rounded-3xl border bg-white shadow-[0_8px_24px_rgba(15,31,51,0.05)]">
+    <section className="overflow-hidden rounded-xl border bg-[var(--color-surface)] shadow-[0_2px_8px_rgba(15,31,51,0.03)]">
       <div className="flex items-center justify-between border-b bg-[var(--color-surface-muted)] px-5 py-4">
         <div>
           <h2 className="text-sm font-semibold text-[var(--color-text)]">{title}</h2>
@@ -38,7 +42,7 @@ export function DatabaseFileTable({
       <div className="overflow-x-auto">
         <table className="w-full min-w-[860px]">
           <thead>
-            <tr className="border-b bg-white text-left">
+            <tr className="border-b bg-[var(--color-surface)] text-left">
               <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--color-text-soft)]">Fichier</th>
               <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--color-text-soft)]">Créé le</th>
               <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--color-text-soft)]">Taille</th>
@@ -78,10 +82,20 @@ export function DatabaseFileTable({
                   </td>
                   <td className="px-5 py-4 text-right">
                     <div className="flex justify-end gap-2">
+                      {onValidate && (
+                        <button
+                          onClick={() => onValidate(item.fileName)}
+                          className="btn-secondary-sm inline-flex"
+                          disabled={Boolean(restoringFile) || Boolean(testingFile)}
+                        >
+                          <ShieldCheck size={16} className={testingFile === item.fileName ? 'animate-pulse' : ''} />
+                          {testingFile === item.fileName ? 'Test...' : 'Tester'}
+                        </button>
+                      )}
                       <button
                         onClick={() => onRestore(item.fileName)}
                         className="btn-secondary-sm inline-flex"
-                        disabled={Boolean(restoringFile)}
+                        disabled={Boolean(restoringFile) || Boolean(testingFile)}
                       >
                         <RotateCcw size={16} className={restoringFile === item.fileName ? 'animate-spin' : ''} />
                         {restoringFile === item.fileName ? 'Restauration...' : 'Restaurer'}

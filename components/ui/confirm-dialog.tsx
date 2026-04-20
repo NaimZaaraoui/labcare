@@ -37,20 +37,20 @@ export function ConfirmDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
-        className="sm:max-w-[460px] rounded-3xl border border-[var(--color-border)] bg-white p-6 shadow-[0_18px_50px_rgba(15,31,51,0.18)] sm:p-7"
+        className="sm:max-w-[460px] rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-[0_10px_26px_rgba(15,31,51,0.10)] sm:p-7"
         showCloseButton={false}
       >
         <DialogHeader className="mb-2">
           <div className="flex items-start gap-4">
-            <div className={`w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 ${
+            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${
               isDestructive 
-                ? 'bg-rose-50' 
+                ? 'bg-rose-50'
                 : 'bg-[var(--color-accent-soft)]'
             }`}>
               {isDestructive ? (
-                <Trash2 className={`w-6 h-6 ${isDestructive ? 'text-rose-600' : 'text-indigo-600'}`} />
+                <Trash2 className="h-5 w-5 text-rose-700" />
               ) : (
-                <AlertCircle className={`w-6 h-6 ${isDestructive ? 'text-rose-600' : 'text-[var(--color-accent)]'}`} />
+                <AlertCircle className="h-5 w-5 text-[var(--color-accent)]" />
               )}
             </div>
             <div className="flex-1">
@@ -68,7 +68,7 @@ export function ConfirmDialog({
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="h-11 rounded-2xl border-[var(--color-border)] px-5 text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-muted)] transition-all active:scale-[0.99]"
+            className="h-11 rounded-xl border-[var(--color-border)] px-5 text-[var(--color-text-secondary)] transition-all active:scale-[0.99] hover:bg-[var(--color-surface-muted)]"
           >
             {cancelLabel}
           </Button>
@@ -77,7 +77,7 @@ export function ConfirmDialog({
               onConfirm();
               onOpenChange(false);
             }}
-            className={`h-11 rounded-2xl px-5 font-medium transition-all active:scale-[0.99] ${
+            className={`h-11 rounded-xl px-5 font-medium transition-all active:scale-[0.99] ${
               isDestructive 
                 ? 'bg-rose-600 hover:bg-rose-700 text-white' 
                 : 'bg-[var(--color-accent)] hover:brightness-95 text-white'

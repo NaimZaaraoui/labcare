@@ -18,7 +18,7 @@ export function ReadingSlot({ label, reading, unit, onClick }: ReadingSlotProps)
       onClick={onClick}
       className={`relative group cursor-pointer flex flex-col p-4 rounded-3xl border transition-all duration-200 ${
         isPending
-          ? 'border-dashed border-slate-200 bg-slate-50/30 hover:bg-indigo-50/30 hover:border-indigo-200'
+          ? 'border-dashed border-[var(--color-border)] bg-[var(--color-surface-muted)]/30 hover:bg-indigo-50/30 hover:border-indigo-200'
           : reading.isOutOfRange
             ? 'border-rose-100 bg-rose-50/50 hover:bg-rose-50'
             : 'border-emerald-100 bg-emerald-50/50 hover:bg-emerald-50'

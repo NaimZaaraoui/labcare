@@ -21,7 +21,7 @@ export function TemperatureHistoryHeader({
   onPrint,
 }: TemperatureHistoryHeaderProps) {
   return (
-    <section className="rounded-3xl border bg-white px-5 py-4 shadow-[0_8px_28px_rgba(15,31,51,0.06)]">
+    <section className="rounded-xl border bg-[var(--color-surface)] px-5 py-4 shadow-[0_2px_8px_rgba(15,31,51,0.03)]">
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
           <PageBackLink href="/dashboard/temperature" />
@@ -29,7 +29,7 @@ export function TemperatureHistoryHeader({
           <p className="mt-1 text-sm text-[var(--color-text-soft)]">{instrumentName || 'Instrument'}</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <div className="input-premium flex h-11 items-center gap-2 px-3">
+          <div className="input-premium flex h-11 items-center gap-2 rounded-md px-3">
             <Calendar className="h-4 w-4 text-[var(--color-text-soft)]" />
             <input
               type="month"

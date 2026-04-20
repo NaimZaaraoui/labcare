@@ -12,6 +12,7 @@ export const viewport: Viewport = {
   maximumScale: 5,
 }
 
+import { ThemeProvider } from "@/components/ThemeProvider";
 import { Providers } from "@/components/Providers";
 import { auth } from "@/lib/auth";
 
@@ -23,11 +24,13 @@ export default async function RootLayout({
   const session = await auth();
   
   return (
-    <html lang="fr">
+    <html lang="fr" suppressHydrationWarning>
       <body className="bg-[var(--color-page)] font-sans antialiased text-[var(--color-text-secondary)]">
-        <Providers session={session}>
-          {children}
-        </Providers>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem storageKey="nexlab-theme" disableTransitionOnChange>
+          <Providers session={session}>
+            {children}
+          </Providers>
+        </ThemeProvider>
       </body>
     </html>
   );

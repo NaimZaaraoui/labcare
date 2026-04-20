@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { GlobalSearchBox } from '@/components/layout/GlobalSearchBox';
 import { NotificationsMenu } from '@/components/layout/NotificationsMenu';
 import { QcStatusChip } from '@/components/layout/QcStatusChip';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import type { HeaderNotification, HeaderQcSummary, HeaderSearchResult } from '@/components/layout/types';
 import { useMobileMenu } from '@/contexts/MobileMenuContext';
 import { useSession } from 'next-auth/react';
@@ -147,7 +148,7 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-[var(--color-border)] bg-[var(--color-page)]/95 backdrop-blur-xl">
+    <header className="sticky top-0 z-40 border-b border-[var(--color-border)] bg-[var(--color-page)]/95 ">
       <div className="flex h-20 items-center justify-between gap-4 px-4 lg:px-6 xl:px-8">
         <div className="flex min-w-0 flex-1 items-center gap-3">
           <button
@@ -155,9 +156,9 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
               toggle();
               onMobileMenuToggle?.();
             }}
-            className="rounded-xl border bg-white p-2 text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-surface-muted)] lg:hidden"
+            className="rounded-xl border bg-[var(--color-surface)] p-2 text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-surface-muted)] lg:hidden"
           >
-            <Menu className="w-5 h-5 text-slate-600" />
+            <Menu className="w-5 h-5 text-[var(--color-text-secondary)]" />
           </button>
 
           <GlobalSearchBox
@@ -179,6 +180,7 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-2.5">
+          <ThemeToggle />
           <QcStatusChip qcSummary={qcSummary} onClick={() => router.push('/dashboard/qc')} />
 
           <NotificationsMenu
@@ -195,7 +197,7 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
             }}
           />
 
-          <div className="group flex items-center gap-2.5 rounded-2xl border bg-white px-2.5 py-1.5">
+          <div className="group flex items-center gap-2.5 rounded-2xl border bg-[var(--color-surface)] px-2.5 py-1.5">
             <div className="hidden text-right sm:flex sm:flex-col">
               <div className="text-xs font-semibold text-[var(--color-text)]">{user?.name || 'Utilisateur'}</div>
               <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--color-text-soft)]">{roleLabel}</div>

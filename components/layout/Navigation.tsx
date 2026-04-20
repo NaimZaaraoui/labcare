@@ -38,7 +38,7 @@ export function Navigation() {
   return (
     <>
       <aside
-        className={`fixed left-0 top-0 z-50 hidden h-full flex-col border-r border-[var(--color-border)] bg-[var(--color-surface)]/95 shadow-[8px_0_36px_rgba(15,31,51,0.08)] backdrop-blur-sm transition-all duration-300 lg:flex ${
+        className={`fixed left-0 top-0 z-50 hidden h-full flex-col border-r border-[var(--color-border)] bg-[var(--color-surface)] transition-all duration-300 lg:flex ${
           sidebarOpen ? 'w-[var(--shell-nav-width)]' : 'w-[var(--shell-nav-width-collapsed)]'
         }`}
       >
@@ -56,7 +56,7 @@ export function Navigation() {
 
         <button
           onClick={toggleCollapse}
-          className="absolute -right-3 top-8 flex h-7 w-7 items-center justify-center rounded-full border bg-white text-[var(--color-text-soft)] shadow-md transition-colors hover:bg-[var(--color-surface-muted)]"
+          className="absolute -right-3 top-8 flex h-7 w-7 items-center justify-center rounded-full border bg-[var(--color-surface)] text-[var(--color-text-soft)] transition-colors hover:bg-[var(--color-surface-muted)]"
         >
           <ChevronLeft
             className={`w-4 h-4 transition-transform ${!sidebarOpen && 'rotate-180'}`}
@@ -66,13 +66,13 @@ export function Navigation() {
 
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-slate-900/25 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-slate-900/25  lg:hidden"
           onClick={closeMobile}
         />
       )}
 
       <aside
-        className={`fixed left-0 top-0 z-50 flex h-full w-[88vw] max-w-[320px] flex-col border-r border-[var(--color-border)] bg-[var(--color-surface)] transition-transform shadow-2xl lg:hidden ${
+        className={`fixed left-0 top-0 z-50 flex h-full w-[88vw] max-w-[320px] flex-col border-r border-[var(--color-border)] bg-[var(--color-surface)] transition-transform shadow-[0_10px_30px_rgba(15,31,51,0.10)] lg:hidden ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >

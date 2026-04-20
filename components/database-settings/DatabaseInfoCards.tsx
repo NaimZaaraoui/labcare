@@ -11,7 +11,7 @@ export function DatabaseInfoCards({ data, newestBackupCreatedAt }: Props) {
     <section className="grid gap-4 md:grid-cols-3">
       <article className="bento-panel p-5">
         <div className="flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-50 text-[var(--color-accent)]">
             <Database size={20} />
           </span>
           <div>
@@ -37,7 +37,7 @@ export function DatabaseInfoCards({ data, newestBackupCreatedAt }: Props) {
 
       <article className="bento-panel p-5">
         <div className="flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
+          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--color-surface-muted)] text-slate-700">
             <ShieldCheck size={20} />
           </span>
           <div>

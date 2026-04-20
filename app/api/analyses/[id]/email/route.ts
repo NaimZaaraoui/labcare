@@ -216,6 +216,15 @@ export async function POST(
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    try {
+      await prisma.analysis.update({
+        where: { id },
+        data: { emailedAt: new Date() }
+      });
+    } catch (dbError) {
+      console.error('Error updating emailedAt:', dbError);
+    }
+
     return NextResponse.json({ success: true, messageId: data?.id });
   } catch (error: unknown) {
     console.error('Error sending email:', error);

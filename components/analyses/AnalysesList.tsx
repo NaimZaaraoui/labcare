@@ -31,10 +31,13 @@ export function AnalysesList() {
     paginatedAnalyses,
     totalPages,
     deletingId,
+    sendingEmailId,
     confirmDialog,
     setConfirmDialog,
     handleDeleteRequest,
     handleConfirmDelete,
+    handlePrintRequest,
+    handleEmailRequest,
   } = useAnalysesList();
 
   if (loading) {
@@ -60,7 +63,7 @@ export function AnalysesList() {
         setCustomDate={setCustomDate}
       />
 
-      <section className="overflow-hidden rounded-3xl border bg-white shadow-[0_10px_30px_rgba(15,31,51,0.06)]">
+      <section className="overflow-hidden rounded-xl border bg-[var(--color-surface)] shadow-[0_2px_8px_rgba(15,31,51,0.03)]">
         {filteredAnalyses.length === 0 ? (
           <div className="empty-state mx-4 my-6">
             <div className="empty-state-icon">
@@ -73,14 +76,14 @@ export function AnalysesList() {
           </div>
         ) : (
           <>
-            <div className="hidden grid-cols-12 border-b bg-[var(--color-surface-muted)] px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--color-text-soft)] lg:grid">
+            <div className="hidden grid-cols-12 border-b bg-[var(--color-surface-muted)] px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--color-text-soft)] lg:grid">
               <div className="col-span-1 text-center">ID</div>
               <div className="col-span-4">Patient</div>
               <div className="col-span-2">Date</div>
               <div className="col-span-1 text-center">TAT</div>
-              <div className="col-span-2 text-center">Commande</div>
+              <div className="col-span-1 text-center truncate" title="Commande">Cmd</div>
               <div className="col-span-1 text-center">Statut</div>
-              <div className="col-span-1 text-right">Actions</div>
+              <div className="col-span-2 text-right">Actions</div>
             </div>
 
             <div className="divide-y">
@@ -91,7 +94,10 @@ export function AnalysesList() {
                   currencyUnit={currencyUnit}
                   tatThresholds={tatThresholds}
                   deletingId={deletingId}
+                  sendingEmailId={sendingEmailId}
                   onDeleteRequest={handleDeleteRequest}
+                  onPrintRequest={handlePrintRequest}
+                  onEmailRequest={handleEmailRequest}
                 />
               ))}
             </div>
@@ -105,7 +111,7 @@ export function AnalysesList() {
                   id="items-per-page"
                   value={itemsPerPage}
                   onChange={(event) => setItemsPerPage(Number(event.target.value))}
-                  className="input-premium h-10 w-[92px] px-3"
+                  className="input-premium h-10 w-[92px] rounded-md px-3"
                 >
                   {ITEMS_PER_PAGE_OPTIONS.map((option) => (
                     <option key={option} value={option}>

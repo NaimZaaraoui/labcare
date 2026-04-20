@@ -21,7 +21,7 @@ export function TemperatureReadingsTable({
   onInvalidate,
 }: TemperatureReadingsTableProps) {
   return (
-    <section className="overflow-hidden rounded-3xl border bg-white shadow-[0_8px_24px_rgba(15,31,51,0.05)]">
+    <section className="overflow-hidden rounded-xl border bg-[var(--color-surface)] shadow-[0_2px_8px_rgba(15,31,51,0.03)]">
       <div className="flex items-center justify-between border-b bg-[var(--color-surface-muted)] px-5 py-4">
         <div>
           <h2 className="text-sm font-semibold text-[var(--color-text)]">Relevés du mois</h2>
@@ -32,7 +32,7 @@ export function TemperatureReadingsTable({
       <div className="overflow-x-auto">
         <table className="w-full min-w-[900px]">
           <thead>
-            <tr className="border-b bg-white text-left">
+            <tr className="border-b bg-[var(--color-surface)] text-left">
               <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--color-text-soft)]">Date</th>
               <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--color-text-soft)]">Période</th>
               <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--color-text-soft)]">Valeur</th>
@@ -72,7 +72,7 @@ export function TemperatureReadingsTable({
                     {reading.value} {instrument?.unit}
                   </td>
                   <td className="px-5 py-4">
-                    <span className={`status-pill ${reading.isOutOfRange ? 'status-pill-error' : 'status-pill-success'}`}>
+                    <span className={`status-pill rounded-md px-2.5 py-1 ${reading.isOutOfRange ? 'status-pill-error' : 'status-pill-success'}`}>
                       {reading.isOutOfRange ? 'Hors plage' : 'Conforme'}
                     </span>
                   </td>

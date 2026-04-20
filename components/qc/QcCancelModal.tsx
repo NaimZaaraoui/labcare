@@ -1,6 +1,7 @@
 'use client';
 
 import { X } from 'lucide-react';
+import { useScrollLock } from '@/hooks/useScrollLock';
 
 interface Props {
   isOpen: boolean;
@@ -19,13 +20,15 @@ export function QcCancelModal({
   onMotiveChange,
   onConfirm,
 }: Props) {
+  useScrollLock(isOpen);
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm print:hidden p-4">
-      <div className="w-full max-w-sm rounded-[2rem] bg-white p-6 shadow-2xl animate-scale-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 print:hidden">
+      <div className="w-full max-w-sm rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-[0_10px_26px_rgba(15,31,51,0.10)]">
          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-slate-900">Invalider le point</h3>
+            <h3 className="font-semibold text-[var(--color-text)]">Invalider le point</h3>
             <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
                <X size={20} />
             </button>
@@ -37,7 +40,7 @@ export function QcCancelModal({
             value={motive}
             onChange={(e) => onMotiveChange(e.target.value)}
             placeholder="Motif d'invalidation (obligatoire)..."
-            className="input-premium h-24 mb-5 text-sm resize-none"
+            className="input-premium mb-5 h-24 resize-none text-sm"
          />
          <div className="flex gap-2">
             <button onClick={onClose} className="btn-secondary-md w-full">Annuler</button>

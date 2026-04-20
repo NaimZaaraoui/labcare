@@ -63,9 +63,13 @@ export const formatResultsForExcel = (analysesWithResults: any[]) => {
   const rows: any[] = [];
   
   analysesWithResults.forEach(analysis => {
-    analysis.results.forEach((res: any) => {
-      if (res.test?.isGroup) return; // Skip group headers
+    analysis.results?.forEach((res: any) => {
+      if (res.test?.isGroup) return;
+      if (!res.test) return; // Skip orphaned results
       
+      const refMin = res.test.minValue ?? res.test.minValueM ?? null;
+      const refMax = res.test.maxValue ?? res.test.maxValueM ?? null;
+
       rows.push({
         'Date': format(new Date(analysis.creationDate), 'dd/MM/yyyy', { locale: fr }),
         'N° Commande': analysis.orderNumber,
@@ -74,6 +78,8 @@ export const formatResultsForExcel = (analysesWithResults: any[]) => {
         'Code': res.test?.code || '',
         'Résultat': res.value || '',
         'Unité': res.unit || res.test?.unit || '',
+        'Ref. Min': refMin ?? '',
+        'Ref. Max': refMax ?? '',
         'Normalité': res.abnormal ? 'Anormal' : 'Normal',
         'Note': res.notes || ''
       });
@@ -193,8 +199,8 @@ export const formatMonthlySummaryForExcel = (analyses: any[], currencyUnit: stri
  */
 export const formatCategorySummaryForExcel = (analysesWithResults: any[]): Record<string, unknown>[] => {
   const byCategory = analysesWithResults.reduce<Record<string, { category: string; count: number; abnormal: number; normal: number }>>((acc, a) => {
-    a.results?.forEach((res: any) => {
-      if (res.test?.isGroup) return;
+    (a.results || []).forEach((res: any) => {
+      if (!res.test || res.test?.isGroup) return; // Skip groups & orphans
       const cat = res.test?.categoryRel?.name || 'Non classé';
       if (!acc[cat]) {
         acc[cat] = { category: cat, count: 0, abnormal: 0, normal: 0 };

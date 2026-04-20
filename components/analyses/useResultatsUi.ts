@@ -1,4 +1,4 @@
-import { useCallback, type Dispatch, type MutableRefObject, type SetStateAction } from 'react';
+import { useCallback, useState, type Dispatch, type MutableRefObject, type SetStateAction } from 'react';
 import type { ResultWithRenderCategory, AnalysisInputsMap } from './types';
 
 interface UseResultatsUiOptions {
@@ -47,21 +47,15 @@ export function useResultatsUi({
     ));
   }, [setSelectedTestIds]);
 
+  const [printUrl, setPrintUrl] = useState<string | null>(null);
+
   const handlePrint = useCallback(() => {
     const selected = selectedIds.length > 0 ? `&selected=${selectedIds.join(',')}` : '';
-    window.open(
-      `/analyses/${analysisId}/export?autoprint=1&closeAfterPrint=1${selected}`,
-      '_blank',
-      'noopener,noreferrer'
-    );
+    setPrintUrl(`/analyses/${analysisId}/export?autoprint=1${selected}&_t=${Date.now()}`);
   }, [analysisId, selectedIds]);
 
   const handlePrintInvoice = useCallback(() => {
-    window.open(
-      `/analyses/${analysisId}/invoice?autoprint=1&closeAfterPrint=1`,
-      '_blank',
-      'noopener,noreferrer'
-    );
+    setPrintUrl(`/analyses/${analysisId}/invoice?autoprint=1&_t=${Date.now()}`);
   }, [analysisId]);
 
   return {
@@ -70,5 +64,6 @@ export function useResultatsUi({
     toggleSelectedTest,
     handlePrint,
     handlePrintInvoice,
+    printUrl,
   };
 }

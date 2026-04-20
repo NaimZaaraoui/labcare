@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { TemperatureMonthlyReport } from '@/components/print/TemperatureMonthlyReport';
-import { PrintPageButton } from '@/components/ui/PrintPageButton';
+import type { TemperatureReading } from '@/components/temperature/types';
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -45,13 +45,17 @@ export default async function TemperaturePrintPage({ params, searchParams }: Pag
   });
 
   const settingsItems = await prisma.setting.findMany();
-  const settings = settingsItems.reduce((acc: any, s) => ({ ...acc, [s.key]: s.value }), {});
+  const settings = settingsItems.reduce<Record<string, string>>((acc, s) => {
+    acc[s.key] = s.value;
+    return acc;
+  }, {});
 
-  const formattedReadings = readings.map(r => ({
+  const formattedReadings: TemperatureReading[] = readings.map(r => ({
     id: r.id,
     value: r.value,
-    period: r.period,
+    period: r.period as TemperatureReading['period'],
     recordedAt: r.recordedAt.toISOString(),
+    measuredAt: r.recordedAt.toISOString(),
     isOutOfRange: r.isOutOfRange,
     correctiveAction: r.correctiveAction,
     recordedBy: r.recordedBy,
@@ -68,7 +72,7 @@ export default async function TemperaturePrintPage({ params, searchParams }: Pag
   };
 
   return (
-    <div className="bg-white min-h-screen">
+    <div className="bg-[var(--color-surface)] min-h-screen">
        <div className="max-w-[210mm] mx-auto py-8 px-4 print:p-0">
          <TemperatureMonthlyReport 
            instrument={formattedInstrument}

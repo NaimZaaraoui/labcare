@@ -59,7 +59,7 @@ export function CategoryListPanel({
             className={`p-4 rounded-xl flex items-center justify-between cursor-pointer transition-all border ${
               selectedCategory?.id === cat.id
                 ? 'bg-indigo-50 border-indigo-200 shadow-md'
-                : 'bg-white border-transparent hover:bg-slate-50 hover:border-slate-200'
+                : 'bg-[var(--color-surface)] border-transparent hover:bg-[var(--color-surface-muted)] hover:border-[var(--color-border)]'
             }`}
             style={{ marginLeft: `${depth * 24}px` }}
           >
@@ -160,7 +160,7 @@ export function CategoryListPanel({
                   if (!cat) return null;
                   return (
                     <div
-                      className="p-4 rounded-xl flex items-center justify-between bg-white border border-blue-200 shadow-xl opacity-90 scale-105 cursor-grabbing"
+                      className="p-4 rounded-xl flex items-center justify-between bg-[var(--color-surface)] border border-blue-200 shadow-xl opacity-90 scale-105 cursor-grabbing"
                       style={{ width: activeDragWidth ? `${activeDragWidth}px` : 'auto' }}
                     >
                       <div className="flex items-center gap-3">

@@ -23,9 +23,9 @@ export function InventorySummaryStats({
   return (
     <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
       {cards.map((card) => (
-        <article key={card.label} className="rounded-3xl border bg-white p-5 shadow-[0_8px_26px_rgba(15,31,51,0.05)]">
+        <article key={card.label} className="flex flex-col justify-center rounded-[2rem] border border-[var(--color-border)]/50 bg-[var(--color-surface)] p-6 shadow-sm ring-1 ring-slate-900/5 transition-all hover:shadow-md">
           <div className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--color-text-soft)]">{card.label}</div>
-          <div className="mt-2 text-3xl font-semibold tracking-tight text-[var(--color-text)]">{card.value}</div>
+          <div className="mt-2 text-2xl font-semibold tracking-tight text-[var(--color-text)]">{card.value}</div>
           <div className="mt-1 text-xs text-[var(--color-text-soft)]">{card.hint}</div>
         </article>
       ))}

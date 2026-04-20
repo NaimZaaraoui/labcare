@@ -31,11 +31,11 @@ export function NavigationGroups({
   void pathname;
 
   return (
-    <nav className={mobile ? 'flex-1 space-y-6 overflow-y-auto p-4 pb-2' : 'flex-1 space-y-6 overflow-y-auto px-3 py-5'}>
+    <nav className={mobile ? 'flex-1 space-y-5 overflow-y-auto p-4 pb-2' : 'flex-1 space-y-4 overflow-y-auto px-2 py-3'}>
       {filteredGroups.map((group, groupIndex) => (
         <div key={groupIndex} className="space-y-2">
           {(sidebarOpen || mobile) && (
-            <div className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--color-text-soft)]">
+            <div className="mb-1 px-2 text-[10px] font-medium uppercase tracking-[0.16em] text-[var(--color-text-soft)]">
               {group.title}
             </div>
           )}
@@ -48,9 +48,9 @@ export function NavigationGroups({
                   href={item.href}
                   onClick={onNavClick}
                   title={!sidebarOpen && !mobile ? item.name : undefined}
-                  className={`group flex items-center gap-3 rounded-2xl py-2.5 font-medium transition-all ${
+                  className={`group flex items-center gap-3 rounded-md py-2.5 font-medium transition-all ${
                     active
-                      ? 'border border-blue-600/20 bg-[var(--color-accent-soft)] text-[var(--color-accent)]'
+                      ? 'border border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text)]'
                       : 'border border-transparent text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]'
                   } ${mobile ? 'px-3' : sidebarOpen ? 'px-3' : 'justify-center px-0'}`}
                 >

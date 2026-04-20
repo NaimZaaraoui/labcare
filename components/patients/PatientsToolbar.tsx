@@ -23,14 +23,14 @@ export function PatientsToolbar({
 }: PatientsToolbarProps) {
   return (
     <>
-      <section className="rounded-3xl border bg-white px-5 py-4 shadow-[0_8px_28px_rgba(15,31,51,0.06)]">
+      <section className="rounded-xl border bg-[var(--color-surface)] px-5 py-4 shadow-[0_2px_8px_rgba(15,31,51,0.03)]">
         <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
           <div>
-            <h1 className="text-xl font-semibold text-[var(--color-text)]">Patients</h1>
+            <h1 className="text-lg font-semibold text-[var(--color-text)]">Patients</h1>
             <p className="mt-1 text-sm text-[var(--color-text-soft)]">Répertoire central des dossiers patients.</p>
           </div>
           <div className="flex items-center gap-2.5">
-            <div className="rounded-2xl border bg-[var(--color-surface-muted)] px-3 py-2 text-right">
+            <div className="rounded-md border bg-[var(--color-surface-muted)] px-3 py-2 text-right">
               <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--color-text-soft)]">Total</div>
               <div className="text-lg font-semibold text-[var(--color-text)]">{total}</div>
             </div>
@@ -50,8 +50,8 @@ export function PatientsToolbar({
         </div>
       </section>
 
-      <section className="rounded-3xl border bg-white p-4 shadow-[0_8px_24px_rgba(15,31,51,0.05)]">
-        <div className="input-premium flex h-11 items-center gap-2 px-3">
+      <section className="rounded-xl border bg-[var(--color-surface)] p-3 shadow-[0_2px_8px_rgba(15,31,51,0.03)]">
+        <div className="flex h-11 items-center gap-2 rounded-md border bg-[var(--color-surface)] px-3">
           <Search className="h-4 w-4 shrink-0 text-[var(--color-text-soft)]" />
           <input
             value={searchTerm}

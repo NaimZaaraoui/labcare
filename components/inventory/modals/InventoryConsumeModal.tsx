@@ -33,7 +33,7 @@ export function InventoryConsumeModal({
             <input
               type="number"
               step="0.01"
-              className="input-premium h-11 bg-white"
+              className="input-premium h-11 bg-[var(--color-surface)]"
               value={quantity}
               onChange={(e) => onQuantityChange(e.target.value)}
               required
@@ -42,7 +42,7 @@ export function InventoryConsumeModal({
           <label className="grid gap-1">
             <span className="form-label">Lot ciblé</span>
             <select
-              className="input-premium h-11 bg-white"
+              className="input-premium h-11 bg-[var(--color-surface)]"
               value={lotNumber}
               onChange={(e) => onLotNumberChange(e.target.value)}
             >
@@ -57,7 +57,7 @@ export function InventoryConsumeModal({
           <label className="grid gap-1">
             <span className="form-label">Motif</span>
             <textarea
-              className="input-premium min-h-[100px] bg-white p-3"
+              className="input-premium min-h-[100px] bg-[var(--color-surface)] p-3"
               value={reason}
               onChange={(e) => onReasonChange(e.target.value)}
               placeholder="Analyse patient, contrôle QC..."

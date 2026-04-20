@@ -7,6 +7,8 @@ import { auth } from '@/lib/auth';
 import { notifyUsers, getUserIdsByRoles } from '@/lib/notifications';
 import { requireAnyRole, requireAuthUser } from '@/lib/authz';
 import { createAuditLog, getRequestMeta } from '@/lib/audit';
+import { createAnalysisSchema } from '@/lib/validations';
+import { getLicenseStatus } from '@/lib/license';
 
 export async function GET(request: NextRequest) {
   try {
@@ -20,6 +22,13 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status');
     const includeResults = searchParams.get('includeResults') === 'true';
     const category = searchParams.get('category');
+    
+    // Pagination params
+    const isPaginated = searchParams.get('paginated') === 'true';
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const limit = parseInt(searchParams.get('limit') || '50', 10);
+    
+    const q = searchParams.get('q');
     
     const where: Prisma.AnalysisWhereInput = {};
 
@@ -39,8 +48,16 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    if (status) {
+    if (status && status !== 'all') {
       where.status = status;
+    }
+
+    if (q) {
+      where.OR = [
+        { orderNumber: { contains: q } },
+        { patientFirstName: { contains: q } },
+        { patientLastName: { contains: q } }
+      ];
     }
 
     if (category) {
@@ -55,7 +72,10 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    const analyses = await prisma.analysis.findMany({
+    let analyses = [];
+    let totalCount = 0;
+
+    const findOptions = {
       where,
       include: {
         patient: true,
@@ -80,19 +100,40 @@ export async function GET(request: NextRequest) {
           }
         }
       },
-      orderBy: { creationDate: 'desc' }
-    });
+      orderBy: { creationDate: 'desc' } as any
+    };
+
+    if (isPaginated) {
+      const skip = (page - 1) * limit;
+      const [count, items] = await prisma.$transaction([
+        prisma.analysis.count({ where }),
+        prisma.analysis.findMany({ ...findOptions, skip, take: limit })
+      ]);
+      totalCount = count;
+      analyses = items;
+    } else {
+      analyses = await prisma.analysis.findMany(findOptions);
+    }
 
     const normalizedAnalyses = analyses.map((analysis) => {
       const testsCount = (analysis.results || []).filter(
         (result) => !result.test?.parentId
       ).length;
 
-      return {
-        ...analysis,
-        testsCount,
-      };
+      return { ...analysis, testsCount };
     });
+
+    if (isPaginated) {
+      return NextResponse.json({
+        items: normalizedAnalyses,
+        pagination: {
+          total: totalCount,
+          pages: Math.ceil(totalCount / limit),
+          page,
+          limit
+        }
+      });
+    }
 
     return NextResponse.json(normalizedAnalyses);
   } catch (error) {
@@ -108,9 +149,26 @@ export async function POST(request: NextRequest) {
   try {
     const guard = await requireAnyRole(['ADMIN', 'TECHNICIEN', 'RECEPTIONNISTE']);
     if (!guard.ok) return guard.error;
+    
+    const license = await getLicenseStatus();
+    if (!license.isValid) {
+      return NextResponse.json({ 
+        error: 'Paiement Requis (402)', 
+        details: 'Licence NexLab expirée ou absente. L\'application est verrouillée en mode Lecture Seule.' 
+      }, { status: 402 });
+    }
+
     const meta = getRequestMeta({ headers: request.headers });
 
     const body = await request.json();
+    const parsed = createAnalysisSchema.safeParse(body);
+    
+    if (!parsed.success) {
+      return NextResponse.json({ 
+        error: 'Données invalides', 
+        details: parsed.error.format() 
+      }, { status: 400 });
+    }
     
     // Générer numéro d'ordre unique (Robuste: cherche le max existant du jour)
     const today = new Date();
@@ -203,7 +261,7 @@ export async function POST(request: NextRequest) {
       insuranceProvider,
       insuranceNumber,
       insuranceCoverage,
-    } = body;
+    } = parsed.data;
 
     // Determine Patient UUID and Daily ID (handling naming inconsistencies)
     let finalPatientId = selectedPatientId || (typeof patientId === 'string' && patientId.includes('-') ? patientId : null);

@@ -157,7 +157,7 @@ export default function ExportsPage() {
 
       switch (exportType) {
         case 'patients':
-          url = `/api/patients?start=${dateRange.start}&end=${dateRange.end}`;
+          url = `/api/patients?start=${dateRange.start}&end=${dateRange.end}&limit=10000`;
           fileName = 'Patients';
           formatter = formatPatientsForExcel;
           sheetName = 'Liste_Patients';
@@ -287,7 +287,7 @@ export default function ExportsPage() {
 
   return (
     <div className="mx-auto max-w-[1500px] space-y-6 pb-16">
-      <section className="rounded-3xl border bg-white px-5 py-4 shadow-[0_8px_28px_rgba(15,31,51,0.06)]">
+      <section className="rounded-3xl border bg-[var(--color-surface)] px-5 py-4 shadow-[0_8px_28px_rgba(15,31,51,0.06)]">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <PageBackLink href="/" />

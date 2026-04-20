@@ -16,7 +16,7 @@ export function InventoryReorderPanel({ items }: InventoryReorderPanelProps) {
   if (items.length === 0) return null;
 
   return (
-    <section className="bento-panel p-5">
+    <section className="rounded-[2rem] border border-[var(--color-border)]/50 bg-[var(--color-surface)] p-6 shadow-sm ring-1 ring-slate-900/5">
       <div className="flex flex-col gap-2">
         <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-[var(--color-text-secondary)]">
           Réapprovisionnement conseillé
@@ -30,7 +30,7 @@ export function InventoryReorderPanel({ items }: InventoryReorderPanelProps) {
           <Link
             key={item.id}
             href={`/dashboard/inventory/${item.id}`}
-            className="rounded-2xl border bg-[var(--color-surface-muted)] px-4 py-4 transition-colors hover:bg-slate-50"
+            className="rounded-2xl border border-[var(--color-border)]/50 bg-[var(--color-surface-muted)]/50 px-5 py-5 transition-all hover:bg-[var(--color-surface)] hover:shadow-md hover:ring-1 hover:ring-slate-900/5"
           >
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -52,15 +52,15 @@ export function InventoryReorderPanel({ items }: InventoryReorderPanelProps) {
               </span>
             </div>
             <div className="mt-4 grid grid-cols-3 gap-3 text-center">
-              <div className="rounded-xl border bg-white px-3 py-2">
+              <div className="rounded-xl border border-[var(--color-border)]/50 bg-[var(--color-surface)] px-3 py-2 shadow-sm ring-1 ring-slate-900/5">
                 <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--color-text-soft)]">Stock</div>
                 <div className="mt-1 text-sm font-semibold text-[var(--color-text)]">{item.currentStock}</div>
               </div>
-              <div className="rounded-xl border bg-white px-3 py-2">
+              <div className="rounded-xl border bg-[var(--color-surface)] px-3 py-2">
                 <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--color-text-soft)]">Commander</div>
                 <div className="mt-1 text-sm font-semibold text-[var(--color-accent)]">+{item.reorder.suggestedQuantity}</div>
               </div>
-              <div className="rounded-xl border bg-white px-3 py-2">
+              <div className="rounded-xl border bg-[var(--color-surface)] px-3 py-2">
                 <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--color-text-soft)]">Cible</div>
                 <div className="mt-1 text-sm font-semibold text-[var(--color-text)]">{item.reorder.targetStock}</div>
               </div>

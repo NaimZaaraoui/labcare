@@ -5,6 +5,7 @@ import { createAuditLog, getRequestMeta } from '@/lib/audit';
 import {
   createNamedDatabaseBackup,
   restoreDatabaseBackup,
+  validateActiveDatabase,
 } from '@/lib/database-backups';
 
 export const runtime = 'nodejs';
@@ -25,6 +26,7 @@ export async function POST(request: Request, context: RouteContext) {
 
     await prisma.$disconnect();
     const restoredBackup = await restoreDatabaseBackup(fileName);
+    const validation = validateActiveDatabase();
 
     await createAuditLog({
       action: 'database.backup_restore',
@@ -34,6 +36,7 @@ export async function POST(request: Request, context: RouteContext) {
       details: {
         restoredFrom: restoredBackup.fileName,
         safetyBackup: safetyBackup.fileName,
+        validation,
       },
       ipAddress: meta.ipAddress,
       userAgent: meta.userAgent,
@@ -43,6 +46,7 @@ export async function POST(request: Request, context: RouteContext) {
       message: 'Restauration terminée. Une sauvegarde de sécurité a été créée avant écrasement.',
       restoredFrom: restoredBackup.fileName,
       safetyBackup,
+      validation,
     });
   } catch (error) {
     console.error('Error restoring database backup:', error);

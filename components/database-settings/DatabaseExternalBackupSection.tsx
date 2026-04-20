@@ -49,7 +49,7 @@ export function DatabaseExternalBackupSection({
             </p>
           </label>
 
-          <div className="rounded-2xl border bg-white px-4 py-3">
+          <div className="rounded-2xl border bg-[var(--color-surface)] px-4 py-3">
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-text-soft)]">Etat cible externe</p>
             <p className="mt-1 text-sm font-semibold text-[var(--color-text)]">
               {health?.externalTarget.configuredPath || 'Aucun chemin configuré'}

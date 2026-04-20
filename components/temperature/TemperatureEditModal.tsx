@@ -1,6 +1,7 @@
 'use client';
 
 import { X } from 'lucide-react';
+import { useScrollLock } from '@/hooks/useScrollLock';
 import type { TemperatureReading } from '@/components/temperature/types';
 
 interface TemperatureEditModalProps {

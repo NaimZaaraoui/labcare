@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import {prisma} from '@/lib/prisma';
 import { requireAnyRole } from '@/lib/authz';
 import { createAuditLog, getRequestMeta } from '@/lib/audit';
+import { updateResultSchema } from '@/lib/validations';
 
 export async function PUT(request: NextRequest) {
   try {
@@ -12,7 +13,16 @@ export async function PUT(request: NextRequest) {
     const meta = getRequestMeta({ headers: request.headers });
 
     const body = await request.json();
-    const { id, value, unit, notes, abnormal } = body;
+    const parsed = updateResultSchema.safeParse(body);
+    
+    if (!parsed.success) {
+      return NextResponse.json({ 
+        error: 'Données invalides', 
+        details: parsed.error.format() 
+      }, { status: 400 });
+    }
+
+    const { id, value, unit, notes, abnormal } = parsed.data;
     
     const result = await prisma.result.update({
       where: { id },

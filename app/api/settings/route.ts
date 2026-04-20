@@ -85,6 +85,16 @@ export async function PATCH(request: Request) {
     }
   }
 
+  if ('database_recovery_retention_count' in settings) {
+    const retentionCount = parseInt(settings.database_recovery_retention_count ?? '0', 10);
+    if (isNaN(retentionCount) || retentionCount < 0 || retentionCount > 200) {
+      return NextResponse.json(
+        { error: 'La retention des bundles de reprise doit etre comprise entre 0 et 200.' },
+        { status: 400 }
+      );
+    }
+  }
+
   if ('database_backup_external_target' in settings) {
     const target = (settings.database_backup_external_target ?? '').trim();
     if (target.length > 500) {

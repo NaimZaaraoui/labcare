@@ -74,6 +74,7 @@ model Analysis {
   drawingDate         DateTime?
   status              String?   @default("pending")
   printedAt           DateTime?
+  emailedAt           DateTime?
   histogramData       String?
   totalPrice          Float     @default(0)
   amountPaid          Float     @default(0)

@@ -26,22 +26,22 @@ export function InstrumentCard({
 
   return (
     <article
-      className={`group relative flex flex-col overflow-hidden rounded-[2.5rem] border border-slate-200/60 bg-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.02)] transition-all duration-300 hover:border-indigo-100 hover:shadow-[0_12px_40px_rgba(79,70,229,0.06)] ${
+      className={`group relative flex flex-col overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[0_2px_8px_rgba(15,31,51,0.03)] transition-colors hover:bg-[var(--color-surface-muted)] ${
         instrument.isActive === false ? 'opacity-70 grayscale' : ''
       }`}
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <h3 className="text-lg font-black tracking-tight text-slate-800">{instrument.name}</h3>
+            <h3 className="text-base font-semibold tracking-tight text-[var(--color-text)]">{instrument.name}</h3>
             {instrument.todayStatus === 'alert' && <div className="h-2 w-2 animate-pulse rounded-full bg-rose-500" />}
           </div>
           <div className="mt-1.5 flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center rounded-lg border border-indigo-100/50 bg-indigo-50/50 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-indigo-600">
+            <span className="inline-flex items-center rounded-md border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-secondary)]">
               {instrument.type}
             </span>
             {instrument.isActive === false && (
-              <span className="rounded-lg border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-slate-500">
+              <span className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-soft)]">
                 Inactif
               </span>
             )}
@@ -51,12 +51,12 @@ export function InstrumentCard({
           </div>
         </div>
         <div
-          className={`flex h-12 w-12 items-center justify-center rounded-2xl transition-colors ${
+          className={`flex h-10 w-10 items-center justify-center rounded-md border border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text-secondary)] ${
             instrument.todayStatus === 'alert'
-              ? 'bg-rose-50 text-rose-500'
+              ? 'border-slate-300 bg-[var(--color-surface-muted)] text-slate-700'
               : instrument.todayStatus === 'missing' || instrument.todayStatus === 'empty'
-                ? 'bg-amber-50 text-amber-500'
-                : 'bg-emerald-50 text-emerald-500'
+                ? 'border-slate-300 bg-[var(--color-surface-muted)] text-slate-700'
+                : 'border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text-secondary)]'
           }`}
         >
           <Thermometer className="h-6 w-6" />
@@ -64,15 +64,15 @@ export function InstrumentCard({
       </div>
 
       <div className="mt-6 space-y-4">
-        <div className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50/50 p-4">
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Plage de sécurité</span>
+        <div className="flex items-center justify-between rounded-md border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-3">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-soft)]">Plage de sécurité</span>
           <div className="flex items-center gap-2">
-            <span className="text-sm font-black text-slate-900">
+            <span className="text-sm font-semibold text-[var(--color-text)]">
               {instrument.targetMin}
               {instrument.unit}
             </span>
             <span className="h-px w-3 bg-slate-300" />
-            <span className="text-sm font-black text-slate-900">
+            <span className="text-sm font-semibold text-[var(--color-text)]">
               {instrument.targetMax}
               {instrument.unit}
             </span>
@@ -95,28 +95,28 @@ export function InstrumentCard({
         </div>
       </div>
 
-      <div className="flex items-center gap-1.5 border-t border-slate-50 pt-4">
+      <div className="mt-5 flex items-center gap-2 border-t border-[var(--color-border)] pt-4 text-sm">
         <button
-          className="btn-secondary-sm flex-1 !border-none !bg-slate-50 !text-slate-600 hover:!bg-indigo-50 hover:!text-indigo-600"
+          className="btn-secondary flex-1 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-surface)] hover:text-[var(--color-text)]"
           onClick={() => onOpenHistory(instrument.id)}
         >
-          Historique
+          Voir l&apos;historique
         </button>
         {canManage && (
           <button
-            className="rounded-xl border border-slate-100 p-2.5 text-slate-400 transition-colors hover:bg-indigo-50 hover:text-indigo-600"
+            className="flex h-10 w-10 items-center justify-center rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-soft)] transition-colors hover:bg-[var(--color-surface)] hover:text-[var(--color-text)]"
             onClick={() => onOpenEdit(instrument)}
             title="Modifier"
           >
-            <Edit3 size={16} />
+            <Edit3 size={18} />
           </button>
         )}
         <button
-          className="rounded-xl border border-slate-100 p-2.5 text-slate-400 transition-colors hover:bg-indigo-50 hover:text-indigo-600"
+          className="flex h-10 w-10 items-center justify-center rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-soft)] transition-colors hover:bg-[var(--color-surface)] hover:text-[var(--color-text)]"
           onClick={() => onPrint(instrument.id)}
           title="Imprimer rapport mensuel"
         >
-          <Printer size={16} />
+          <Printer size={18} />
         </button>
       </div>
     </article>

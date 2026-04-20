@@ -23,7 +23,7 @@ export function QcStatusChip({ qcSummary, onClick }: QcStatusChipProps) {
                 ? `${qcSummary.missing} contrôle(s) non effectué(s) aujourd'hui`
                 : `${qcSummary.warn} contrôle(s) en avertissement`
       }
-      className={`hidden rounded-2xl border px-3 py-2 text-sm font-semibold transition-colors md:inline-flex md:items-center md:gap-2 ${
+      className={`hidden rounded-lg border px-3 py-2 text-sm font-semibold transition-colors md:inline-flex md:items-center md:gap-2 ${
         !qcSummary || (qcSummary.allPass && qcSummary.missing === 0)
           ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
           : qcSummary.fail > 0

@@ -1,6 +1,7 @@
 'use client';
 
 import { X } from 'lucide-react';
+import { useScrollLock } from '@/hooks/useScrollLock';
 
 interface QcLotEditModalProps {
   open: boolean;
@@ -17,6 +18,7 @@ interface QcLotEditModalProps {
 }
 
 export function QcLotEditModal({ open, saving, lot, onClose, onChange, onSave }: QcLotEditModalProps) {
+  useScrollLock(open);
   if (!open || !lot) return null;
 
   return (
@@ -29,7 +31,7 @@ export function QcLotEditModal({ open, saving, lot, onClose, onChange, onSave }:
           </div>
           <button
             onClick={() => !saving && onClose()}
-            className="rounded-full border px-3 py-1 text-xs font-semibold text-[var(--color-text-soft)] hover:bg-[var(--color-surface-muted)]"
+            className="rounded-lg border px-3 py-1 text-xs font-semibold text-[var(--color-text-soft)] transition-colors hover:bg-[var(--color-surface-muted)]"
           >
             <X className="h-4 w-4" />
           </button>
@@ -39,7 +41,7 @@ export function QcLotEditModal({ open, saving, lot, onClose, onChange, onSave }:
           <label className="grid gap-2">
             <span className="form-label">Numero du lot</span>
             <input
-              className="input-premium h-11 bg-white"
+              className="input-premium h-11 bg-[var(--color-surface)]"
               value={lot.lotNumber}
               onChange={(event) => onChange({ ...lot, lotNumber: event.target.value })}
             />
@@ -48,7 +50,7 @@ export function QcLotEditModal({ open, saving, lot, onClose, onChange, onSave }:
             <span className="form-label">Date d&apos;expiration</span>
             <input
               type="date"
-              className="input-premium h-11 bg-white"
+              className="input-premium h-11 bg-[var(--color-surface)]"
               value={lot.expiryDate}
               onChange={(event) => onChange({ ...lot, expiryDate: event.target.value })}
             />
@@ -57,7 +59,7 @@ export function QcLotEditModal({ open, saving, lot, onClose, onChange, onSave }:
             <span className="form-label">Date d&apos;ouverture</span>
             <input
               type="date"
-              className="input-premium h-11 bg-white"
+              className="input-premium h-11 bg-[var(--color-surface)]"
               value={lot.openedAt}
               onChange={(event) => onChange({ ...lot, openedAt: event.target.value })}
             />

@@ -4,7 +4,7 @@ export default function PrintLayout({
   children: React.ReactNode;
 }) {
   return (
-   <div style={{ margin: 0, padding: 0, background: 'white' }}>
+   <div style={{ margin: 0, padding: 0, background: 'white', minHeight: '100vh' }}>
       {children}
     </div>
   );

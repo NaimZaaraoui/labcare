@@ -24,7 +24,7 @@ export function ReportFooterSignature({ analysis, settings, showFull = true }: P
               <div className="grid grid-cols-3 gap-12">
                 <div className="col-span-2">
                   <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 print:text-black">Notes du Biologiste</h4>
-                  <p className="text-xs text-slate-500 leading-relaxed max-w-md print:text-black">
+                  <p className="text-xs text-[var(--color-text-soft)] leading-relaxed max-w-md print:text-black">
                     Les résultats indiqués ci-dessus ont été obtenus par des méthodes validées et standardisées.
                     Une interprétation clinique par votre médecin traitant est nécessaire.<br />
                     <span className="text-[8px] font-black text-slate-300 uppercase print:text-black/40">↑ = Résultat élevé | ↓ = Résultat bas | Antér. = Dernier résultat validé dans notre laboratoire</span>
@@ -32,11 +32,11 @@ export function ReportFooterSignature({ analysis, settings, showFull = true }: P
                   <div className="mt-6 flex gap-8">
                     <div className="flex flex-col">
                       <span className="text-[9px] font-black text-slate-300 uppercase print:text-black/40">ID Document</span>
-                      <span className="text-[11px] font-bold text-slate-900 print:text-black">{analysis.id.substring(0, 8).toUpperCase()}</span>
+                      <span className="text-[11px] font-bold text-[var(--color-text)] print:text-black">{analysis.id.substring(0, 8).toUpperCase()}</span>
                     </div>
                     <div className="flex flex-col">
                       <span className="text-[9px] font-black text-slate-300 uppercase print:text-black/40">Statut</span>
-                      <span className={`text-[11px] font-black uppercase ${isValidated ? 'text-indigo-600' : 'text-amber-600'} print:text-black`}>
+                      <span className={`text-[11px] font-black uppercase ${isValidated ? 'text-[var(--color-accent)]' : 'text-amber-600'} print:text-black`}>
                         {isValidated ? 'Validé' : 'En attente'}
                       </span>
                     </div>
@@ -49,7 +49,7 @@ export function ReportFooterSignature({ analysis, settings, showFull = true }: P
                   </div>
                   <div className="flex flex-col items-center gap-2 w-full">
                     {analysis.validatedBioAt && (
-                      <div className="text-[9px] text-slate-600 font-medium text-center print:text-black">
+                      <div className="text-[9px] text-[var(--color-text-secondary)] font-medium text-center print:text-black">
                         Validé le {format(new Date(analysis.validatedBioAt), "dd/MM/yyyy 'à' HH:mm", { locale: fr })}
                       </div>
                     )}
@@ -99,7 +99,7 @@ export function ReportFooterSignature({ analysis, settings, showFull = true }: P
                     </div>
 
                     <div className="text-center">
-                      <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest print:text-black">
+                      <p className="text-[10px] font-black text-[var(--color-accent)] uppercase tracking-widest print:text-black">
                         {BIO_TITLE && BIO_NAME ? `${BIO_TITLE} ${BIO_NAME}` : 'Biologiste Responsable'}
                       </p>
                       {BIO_ONMPT && <p className="text-[8px] font-bold text-slate-400 print:text-black/60 mt-0.5">ONMPT: {BIO_ONMPT}</p>}
@@ -113,23 +113,23 @@ export function ReportFooterSignature({ analysis, settings, showFull = true }: P
                   {FOOTER_TEXT}
                 </div>
               )}
-              <div className="mt-6 flex justify-between items-center text-[9px] font-bold text-slate-300 uppercase tracking-[0.3em] border-t border-slate-100 pt-8 print:border-black print:text-black">
+              <div className="mt-6 flex justify-between items-center text-[9px] font-bold text-slate-300 uppercase tracking-[0.3em] border-t border-[var(--color-border)] pt-8 print:border-black print:text-black">
                  <span>{LAB_NAME}</span>
                 <div className="flex gap-4">
                   {LAB_PHONE && <span>Tél: {LAB_PHONE}</span>}
                 </div>
-                <span className="text-slate-900 print:text-black page-number-container">
+                <span className="text-[var(--color-text)] print:text-black page-number-container">
                   Page <span className="page-number"></span>
                 </span>
               </div>
             </div>
           ) : (
-            <div className="mt-4 pt-4 border-t border-slate-100 print:border-black/10 footer-content">
+            <div className="mt-4 pt-4 border-t border-[var(--color-border)] print:border-black/10 footer-content">
               <div className="flex justify-between items-center text-[9px] font-bold text-slate-300 uppercase tracking-[0.3em] print:text-black">
                 <span>{LAB_NAME} - Rapport NFS</span>
                 <div className="flex gap-8 items-center">
-                  <span className="text-indigo-600 font-black">Validé par le Biologiste Responsable</span>
-                  <span className="text-slate-900 print:text-black page-number-container">
+                  <span className="text-[var(--color-accent)] font-black">Validé par le Biologiste Responsable</span>
+                  <span className="text-[var(--color-text)] print:text-black page-number-container">
                     Page <span className="page-number"></span>
                   </span>
                 </div>

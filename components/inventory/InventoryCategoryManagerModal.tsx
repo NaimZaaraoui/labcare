@@ -1,6 +1,7 @@
 'use client';
 
 import { Plus, Trash2 } from 'lucide-react';
+import { useScrollLock } from '@/hooks/useScrollLock';
 import type { InventoryCategoryConfig } from '@/lib/inventory-categories';
 
 interface InventoryCategoryManagerModalProps {
@@ -22,6 +23,7 @@ export function InventoryCategoryManagerModal({
   onNewCategoryNameChange,
   onSave,
 }: InventoryCategoryManagerModalProps) {
+  useScrollLock(open);
   if (!open) return null;
 
   return (
@@ -37,7 +39,7 @@ export function InventoryCategoryManagerModal({
           </div>
           <button
             onClick={onClose}
-            className="rounded-full border px-3 py-1 text-xs font-semibold text-[var(--color-text-soft)] hover:bg-[var(--color-surface-muted)]"
+            className="rounded-lg border px-3 py-1 text-xs font-semibold text-[var(--color-text-soft)] transition-colors hover:bg-[var(--color-surface-muted)]"
           >
             Fermer
           </button>
@@ -46,10 +48,10 @@ export function InventoryCategoryManagerModal({
           {categoryDrafts.map((category, index) => (
             <div
               key={category.id}
-              className="grid gap-3 rounded-2xl border bg-[var(--color-surface-muted)] px-4 py-4 md:grid-cols-[1fr_auto_auto] md:items-center"
+              className="grid gap-3 rounded-xl border bg-[var(--color-surface-muted)] px-4 py-4 md:grid-cols-[1fr_auto_auto] md:items-center"
             >
               <input
-                className="input-premium h-11 bg-white"
+                className="input-premium h-11 bg-[var(--color-surface)]"
                 value={category.name}
                 onChange={(event) =>
                   onCategoryDraftsChange((prev) =>
@@ -64,10 +66,10 @@ export function InventoryCategoryManagerModal({
                     prev.map((entry) => (entry.id === category.id ? { ...entry, isActive: !entry.isActive } : entry))
                   )
                 }
-                className={`rounded-2xl border px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] ${
+                className={`rounded-xl border px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] ${
                   category.isActive
-                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                    : 'border-slate-200 bg-white text-[var(--color-text-soft)]'
+                    ? 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]'
+                    : 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-soft)]'
                 }`}
               >
                 {category.isActive ? 'Active' : 'Masquée'}
@@ -94,16 +96,16 @@ export function InventoryCategoryManagerModal({
                       prev.filter((entry) => entry.id !== category.id).map((entry, rank) => ({ ...entry, rank }))
                     )
                   }
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-rose-200 bg-rose-50 text-rose-700"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)] text-rose-700"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
             </div>
           ))}
-          <div className="grid gap-3 rounded-2xl border border-dashed px-4 py-4 md:grid-cols-[1fr_auto] md:items-center">
+          <div className="grid gap-3 rounded-xl border border-dashed px-4 py-4 md:grid-cols-[1fr_auto] md:items-center">
             <input
-              className="input-premium h-11 bg-white"
+              className="input-premium h-11 bg-[var(--color-surface)]"
               value={newCategoryName}
               onChange={(event) => onNewCategoryNameChange(event.target.value)}
               placeholder="Nouvelle catégorie"

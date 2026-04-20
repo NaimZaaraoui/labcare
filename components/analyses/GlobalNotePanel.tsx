@@ -2,25 +2,20 @@
 import React from 'react';
 import { Save } from 'lucide-react';
 
-interface GlobalNotePanelProps {
-  isFinalValidated: boolean;
-  globalNote: string;
-  setGlobalNote: (note: string) => void;
-  globalNotePlacement: 'all' | 'first' | 'last';
-  setGlobalNotePlacement: (placement: 'all' | 'first' | 'last') => void;
-  saveGlobalNote: () => void;
-  saveGlobalNoteBusy: boolean;
-}
+import { useAnalysisContext } from './AnalysisContext';
 
-export function GlobalNotePanel({
-  isFinalValidated,
-  globalNote,
-  setGlobalNote,
-  globalNotePlacement,
-  setGlobalNotePlacement,
-  saveGlobalNote,
-  saveGlobalNoteBusy,
-}: GlobalNotePanelProps) {
+export function GlobalNotePanel() {
+  const {
+    analysis,
+    globalNote,
+    setGlobalNote,
+    globalNotePlacement,
+    setGlobalNotePlacement,
+    saveGlobalNote,
+    saveGlobalNoteBusy,
+  } = useAnalysisContext();
+
+  const isFinalValidated = analysis?.status === 'validated_bio' || analysis?.status === 'completed';
   return (
     <div className="mt-6 border-t border-[var(--color-border)] pt-6 space-y-3">
       <span className="section-label">Note globale du rapport</span>
@@ -49,7 +44,7 @@ export function GlobalNotePanel({
             value={globalNote}
             onChange={(e) => setGlobalNote(e.target.value)}
             placeholder="Ajouter une note globale (conclusion, recommandation, commentaire général)..."
-            className="input-premium min-h-[96px] w-full resize-none p-3 text-sm bg-white"
+            className="input-premium min-h-[96px] w-full resize-none p-3 text-sm bg-[var(--color-surface)]"
           />
           <div className="flex justify-end">
             <button

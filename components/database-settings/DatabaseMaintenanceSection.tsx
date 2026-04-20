@@ -37,7 +37,7 @@ export function DatabaseMaintenanceSection({
         </div>
 
         <div className="w-full max-w-2xl space-y-4">
-          <label className="flex items-center justify-between gap-4 rounded-2xl border bg-white px-4 py-3">
+          <label className="flex items-center justify-between gap-4 rounded-2xl border bg-[var(--color-surface)] px-4 py-3">
             <div>
               <p className="text-sm font-semibold text-[var(--color-text)]">Maintenance active</p>
               <p className="text-xs text-[var(--color-text-soft)]">Les admins gardent l&apos;acces, les autres voient l&apos;ecran de maintenance.</p>
@@ -50,7 +50,7 @@ export function DatabaseMaintenanceSection({
               }`}
             >
               <span
-                className={`inline-block h-5 w-5 transform rounded-full bg-white transition ${
+                className={`inline-block h-5 w-5 transform rounded-full bg-[var(--color-surface)] transition ${
                   maintenanceMode ? 'translate-x-6' : 'translate-x-1'
                 }`}
               />

@@ -11,9 +11,18 @@ interface HistogramProps {
   width?: number;
   height?: number;
   xAxisMax?: number; // Maximum value on X axis (e.g. 400 fL for WBC)
+  variant?: 'default' | 'report';
 }
 
-export function HistogramView({ data, title, color = '#3b82f6', width = 300, height = 150, xAxisMax = 250 }: HistogramProps) {
+export function HistogramView({
+  data,
+  title,
+  color = '#3b82f6',
+  width = 300,
+  height = 150,
+  xAxisMax = 250,
+  variant = 'default',
+}: HistogramProps) {
   const { bins, markers } = data;
 
   const maxVal = Math.max(...bins, 1);
@@ -37,15 +46,29 @@ export function HistogramView({ data, title, color = '#3b82f6', width = 300, hei
 
   if (!bins || bins.length === 0) return null;
 
+  const isReport = variant === 'report';
+  const containerClassName = isReport
+    ? 'bg-transparent px-0 py-1 overflow-hidden'
+    : 'bg-[var(--color-surface)] p-4 rounded-2xl border border-[var(--color-border)] overflow-hidden';
+  const titleClassName = isReport
+    ? 'text-[11px] font-black text-[var(--color-text)] uppercase tracking-[0.2em] print:text-black'
+    : 'text-[10px] font-black text-slate-400 uppercase tracking-widest';
+  const axisStroke = isReport ? '#cbd5e1' : '#f1f5f9';
+  const markerStroke = isReport ? '#64748b' : '#94a3b8';
+  const markerValueClassName = isReport ? 'fill-slate-900 font-bold' : 'fill-indigo-600 font-medium';
+  const markerLabelClassName = isReport
+    ? 'fill-slate-500 font-medium uppercase tracking-tighter'
+    : 'fill-slate-400 font-medium uppercase tracking-tighter';
+
   return (
-    <div className="bg-white p-4 rounded-2xl border border-slate-100 overflow-hidden">
+    <div className={containerClassName}>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{title}</h3>
+        <h3 className={titleClassName}>{title}</h3>
       </div>
       
       <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="overflow-visible">
         {/* Grids / Axes */}
-        <line x1={padding} y1={height - bottomPadding} x2={padding + chartWidth} y2={height - bottomPadding} stroke="#f1f5f9" strokeWidth="1" />
+        <line x1={padding} y1={height - bottomPadding} x2={padding + chartWidth} y2={height - bottomPadding} stroke={axisStroke} strokeWidth="1" />
         
         {/* The Curve */}
         <path
@@ -79,14 +102,14 @@ export function HistogramView({ data, title, color = '#3b82f6', width = 300, hei
                 y1={padding}
                 x2={x}
                 y2={height - bottomPadding}
-                stroke="#94a3b8"
+                stroke={markerStroke}
                 strokeWidth="1"
                 strokeDasharray="4 2"
               />
-              <text x={x} y={height - bottomPadding + 14} textAnchor="middle" fontSize="10" className="fill-indigo-600 font-medium">
+              <text x={x} y={height - bottomPadding + 14} textAnchor="middle" fontSize="10" className={markerValueClassName}>
                 {fLValue}
               </text>
-              <text x={x} y={height - bottomPadding + 28} textAnchor="middle" fontSize="8" className="fill-slate-400 font-medium uppercase tracking-tighter">
+              <text x={x} y={height - bottomPadding + 28} textAnchor="middle" fontSize="8" className={markerLabelClassName}>
                 M{i + 1}
               </text>
             </React.Fragment>

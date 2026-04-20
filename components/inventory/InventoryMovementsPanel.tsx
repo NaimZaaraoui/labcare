@@ -29,7 +29,7 @@ export function InventoryMovementsPanel({ item }: InventoryMovementsPanelProps) 
                 ) : movement.type === 'consumption' ? (
                   <ArrowDownCircle className="h-4 w-4 text-rose-600" />
                 ) : movement.type === 'waste' ? (
-                  <Trash2 className="h-4 w-4 text-slate-600" />
+                  <Trash2 className="h-4 w-4 text-[var(--color-text-secondary)]" />
                 ) : (
                   <Settings2 className="h-4 w-4 text-sky-600" />
                 )}

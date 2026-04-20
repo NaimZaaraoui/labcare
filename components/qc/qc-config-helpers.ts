@@ -8,12 +8,12 @@ export function formatQcLimit(value: string, sd: string, multiplier: number) {
 }
 
 export function getEffectiveSd(row: TargetRow, globalRangeBasis: RangeBasis) {
-  if (row.inputMode === 'sd') return row.sd;
+  if (row.inputMode === 'sd') return Number(row.sd).toFixed(2);
   const minValue = Number(row.minValue);
   const maxValue = Number(row.maxValue);
   if (!Number.isFinite(minValue) || !Number.isFinite(maxValue)) return '';
   const divisor = globalRangeBasis === '1sd' ? 2 : globalRangeBasis === '3sd' ? 6 : 4;
-  return ((maxValue - minValue) / divisor).toFixed(4);
+  return ((maxValue - minValue) / divisor).toFixed(2);
 }
 
 export function getRangeBasisLabel(globalRangeBasis: RangeBasis) {

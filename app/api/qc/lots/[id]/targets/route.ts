@@ -121,7 +121,17 @@ export async function POST(
       severity: 'WARN',
       entity: 'qc_lot',
       entityId: id,
-      details: { targetsCount: targets.length },
+      details: { 
+        targetsCount: targets.length,
+        targets: targets.map(t => ({
+          code: t.testCode,
+          name: t.testName,
+          mean: t.mean,
+          sd: t.sd,
+          mode: t.controlMode,
+          range: t.minAcceptable && t.maxAcceptable ? `${t.minAcceptable}-${t.maxAcceptable}` : null
+        }))
+      },
       ipAddress: meta.ipAddress,
       userAgent: meta.userAgent,
     });

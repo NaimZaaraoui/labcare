@@ -7,6 +7,7 @@ import { NotificationToast } from '@/components/ui/notification-toast';
 export function LabSettingsForm() {
   const [settings, setSettings] = useState<Record<string, string>>({
     sample_types: 'Sang total, Sérum, Plasma, Urine, LCR, Plèvre, Ascite',
+    clinical_units: 'g/L, mg/L, µg/L, mmol/L, µmol/L, nmol/L, U/L, %, Ratio, Log',
     amount_unit: 'DA',
     lab_name: '',
     lab_subtitle: '',
@@ -31,6 +32,7 @@ export function LabSettingsForm() {
       .then(data => {
         setSettings({
           sample_types: data.sample_types || 'Sang total, Sérum, Plasma, Urine, LCR, Plèvre, Ascite',
+          clinical_units: data.clinical_units || 'g/L, mg/L, µg/L, mmol/L, µmol/L, nmol/L, U/L, %, Ratio, Log',
           amount_unit: data.amount_unit || 'DA',
           lab_name: data.lab_name || '',
           lab_subtitle: data.lab_subtitle || '',
@@ -78,7 +80,7 @@ export function LabSettingsForm() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-20">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-slate-600" />
       </div>
     );
   }
@@ -92,14 +94,14 @@ export function LabSettingsForm() {
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 xl:gap-10">
         
         {/* Identité du laboratoire */}
-        <div className="rounded-3xl border bg-white p-6 sm:p-7 space-y-6 shadow-[0_8px_24px_rgba(15,31,51,0.05)]">
+        <div className="rounded-xl border bg-[var(--color-surface)] p-6 sm:p-7 space-y-6 shadow-[0_2px_8px_rgba(15,31,51,0.03)]">
           <div className="flex items-center gap-4 mb-2">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
-              <Building2 size={24} />
+            <div className="flex h-10 w-10 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-slate-700">
+              <Building2 size={20} />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-slate-900">Identité du laboratoire</h3>
-              <p className="text-sm text-slate-500">Informations principales sur l&apos;établissement.</p>
+              <h3 className="text-lg font-semibold text-[var(--color-text)]">Identité du laboratoire</h3>
+              <p className="text-sm text-[var(--color-text-soft)]">Informations principales sur l&apos;établissement.</p>
             </div>
           </div>
 
@@ -137,14 +139,14 @@ export function LabSettingsForm() {
         </div>
 
         {/* Coordonnées */}
-        <div className="rounded-3xl border bg-white p-6 sm:p-7 space-y-6 shadow-[0_8px_24px_rgba(15,31,51,0.05)]">
+        <div className="rounded-xl border bg-[var(--color-surface)] p-6 sm:p-7 space-y-6 shadow-[0_2px_8px_rgba(15,31,51,0.03)]">
           <div className="flex items-center gap-4 mb-2">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-50 text-amber-700">
-              <MapPin size={24} />
+            <div className="flex h-10 w-10 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-slate-700">
+              <MapPin size={20} />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-slate-900">Coordonnées</h3>
-              <p className="text-sm text-slate-500">Adresse et moyens de contact.</p>
+              <h3 className="text-lg font-semibold text-[var(--color-text)]">Coordonnées</h3>
+              <p className="text-sm text-[var(--color-text-soft)]">Adresse et moyens de contact.</p>
             </div>
           </div>
 
@@ -174,31 +176,42 @@ export function LabSettingsForm() {
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 xl:gap-10">
         
         {/* Sample Types Configuration */}
-        <div className="rounded-3xl border bg-white p-6 sm:p-7 space-y-6 shadow-[0_8px_24px_rgba(15,31,51,0.05)]">
+        <div className="rounded-xl border bg-[var(--color-surface)] p-6 sm:p-7 space-y-6 shadow-[0_2px_8px_rgba(15,31,51,0.03)]">
           <div className="flex items-center gap-4 mb-2">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-700">
-              <FlaskConical size={24} />
+            <div className="flex h-10 w-10 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-slate-700">
+              <FlaskConical size={20} />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-slate-900">Types d&apos;échantillons</h3>
-              <p className="text-sm text-slate-500">Définir les options disponibles pour les tests.</p>
+              <h3 className="text-lg font-semibold text-[var(--color-text)]">Listes configurables</h3>
+              <p className="text-sm text-[var(--color-text-soft)]">Définir les options disponibles pour vos formulaires et tests.</p>
             </div>
           </div>
 
           <div className="space-y-5">
             <div className="space-y-2">
-              <label className="section-label ml-1">Liste (séparés par des virgules)</label>
+              <label className="section-label ml-1">Types d&apos;échantillons (séparés par des virgules)</label>
               <textarea
                 value={settings.sample_types}
                 onChange={(e) => setSettings({ ...settings, sample_types: e.target.value })}
-                className="input-premium min-h-[130px] bg-slate-50/50 py-4 font-medium"
+                className="input-premium min-h-[90px] rounded-md bg-[var(--color-surface-muted)]/50 py-3 text-sm font-medium"
                 placeholder="Ex: Sang total, Urine, LCR..."
               />
             </div>
-            <div className="flex items-start gap-3 p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100/50">
-              <Info size={16} className="text-indigo-500 shrink-0 mt-0.5" />
-              <p className="text-[10px] font-semibold text-indigo-700 leading-relaxed uppercase tracking-tight">
-                Ces types apparaîtront sous forme de liste déroulante lors de la configuration de vos analyses dans le catalogue.
+            
+            <div className="space-y-2">
+              <label className="section-label ml-1">Unités de mesure cliniques (séparées par des virgules)</label>
+              <textarea
+                value={settings.clinical_units}
+                onChange={(e) => setSettings({ ...settings, clinical_units: e.target.value })}
+                className="input-premium min-h-[90px] rounded-md bg-[var(--color-surface-muted)]/50 py-3 text-sm font-medium"
+                placeholder="Ex: g/L, mmol/L, %, mg..."
+              />
+            </div>
+            
+            <div className="flex items-start gap-3 rounded-md border border-slate-200 bg-slate-50 p-4">
+              <Info size={16} className="mt-0.5 shrink-0 text-slate-500" />
+              <p className="text-[10px] font-semibold uppercase tracking-tight text-slate-600 leading-relaxed">
+                Ces options fourniront une auto-complétion intelligente lors de la configuration de votre catalogue technique (tests), de votre inventaire et de vos paramètres QC.
               </p>
             </div>
           </div>
@@ -207,14 +220,14 @@ export function LabSettingsForm() {
         {/* Biologiste & TAT & Monnaie */}
         <div className="flex flex-col gap-8">
           
-          <div className="rounded-3xl border bg-white p-6 sm:p-7 space-y-6 shadow-[0_8px_24px_rgba(15,31,51,0.05)]">
+          <div className="rounded-xl border bg-[var(--color-surface)] p-6 sm:p-7 space-y-6 shadow-[0_2px_8px_rgba(15,31,51,0.03)]">
             <div className="flex items-center gap-4 mb-2">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-rose-50 text-rose-700">
-                <UserCheck size={24} />
+              <div className="flex h-10 w-10 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-slate-700">
+                <UserCheck size={20} />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-slate-900">Biologiste responsable</h3>
-                <p className="text-sm text-slate-500">Pour les rapports et l&apos;affichage global.</p>
+                <h3 className="text-lg font-semibold text-[var(--color-text)]">Biologiste responsable</h3>
+                <p className="text-sm text-[var(--color-text-soft)]">Pour les rapports et l&apos;affichage global.</p>
               </div>
             </div>
 
@@ -238,44 +251,46 @@ export function LabSettingsForm() {
             </div>
           </div>
 
+
+
           <div className="grid grid-cols-1 2xl:grid-cols-2 gap-6">
             {/* Seuils TAT */}
-            <div className="rounded-3xl border bg-white p-6 space-y-5 shadow-[0_8px_24px_rgba(15,31,51,0.05)]">
+            <div className="rounded-xl border bg-[var(--color-surface)] p-6 space-y-5 shadow-[0_2px_8px_rgba(15,31,51,0.03)]">
               <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center shadow-inner">
+                <div className="flex h-10 w-10 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-slate-700">
                   <Clock size={20} />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-slate-900">Seuils TAT</h3>
+                  <h3 className="text-sm font-semibold text-[var(--color-text)]">Seuils TAT</h3>
                 </div>
               </div>
               
               <div className="space-y-4">
                 <div>
-                  <label className="block text-[10px] font-semibold text-amber-500 uppercase tracking-[0.12em] mb-1.5">Avertissement</label>
+                  <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">Avertissement</label>
                   <div className="relative">
                     <input className={`${inputClass} pr-14`} type="number" min="1" max="480" value={settings.tat_warn} onChange={e => setSettings({ ...settings, tat_warn: e.target.value })} />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-amber-500">min</span>
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-slate-500">min</span>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-semibold text-rose-500 uppercase tracking-[0.12em] mb-1.5">Dépassement</label>
+                  <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">Dépassement</label>
                   <div className="relative">
                     <input className={`${inputClass} pr-14`} type="number" min="1" max="480" value={settings.tat_alert} onChange={e => setSettings({ ...settings, tat_alert: e.target.value })} />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-rose-500">min</span>
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-slate-500">min</span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Currency Configuration */}
-            <div className="rounded-3xl border bg-white p-6 space-y-5 shadow-[0_8px_24px_rgba(15,31,51,0.05)]">
+            <div className="rounded-xl border bg-[var(--color-surface)] p-6 space-y-5 shadow-[0_2px_8px_rgba(15,31,51,0.03)]">
               <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-inner">
+                <div className="flex h-10 w-10 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-slate-700">
                   <Coins size={20} />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-slate-900">Monnaie</h3>
+                  <h3 className="text-sm font-semibold text-[var(--color-text)]">Monnaie</h3>
                 </div>
               </div>
 
@@ -284,7 +299,7 @@ export function LabSettingsForm() {
                 <input
                   value={settings.amount_unit}
                   onChange={(e) => setSettings({ ...settings, amount_unit: e.target.value })}
-                  className="input-premium mt-1.5 h-11 bg-slate-50/50 text-center font-semibold"
+                  className="input-premium mt-1.5 h-11 rounded-md bg-[var(--color-surface-muted)]/50 text-center font-semibold"
                   placeholder="DA"
                 />
               </div>

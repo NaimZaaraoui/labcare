@@ -60,6 +60,7 @@ export type TestsLabSettings = LabDisplaySettings;
 
 export const DEFAULT_TESTS_LAB_SETTINGS: TestsLabSettings = {
   sample_types: 'Sang total, Sérum, Plasma, Urine, LCR, Plèvre, Ascite',
+  clinical_units: 'g/L, mg/L, µg/L, mmol/L, µmol/L, nmol/L, U/L, %, Ratio, Log',
   amount_unit: 'DA',
 };
 

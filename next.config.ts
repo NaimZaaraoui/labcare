@@ -2,15 +2,13 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: 'standalone',
-  // Silences the Turbopack error while keeping webpack config for standalone build
-  // @ts-ignore - turbopack is a valid key in Next.js 16 but might not be in types yet
+  // @ts-ignore
   turbopack: {},
-  serverExternalPackages: ['@libsql/client', '@prisma/adapter-libsql'],
-  webpack: (config, { isServer }) => {
-    if (isServer) {
-      config.externals.push('@libsql/client', '@prisma/adapter-libsql');
-    }
-    return config;
+  serverExternalPackages: ['@libsql/client', '@prisma/adapter-libsql', '@prisma/adapter-better-sqlite3', 'better-sqlite3', 'bcryptjs'],
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '2mb',
+    },
   },
 };
 

@@ -19,7 +19,7 @@ export function ExportTypeSelector({ exportType, config, onChange }: ExportTypeS
             className={`group flex items-start gap-4 rounded-2xl border-2 p-5 text-left transition-all ${
               exportType === item.id
                 ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)] text-[var(--color-text)]'
-                : 'border-[var(--color-border)] bg-white hover:border-slate-300'
+                : 'border-[var(--color-border)] bg-[var(--color-surface)] hover:border-slate-300'
             }`}
           >
             <div
