@@ -75,7 +75,7 @@ async function seed() {
         lastName: 'Dupont',
         birthDate: new Date('1985-05-15'),
         gender: 'M',
-        phone: '0612345678',
+        phoneNumber: '0612345678',
         email: 'jean@example.com',
         address: '123 Rue de Paris',
         createdAt: new Date(),
@@ -88,7 +88,7 @@ async function seed() {
         lastName: 'Martin',
         birthDate: new Date('1990-03-20'),
         gender: 'F',
-        phone: '0687654321',
+        phoneNumber: '0687654321',
         email: 'marie@example.com',
         address: '456 Avenue des Champs',
         createdAt: new Date(),
@@ -120,9 +120,7 @@ async function seed() {
         unit: 'g/dL',
         minValue: 10.0,
         maxValue: 20.0,
-        decimalPlaces: 1,
-        referenceRangeMin: 13.0,
-        referenceRangeMax: 17.0,
+        decimals: 1
       },
     });
 
@@ -134,9 +132,7 @@ async function seed() {
         unit: '10³/µL',
         minValue: 100,
         maxValue: 600,
-        decimalPlaces: 0,
-        referenceRangeMin: 150,
-        referenceRangeMax: 450,
+        decimals: 0,
       },
     });
 
