@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createAnalysisSchema, updateResultSchema } from '@/lib/validations';
+import { analysisCreateSchema, resultUpdateSchema } from '@/lib/validators';
 
 describe('Validation Schemas', () => {
   describe('createAnalysisSchema', () => {
@@ -11,7 +11,7 @@ describe('Validation Schemas', () => {
         testsIds: ['test-1', 'test-2'],
       };
 
-      const result = createAnalysisSchema.safeParse(data);
+      const result = analysisCreateSchema.safeParse(data);
       expect(result.success).toBe(true);
     });
 
@@ -22,7 +22,7 @@ describe('Validation Schemas', () => {
         testsIds: ['test-1'],
       };
 
-      const result = createAnalysisSchema.safeParse(data);
+      const result = analysisCreateSchema.safeParse(data);
       expect(result.success).toBe(false);
     });
 
@@ -33,7 +33,7 @@ describe('Validation Schemas', () => {
         testsIds: ['test-1'],
       };
 
-      const result = createAnalysisSchema.safeParse(data);
+      const result = analysisCreateSchema.safeParse(data);
       expect(result.success).toBe(false);
     });
 
@@ -45,7 +45,7 @@ describe('Validation Schemas', () => {
         testsIds: [],
       };
 
-      const result = createAnalysisSchema.safeParse(data);
+      const result = analysisCreateSchema.safeParse(data);
       expect(result.success).toBe(false);
     });
 
@@ -61,7 +61,7 @@ describe('Validation Schemas', () => {
         isUrgent: true,
       };
 
-      const result = createAnalysisSchema.safeParse(data);
+      const result = analysisCreateSchema.safeParse(data);
       expect(result.success).toBe(true);
     });
 
@@ -74,7 +74,7 @@ describe('Validation Schemas', () => {
         testsIds: ['test-1'],
       };
 
-      const result = createAnalysisSchema.safeParse(data);
+      const result = analysisCreateSchema.safeParse(data);
       expect(result.success).toBe(false);
     });
 
@@ -87,7 +87,7 @@ describe('Validation Schemas', () => {
         testsIds: ['test-1'],
       };
 
-      const result = createAnalysisSchema.safeParse(data);
+      const result = analysisCreateSchema.safeParse(data);
       expect(result.success).toBe(true);
     });
 
@@ -99,7 +99,7 @@ describe('Validation Schemas', () => {
         testsIds: ['test-1'],
       };
 
-      const result = createAnalysisSchema.safeParse(data);
+      const result = analysisCreateSchema.safeParse(data);
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data.patientGender).toBe('M');
@@ -114,7 +114,7 @@ describe('Validation Schemas', () => {
         insuranceCoverage: 75,
       };
 
-      const result = createAnalysisSchema.safeParse(data);
+      const result = analysisCreateSchema.safeParse(data);
       expect(result.success).toBe(true);
     });
 
@@ -126,7 +126,7 @@ describe('Validation Schemas', () => {
         insuranceCoverage: 150,
       };
 
-      const result = createAnalysisSchema.safeParse(data);
+      const result = analysisCreateSchema.safeParse(data);
       expect(result.success).toBe(false);
     });
 
@@ -138,7 +138,7 @@ describe('Validation Schemas', () => {
         insuranceCoverage: -10,
       };
 
-      const result = createAnalysisSchema.safeParse(data);
+      const result = analysisCreateSchema.safeParse(data);
       expect(result.success).toBe(false);
     });
 
@@ -153,7 +153,7 @@ describe('Validation Schemas', () => {
           globalNotePlacement: placement,
         };
 
-        const result = createAnalysisSchema.safeParse(data);
+        const result = analysisCreateSchema.safeParse(data);
         expect(result.success).toBe(true);
       }
     });
@@ -166,7 +166,7 @@ describe('Validation Schemas', () => {
         globalNotePlacement: 'invalid-placement',
       };
 
-      const result = createAnalysisSchema.safeParse(data);
+      const result = analysisCreateSchema.safeParse(data);
       // Note: Zod may coerce invalid enum values, so we check if it doesn't match expected
       if (result.success) {
         // If it succeeds, the value should have been coerced or defaulted
@@ -181,7 +181,7 @@ describe('Validation Schemas', () => {
         testsIds: ['test-1'],
       };
 
-      const result = createAnalysisSchema.safeParse(data);
+      const result = analysisCreateSchema.safeParse(data);
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data.isUrgent).toBe(false);
@@ -198,7 +198,7 @@ describe('Validation Schemas', () => {
         testsIds: ['test-1'],
       };
 
-      const result = createAnalysisSchema.safeParse(data);
+      const result = analysisCreateSchema.safeParse(data);
       expect(result.success).toBe(true);
     });
   });
@@ -213,7 +213,7 @@ describe('Validation Schemas', () => {
         abnormal: false,
       };
 
-      const result = updateResultSchema.safeParse(data);
+      const result = resultUpdateSchema.safeParse(data);
       expect(result.success).toBe(true);
     });
 
@@ -222,7 +222,7 @@ describe('Validation Schemas', () => {
         value: '12.5',
       };
 
-      const result = updateResultSchema.safeParse(data);
+      const result = resultUpdateSchema.safeParse(data);
       expect(result.success).toBe(false);
     });
 
@@ -231,7 +231,7 @@ describe('Validation Schemas', () => {
         id: 'result-1',
       };
 
-      const result = updateResultSchema.safeParse(data);
+      const result = resultUpdateSchema.safeParse(data);
       expect(result.success).toBe(true);
     });
 
@@ -241,7 +241,7 @@ describe('Validation Schemas', () => {
         value: null,
       };
 
-      const result = updateResultSchema.safeParse(data);
+      const result = resultUpdateSchema.safeParse(data);
       expect(result.success).toBe(true);
     });
 
@@ -251,7 +251,7 @@ describe('Validation Schemas', () => {
         value: '5.2',
       };
 
-      const result = updateResultSchema.safeParse(data);
+      const result = resultUpdateSchema.safeParse(data);
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data.abnormal).toBe(false);
@@ -265,7 +265,7 @@ describe('Validation Schemas', () => {
         abnormal: true,
       };
 
-      const result = updateResultSchema.safeParse(data);
+      const result = resultUpdateSchema.safeParse(data);
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data.abnormal).toBe(true);
@@ -278,7 +278,7 @@ describe('Validation Schemas', () => {
         value: '123.456',
       };
 
-      const result = updateResultSchema.safeParse(data);
+      const result = resultUpdateSchema.safeParse(data);
       expect(result.success).toBe(true);
     });
 
@@ -288,7 +288,7 @@ describe('Validation Schemas', () => {
         value: 'Positif',
       };
 
-      const result = updateResultSchema.safeParse(data);
+      const result = resultUpdateSchema.safeParse(data);
       expect(result.success).toBe(true);
     });
 
@@ -299,7 +299,7 @@ describe('Validation Schemas', () => {
         notes: '',
       };
 
-      const result = updateResultSchema.safeParse(data);
+      const result = resultUpdateSchema.safeParse(data);
       expect(result.success).toBe(true);
     });
 
@@ -310,7 +310,7 @@ describe('Validation Schemas', () => {
         notes: 'Résultat avec caractères spéciaux: @#$%&*',
       };
 
-      const result = updateResultSchema.safeParse(data);
+      const result = resultUpdateSchema.safeParse(data);
       expect(result.success).toBe(true);
     });
 
@@ -321,7 +321,7 @@ describe('Validation Schemas', () => {
         notes: 'Résultat - 測試 - тест',
       };
 
-      const result = updateResultSchema.safeParse(data);
+      const result = resultUpdateSchema.safeParse(data);
       expect(result.success).toBe(true);
     });
   });

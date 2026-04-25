@@ -13,6 +13,7 @@ import {
   type EditingLot,
   type LotFormState,
   type Material,
+  type QcTarget,
   type RangeBasis,
   type TargetRow,
   type TestOption,
@@ -115,7 +116,7 @@ export default function QcLotsConfigPage() {
     setTargetRows([{ ...EMPTY_TARGET_ROW }]);
   }, [selectedLotId]);
 
-  const handleEditTarget = useCallback((target: any) => {
+  const handleEditTarget = useCallback((target: QcTarget) => {
     setTargetRows([{
       testId: target.testId || '',
       testCode: target.testCode,

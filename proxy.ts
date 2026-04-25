@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 
@@ -20,8 +19,33 @@ const PUBLIC_PREFIXES = [
   '/diagnostic',
 ];
 
+const SECURITY_HEADERS: Record<string, string> = {
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'SAMEORIGIN',
+  'X-XSS-Protection': '1; mode=block',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+  'Strict-Transport-Security': 'max-age=63072000; includeSubDomains; preload',
+  'Content-Security-Policy': [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com",
+    "img-src 'self' data: blob:",
+    "connect-src 'self'",
+    "frame-ancestors 'none'",
+  ].join('; '),
+};
+
 function isPublicPath(pathname: string): boolean {
   return PUBLIC_PREFIXES.some(prefix => pathname.startsWith(prefix));
+}
+
+function withSecurityHeaders(response: NextResponse): NextResponse {
+  Object.entries(SECURITY_HEADERS).forEach(([key, value]) => {
+    response.headers.set(key, value);
+  });
+  return response;
 }
 
 export async function proxy(req: NextRequest) {
@@ -35,7 +59,7 @@ export async function proxy(req: NextRequest) {
 
   // 1. Allow public routes
   if (isPublicPath(pathname) || (isInternalExportRoute && hasValidInternalPrintToken)) {
-    return NextResponse.next();
+    return withSecurityHeaders(NextResponse.next());
   }
 
   // 2. Get token and handle unauthenticated users
@@ -45,28 +69,28 @@ export async function proxy(req: NextRequest) {
   });
 
   if (!token) {
-    return NextResponse.redirect(new URL('/login', req.url));
+    return withSecurityHeaders(NextResponse.redirect(new URL('/login', req.url)));
   }
 
   // 3. Force password change if required
   if (token.mustChangePassword && pathname !== '/changer-mot-de-passe') {
-    return NextResponse.redirect(new URL('/changer-mot-de-passe', req.url));
+    return withSecurityHeaders(NextResponse.redirect(new URL('/changer-mot-de-passe', req.url)));
   }
 
   // 4. Role-based Page Restrictions
   const role = token.role as string;
 
   if (role === 'MEDECIN' && BLOCKED_MEDECIN.some(p => pathname.startsWith(p))) {
-    return NextResponse.redirect(new URL('/', req.url));
+    return withSecurityHeaders(NextResponse.redirect(new URL('/', req.url)));
   }
   if (role === 'RECEPTIONNISTE' && BLOCKED_RECEPTIONNISTE.some(p => pathname.startsWith(p))) {
-    return NextResponse.redirect(new URL('/', req.url));
+    return withSecurityHeaders(NextResponse.redirect(new URL('/', req.url)));
   }
   if (role !== 'ADMIN' && ADMIN_ONLY.some(p => pathname.startsWith(p))) {
-    return NextResponse.redirect(new URL('/', req.url));
+    return withSecurityHeaders(NextResponse.redirect(new URL('/', req.url)));
   }
 
-  return NextResponse.next();
+  return withSecurityHeaders(NextResponse.next());
 }
 
 export const config = {

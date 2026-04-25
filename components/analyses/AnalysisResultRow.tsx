@@ -4,6 +4,8 @@ import { AlertCircle, Calculator, CheckCircle, History, MessageSquare, NotepadTe
 import { formatReferenceRange, getTestReferenceValues } from '@/lib/utils';
 import { getCategoryIcon } from '@/lib/category-icons';
 import { isResultAbnormal } from '@/lib/calculations';
+import { isCalculatedFormulaTest } from '@/lib/calculated-tests';
+import { isCalculatedTest } from '@/lib/test-classification';
 import type { Analysis } from '@/lib/types';
 import type { ResultWithRenderCategory } from './types';
 
@@ -50,7 +52,7 @@ export function AnalysisResultRow({
   const prevResult = history[result.id];
   const displayName = test.name;
   const categoryIcon = getCategoryIcon(test.categoryRel?.icon);
-  const isFormula = ['VGM', 'CCMH', 'TCMH', 'PNN', 'GRA', 'LYM', 'LYM', 'MON', 'MID'].includes(test.code || '');
+  const isFormula = isCalculatedFormulaTest(test) || isCalculatedTest(test.code || '');
 
   return (
     <>

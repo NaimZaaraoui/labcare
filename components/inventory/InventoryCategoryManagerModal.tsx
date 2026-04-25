@@ -1,7 +1,12 @@
 'use client';
 
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle 
+} from "@/components/ui/dialog";
 import { Plus, Trash2 } from 'lucide-react';
-import { useScrollLock } from '@/hooks/useScrollLock';
 import type { InventoryCategoryConfig } from '@/lib/inventory-categories';
 
 interface InventoryCategoryManagerModalProps {
@@ -23,27 +28,14 @@ export function InventoryCategoryManagerModal({
   onNewCategoryNameChange,
   onSave,
 }: InventoryCategoryManagerModalProps) {
-  useScrollLock(open);
-  if (!open) return null;
-
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div
-        className="modal-shell flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="flex items-start justify-between border-b border-[var(--color-border)] px-6 py-5">
-          <div>
-            <h2 className="text-lg font-semibold text-[var(--color-text)]">Catégories d’inventaire</h2>
-            <p className="text-sm text-[var(--color-text-soft)]">Ajoutez, masquez ou réorganisez les familles d’articles.</p>
-          </div>
-          <button
-            onClick={onClose}
-            className="rounded-lg border px-3 py-1 text-xs font-semibold text-[var(--color-text-soft)] transition-colors hover:bg-[var(--color-surface-muted)]"
-          >
-            Fermer
-          </button>
-        </div>
+    <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
+      <DialogContent className="flex max-h-[90vh] max-w-2xl flex-col p-0 overflow-hidden">
+        <DialogHeader className="px-6 py-5 border-b">
+          <DialogTitle className="text-lg font-semibold text-[var(--color-text)]">Catégories d’inventaire</DialogTitle>
+          <p className="text-sm text-[var(--color-text-soft)]">Ajoutez, masquez ou réorganisez les familles d’articles.</p>
+        </DialogHeader>
+
         <div className="custom-scrollbar flex-1 space-y-4 overflow-y-auto px-6 py-5">
           {categoryDrafts.map((category, index) => (
             <div
@@ -133,7 +125,8 @@ export function InventoryCategoryManagerModal({
             </button>
           </div>
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--color-border)] px-6 py-4">
+
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t px-6 py-4">
           <div className="text-xs text-[var(--color-text-soft)]">
             Ces catégories seront proposées dans la création et l’édition des articles.
           </div>
@@ -141,7 +134,7 @@ export function InventoryCategoryManagerModal({
             Enregistrer
           </button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

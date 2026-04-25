@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Segoe UI", "Helvetica Neue", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", "Cascadia Code", "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
+  --font-sans: var(--font-jakarta), "Inter", "Segoe UI", "Helvetica Neue", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), "JetBrains Mono", "Cascadia Code", "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
 
   --animate-fade-in: fade-in 150ms ease-out forwards;
   --animate-fast-fade: fast-fade 150ms ease-out forwards;
@@ -81,6 +81,30 @@ body {
 body {
   background: var(--color-page);
   color: var(--color-text-secondary);
+  background-image: 
+    radial-gradient(at 0% 0%, hsla(215, 60%, 80%, 0.1) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, hsla(215, 60%, 80%, 0.1) 0px, transparent 50%);
+  background-attachment: fixed;
+}
+
+/* Custom Scrollbar Premium */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 10px;
+  border: 2px solid var(--color-page);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-soft);
 }
 
 :focus-visible:not(input) {
@@ -89,11 +113,11 @@ body {
 }
 
 .app-shell {
-  @apply min-h-screen;
+  @apply min-h-screen relative overflow-hidden;
 }
 
 .app-main {
-  @apply min-h-screen flex flex-col;
+  @apply min-h-screen flex flex-col relative z-10;
 }
 
 .app-workspace {
@@ -101,7 +125,7 @@ body {
 }
 
 .app-content {
-  @apply rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[0_2px_8px_rgba(15,31,51,0.03)] transition-all duration-300 sm:p-5 lg:p-6;
+  @apply rounded-[32px] border border-[var(--color-border)] bg-[var(--color-surface)]/80 backdrop-blur-xl p-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-300 sm:p-5 lg:p-10;
 }
 
 .app-right-pane {
@@ -109,16 +133,17 @@ body {
 }
 
 .pane-card {
-  @apply rounded-xl border bg-white p-4 shadow-[0_2px_8px_rgba(15,31,51,0.03)];
+  @apply rounded-[24px] border border-[var(--color-border)] bg-white/60 backdrop-blur-md p-5 shadow-[0_8px_30px_rgb(0,0,0,0.02)];
 }
 
 .bento-panel {
-  @apply rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[0_2px_8px_rgba(15,31,51,0.03)] transition-all duration-300;
+  @apply rounded-[32px] border border-[var(--color-border)] bg-[var(--color-surface)]/60 backdrop-blur-md shadow-[0_8px_30px_rgb(0,0,0,0.02)] transition-all duration-300 hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)] hover:-translate-y-1;
 }
 
 .status-pill {
-  @apply inline-flex items-center justify-center gap-1.5 px-3 py-1 text-[10px] sm:text-xs font-bold uppercase rounded-full whitespace-nowrap;
+  @apply inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-[10px] sm:text-xs font-black uppercase rounded-full whitespace-nowrap tracking-wider;
 }
+
 
 .status-pill-success {
   @apply bg-emerald-50 text-emerald-700 border border-emerald-200/50;
@@ -185,13 +210,6 @@ body {
   @apply mt-1 text-xs text-[var(--color-text-soft)];
 }
 
-.modal-overlay {
-  @apply fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 animate-fade-in;
-}
-
-.modal-shell {
-  @apply rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[0_10px_26px_rgba(15,31,51,0.10)] animate-fast-fade;
-}
 
 .auth-shell {
   @apply min-h-screen bg-[var(--color-page)] flex items-center justify-center p-4;

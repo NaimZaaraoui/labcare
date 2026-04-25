@@ -1,8 +1,12 @@
 'use client';
 
-import { createPortal } from 'react-dom';
-import { useScrollLock } from '@/hooks/useScrollLock';
-import { Edit2, PlusCircle, Save, X } from 'lucide-react';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle 
+} from "@/components/ui/dialog";
+import { Edit2, PlusCircle, Save } from 'lucide-react';
 import { AVAILABLE_ICONS } from './ordering-helpers';
 import type { Category } from './types';
 
@@ -23,7 +27,6 @@ interface Props {
 }
 
 export function CategoryFormModal({
-  mounted,
   showCreateModal,
   showEditModal,
   editingCategory,
@@ -37,31 +40,21 @@ export function CategoryFormModal({
   onClose,
   onSubmit,
   }: Props) {
-  useScrollLock(showCreateModal || showEditModal);
-  if (!mounted || (!showCreateModal && !showEditModal)) return null;
+  const isOpen = showCreateModal || showEditModal;
 
-  return createPortal(
-    <div className="modal-overlay z-[100]">
-      <div
-        className="modal-shell h-[90vh] w-full max-w-md space-y-6 overflow-y-auto p-6"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between">
+  return (
+    <Dialog open={isOpen} onOpenChange={(val) => !val && onClose()}>
+      <DialogContent className="flex max-h-[90vh] w-full max-w-md flex-col p-6 overflow-y-auto">
+        <DialogHeader className="flex flex-row items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl border bg-[var(--color-surface-muted)] text-[var(--color-text-secondary)]">
               {showEditModal ? <Edit2 size={20} /> : <PlusCircle size={20} />}
             </div>
-            <h3 className="text-xl font-semibold text-[var(--color-text)] tracking-tight">
+            <DialogTitle className="text-xl font-semibold text-[var(--color-text)] tracking-tight">
               {showEditModal ? 'Modifier la Catégorie' : 'Nouvelle Catégorie'}
-            </h3>
+            </DialogTitle>
           </div>
-          <button
-            onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-text-soft)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)] transition-all"
-          >
-            <X size={20} />
-          </button>
-        </div>
+        </DialogHeader>
 
         <div className="space-y-5">
           <div className="space-y-2">
@@ -130,8 +123,7 @@ export function CategoryFormModal({
             {showEditModal ? 'Enregistrer' : 'Créer'}
           </button>
         </div>
-      </div>
-    </div>,
-    document.body
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -457,3 +457,35 @@ export function isInBilan(testCode: string, bilanCode: keyof typeof STANDARD_BIL
   const normalized = normalizeTestCode(testCode).toUpperCase();
   return bilan.tests.some((c) => normalizeTestCode(c).toUpperCase() === normalized);
 }
+
+// ============================================================================
+// CALCULATED/FORMULA TESTS
+// ============================================================================
+
+/**
+ * Test codes that are automatically calculated from other test values
+ * These tests should have read-only input fields and show calculation details
+ * 
+ * Includes:
+ * - Hematology indices (VGM, TCMH, CCMH) calculated from RBC, HGB, HCT
+ * - WBC differentials (percentages and absolutes) calculated from absolute counts
+ * - Other derived values
+ */
+export const CALCULATED_TEST_CODES = ['VGM', 'MCV', 'TCMH', 'MCH', 'CCMH', 'MCHC', 'PNN', 'GRA', 'LYM', 'MID', 'MON', 'EOS', 'BASO'] as const;
+
+/**
+ * Check if a test code represents a calculated/formula test
+ * Calculated tests are auto-computed from other test values and have read-only inputs
+ * 
+ * @param code - Test code to check
+ * @returns true if test is automatically calculated
+ * 
+ * @example
+ * isCalculatedTest('VGM') // → true (calculated from RBC, HGB, HCT)
+ * isCalculatedTest('GR') // → false (manually entered)
+ * isCalculatedTest('HGB') // → false (manually entered)
+ */
+export function isCalculatedTest(code: string): boolean {
+  const upperCode = code.toUpperCase();
+  return CALCULATED_TEST_CODES.some((c) => c === upperCode);
+}

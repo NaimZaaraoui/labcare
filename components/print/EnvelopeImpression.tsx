@@ -3,7 +3,7 @@
 import React, { forwardRef } from 'react';
 import { LucideMicroscope, MapPin, Phone } from 'lucide-react';
 import type { OptionalAnalysisPrintProps } from '@/components/print/types';
-import { resolveEnvelopeRecipient, resolvePrintBranding } from '@/components/print/report-helpers';
+import { resolveEnvelopeRecipient, resolvePrintBranding } from '@/lib/report-generation';
 
 /*
   ┌─────────────────────────────────────────────────┐

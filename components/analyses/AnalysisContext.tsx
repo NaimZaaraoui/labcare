@@ -9,8 +9,9 @@ import { useDiatronImport } from './useDiatronImport';
 import { useResultatsUi } from './useResultatsUi';
 import { useResultatsPersistence } from './useResultatsPersistence';
 import { sortAnalysisResults } from './resultats-sorting';
-import { calculateResultMetrics } from './resultats-metrics';
-import { performHematologyCalculations } from '@/lib/calculations';
+import { calculateResultMetrics, performHematologyCalculations } from './resultats-metrics';
+import { NFS_SORT_ORDER } from '@/lib/test-classification';
+import { isAnalysisFinalValidated } from '@/lib/status-flow';
 import type { AnalysisInputsMap, AnalysisNotification } from './types';
 import type { Analysis, Result } from '@/lib/types';
 
@@ -52,6 +53,7 @@ export interface AnalysisContextType extends
     isFinalValidated: boolean;
     hasQcBlockers: boolean;
     handleResultChange: (resultId: string, value: string) => void;
+    diatronEnabled: boolean;
 }
 
 const AnalysisContext = createContext<AnalysisContextType | null>(null);
@@ -69,18 +71,6 @@ interface AnalysisProviderProps {
   children: React.ReactNode;
 }
 
-const NFS_SORT_ORDER = [
-  'GB', 'WBC', 
-  'LYM',
-  'MID', 'MON',
-  'GRA', 'GRAN',
-  'LYM%',
-  'MID%', 'MON%',
-  'GRA%',
-  'GR', 'RBC', 'HB', 'HGB',
-  'HT', 'HCT', 'VGM', 'CCMH', 'TCMH', 'IDR', 'RDW', 'PLT'
-];
-
 export function AnalysisProvider({ analysisId, children }: AnalysisProviderProps) {
   const session = useSession();
   const role = session?.data?.user?.role || '';
@@ -95,6 +85,16 @@ export function AnalysisProvider({ analysisId, children }: AnalysisProviderProps
   const [saveGlobalNoteBusy, setSaveGlobalNoteBusy] = useState(false);
   const [savingPayment, setSavingPayment] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [diatronEnabled, setDiatronEnabled] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(r => r.json())
+      .then((s: { diatron_enabled?: string }) => {
+        setDiatronEnabled(s.diatron_enabled === 'true');
+      })
+      .catch(() => {});
+  }, []);
 
   const [notification, setNotification] = useState<AnalysisNotification | null>(null);
   const notificationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -154,7 +154,7 @@ export function AnalysisProvider({ analysisId, children }: AnalysisProviderProps
     validationData.loadQcReadiness();
   }, [validationData.loadQcReadiness]);
 
-  const isFinalValidated = analysis?.status === 'validated_bio' || analysis?.status === 'completed';
+  const isFinalValidated = isAnalysisFinalValidated(analysis?.status);
   const hasQcBlockers = Boolean(validationData.qcReadiness && !validationData.qcReadiness.ready && validationData.qcReadiness.blockers.length > 0);
 
   const handleResultChange = (resultId: string, value: string) => {
@@ -237,6 +237,7 @@ export function AnalysisProvider({ analysisId, children }: AnalysisProviderProps
     isFinalValidated,
     hasQcBlockers,
     handleResultChange,
+    diatronEnabled,
   };
 
   return (

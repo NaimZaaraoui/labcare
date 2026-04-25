@@ -1,8 +1,14 @@
 'use client';
 
-import { Layers, Plus, Save, Settings2, X } from 'lucide-react';
-import { useScrollLock } from '@/hooks/useScrollLock';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle 
+} from "@/components/ui/dialog";
+import { Layers, Plus, Save, Settings2 } from 'lucide-react';
 import { RESULT_TYPES, type CategoryOption, type TestFormState, type TestWithInventory, type TestsLabSettings } from '@/components/tests/types';
+import { validateFormula } from '@/lib/calculated-tests';
 
 interface TestEditorModalProps {
   open: boolean;
@@ -31,14 +37,13 @@ export function TestEditorModal({
   onFormChange,
   onSexBasedChange,
 }: TestEditorModalProps) {
-  useScrollLock(open);
-  if (!open) {
-    return null;
-  }
+  const formulaValidation = !form.isGroup && form.resultType === 'calculated'
+    ? validateFormula(form.formula, tests.filter((test) => test.id !== editingTestId), form.code)
+    : null;
 
   const handleSubmit = (event: React.FormEvent | React.MouseEvent) => {
     event.preventDefault();
-    if (form.unit && form.resultType === 'numeric' && !form.isGroup) {
+    if (form.unit && (form.resultType === 'numeric' || form.resultType === 'calculated') && !form.isGroup) {
       const currentUnits = labSettings.clinical_units?.split(',').map(s => s.trim()) || [];
       const newUnit = form.unit.trim();
       if (newUnit && !currentUnits.includes(newUnit)) {
@@ -54,30 +59,21 @@ export function TestEditorModal({
   };
 
   return (
-    <div className="modal-overlay z-[60]">
-      <div
-        className="modal-shell flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="flex items-start justify-between border-b border-[var(--color-border)] p-6">
+    <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
+      <DialogContent className="flex max-h-[90vh] max-w-2xl flex-col p-0 overflow-hidden">
+        <DialogHeader className="flex items-start justify-between border-b border-[var(--color-border)] p-6">
           <div className="flex items-start gap-4">
             <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${editingTestId ? 'bg-[var(--color-surface-muted)] text-[var(--color-text)]' : 'bg-[var(--color-surface-muted)] text-[var(--color-text-secondary)]'}`}>
               {editingTestId ? <Settings2 size={22} /> : <Plus size={22} />}
             </div>
             <div>
-              <h3 className="text-xl font-semibold tracking-tight text-[var(--color-text)] sm:text-2xl">
+              <DialogTitle className="text-xl font-semibold tracking-tight text-[var(--color-text)] sm:text-2xl">
                 {editingTestId ? 'Modifier' : 'Ajouter'} test
-              </h3>
+              </DialogTitle>
               <p className="mt-1 text-sm text-[var(--color-text-secondary)]">Configurez les parametres de l&apos;analyse biologique.</p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="rounded-xl p-2 text-[var(--color-text-soft)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)] transition-all"
-          >
-            <X size={20} />
-          </button>
-        </div>
+        </DialogHeader>
 
         <form onSubmit={handleSubmit} className="custom-scrollbar flex-1 space-y-6 overflow-y-auto bg-[var(--color-surface)] p-6">
           <div className="grid grid-cols-2 gap-4">
@@ -171,6 +167,27 @@ export function TestEditorModal({
                 />
               </div>
             )}
+            {form.resultType === 'calculated' && !form.isGroup && (
+              <div className="space-y-2 md:col-span-2">
+                <label className="ml-1 text-[10px] font-black uppercase tracking-widest text-slate-400">Formule</label>
+                <textarea
+                  value={form.formula}
+                  onChange={(event) => onFormChange({ ...form, formula: event.target.value })}
+                  placeholder="Ex: (HGB / HCT) * 100"
+                  className="input-premium min-h-[96px] bg-[var(--color-surface)] p-3 font-mono text-sm"
+                />
+                <div className="space-y-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-xs">
+                  <p className="font-semibold text-[var(--color-text-secondary)]">
+                    Utilisez les codes des tests avec seulement `+ - * / ( )`.
+                  </p>
+                  <p className={formulaValidation?.valid ? 'text-emerald-600' : 'text-rose-600'}>
+                    {formulaValidation?.valid
+                      ? `Dépendances détectées: ${formulaValidation.dependencies.join(', ')}`
+                      : (formulaValidation?.error || 'La formule est obligatoire.')}
+                  </p>
+                </div>
+              </div>
+            )}
             <div className="space-y-2">
               <label className="ml-1 text-[10px] font-black uppercase tracking-widest text-slate-400">Echantillon</label>
               <select
@@ -197,7 +214,7 @@ export function TestEditorModal({
             </div>
           </div>
 
-          {!form.isGroup && form.resultType === 'numeric' && (
+          {!form.isGroup && (form.resultType === 'numeric' || form.resultType === 'calculated') && (
             <div className="space-y-6">
               <div className="flex items-center justify-between px-4">
                 <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Parametres Physico-chimiques</h4>
@@ -264,7 +281,7 @@ export function TestEditorModal({
           )}
         </form>
 
-        <div className="mt-auto flex justify-end gap-3 border-t border-[var(--color-border)] bg-[var(--color-surface)] p-6">
+        <div className="flex justify-end gap-3 border-t border-[var(--color-border)] bg-[var(--color-surface)] p-6">
           <button onClick={onClose} className="btn-secondary-md">
             Annuler
           </button>
@@ -272,7 +289,7 @@ export function TestEditorModal({
             <Save size={16} /> <span>Enregistrer</span>
           </button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

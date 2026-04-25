@@ -21,6 +21,7 @@ export interface Test {
     maxValueF: number | null;
     decimals: number | null;
     resultType: string;
+    formula?: string | null;
     categoryId: string | null;
     rank: number;
     options: string | null;
@@ -134,6 +135,7 @@ export type CreateTestInput = {
   minValue?: number;
   maxValue?: number;
   resultType?: string;
+  formula?: string;
   category?: string;
   isGroup?: boolean;
   parentId?: string;

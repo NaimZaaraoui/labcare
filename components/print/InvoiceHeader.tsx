@@ -4,7 +4,7 @@ import React from 'react';
 import { LucideMicroscope } from 'lucide-react';
 import type { Analysis } from '@/lib/types';
 import type { PrintSettings } from '@/components/print/types';
-import { resolvePrintBranding } from '@/components/print/report-helpers';
+import { resolvePrintBranding } from '@/lib/report-generation';
 
 interface InvoiceHeaderProps {
   analysis: Analysis;

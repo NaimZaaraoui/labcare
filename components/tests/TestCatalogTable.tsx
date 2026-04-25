@@ -2,6 +2,7 @@
 
 import { Beaker, Layers, Package, Pencil, Trash2 } from 'lucide-react';
 import { getCategoryIcon } from '@/lib/category-icons';
+import { isCalculatedFormulaTest } from '@/lib/calculated-tests';
 import type { CategoryOption, TestWithInventory, TestsLabSettings } from '@/components/tests/types';
 
 type VisibleCategory = CategoryOption & {
@@ -109,14 +110,14 @@ export function TestCatalogTable({
                             </span>
                           </td>
                           <td className="px-5 py-3.5 align-middle text-center">
-                            <span className={`status-pill ${test.isGroup ? 'bg-indigo-50 text-[var(--color-accent)]' : test.resultType === 'numeric' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
-                              {test.isGroup ? 'Panel' : test.resultType === 'numeric' ? 'Num' : 'Texte'}
+                              <span className={`status-pill ${test.isGroup ? 'bg-indigo-50 text-[var(--color-accent)]' : isCalculatedFormulaTest(test) ? 'bg-violet-50 text-violet-700' : test.resultType === 'numeric' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+                              {test.isGroup ? 'Panel' : isCalculatedFormulaTest(test) ? 'Calc' : test.resultType === 'numeric' ? 'Num' : 'Texte'}
                             </span>
                           </td>
                           <td className="px-5 py-3.5 align-middle text-center">
                             {test.isGroup ? (
                               <Layers size={14} className="mx-auto text-indigo-300" />
-                            ) : test.resultType === 'numeric' ? (
+                            ) : test.resultType === 'numeric' || test.resultType === 'calculated' ? (
                               <div className="flex flex-col items-center justify-center gap-1">
                                 {test.minValueM !== null || test.maxValueM !== null || test.minValueF !== null || test.maxValueF !== null ? (
                                   <div className="flex gap-4 text-[11px] font-bold">

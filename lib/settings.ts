@@ -10,7 +10,7 @@ export async function getSettings(keys: string[]): Promise<Record<string, string
     where: { key: { in: keys } },
   });
   return Object.fromEntries(
-    keys.map(k => [k, settings.find((s: any) => s.key === k)?.value ?? ''])
+    keys.map(k => [k, settings.find((setting) => setting.key === k)?.value ?? ''])
   );
 }
 

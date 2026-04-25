@@ -5,6 +5,7 @@ export const ALLOWED_SETTINGS_KEYS = [
   'lab_footer_text', 'lab_stamp_image', 'lab_bio_signature', 'tat_warn', 'tat_alert',
   'sample_types', 'clinical_units', 'amount_unit', 'qc_range_basis', 'maintenance_mode', 'maintenance_message',
   'database_backup_retention_count', 'database_recovery_retention_count', 'database_backup_external_target',
+  'diatron_enabled',
 ] as const;
 
 export type SettingKey = (typeof ALLOWED_SETTINGS_KEYS)[number];
@@ -38,6 +39,7 @@ export const DEFAULT_SETTINGS: LabSettingsMap = {
   database_backup_retention_count: '',
   database_recovery_retention_count: '',
   database_backup_external_target: '',
+  diatron_enabled: 'false',
 };
 
 export function normalizeSettingsRecord(

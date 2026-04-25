@@ -3,6 +3,7 @@ import { PrismaClient } from '@/app/generated/prisma';
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 import * as fs from 'fs';
 import * as path from 'path';
+import os from 'os';
 
 async function getPrisma() {
   const connectionString = process.env.DATABASE_URL || 'file:./dev.db';
@@ -127,7 +128,26 @@ export async function GET() {
     next_version: '16.1.2',
   });
 
-  // 6. Critical settings check
+  // 6. System Telemetry
+  try {
+    const memoryUsage = process.memoryUsage();
+    diagnostics.checks.push({
+      name: 'system_metrics',
+      status: 'ok',
+      os: os.platform(),
+      cpus: os.cpus().length,
+      load_avg: os.loadavg()[0], // 1-minute load average
+      memory: {
+        rss_mb: Math.round(memoryUsage.rss / 1024 / 1024 * 100) / 100,
+        heap_used_mb: Math.round(memoryUsage.heapUsed / 1024 / 1024 * 100) / 100,
+        free_sys_mb: Math.round(os.freemem() / 1024 / 1024 * 100) / 100,
+      }
+    });
+  } catch(error) {
+    // non-critical
+  }
+
+  // 7. Critical settings check
   try {
     const prisma = await getPrisma();
     const labName = await prisma.setting.findUnique({ where: { key: 'lab_name' } });

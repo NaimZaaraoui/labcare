@@ -1,9 +1,11 @@
 import React from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { resolvePrintBranding } from '@/components/print/report-helpers';
+import { resolvePrintBranding } from '@/lib/report-generation';
+import { isAnalysisValidated } from '@/lib/status-flow';
 import type { Analysis } from '@/lib/types';
 import type { PrintSettings } from '@/components/print/types';
+import type { AnalysisStatus } from '@/lib/status-flow';
 
 interface Props {
   analysis: Analysis;
@@ -13,7 +15,7 @@ interface Props {
 
 export function ReportFooterSignature({ analysis, settings, showFull = true }: Props) {
   const { LAB_NAME, LAB_PHONE, BIO_TITLE, BIO_NAME, BIO_ONMPT, FOOTER_TEXT } = resolvePrintBranding(settings);
-  const isValidated = analysis.status === 'completed' || analysis.status === 'validated_bio';
+  const isValidated = isAnalysisValidated(analysis.status as AnalysisStatus);
 
   return (
     <tfoot className="display-table-footer-group">

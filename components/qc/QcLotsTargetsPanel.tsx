@@ -3,7 +3,7 @@
 import type React from 'react';
 import { AlertTriangle, ChevronDown, ChevronRight, PencilLine, Plus, Power, RefreshCw, Trash2 } from 'lucide-react';
 import { QcTargetRowEditor } from '@/components/qc/QcTargetRowEditor';
-import { EMPTY_TARGET_ROW, type LotFormState, type Material, type RangeBasis, type TargetRow, type TestOption } from '@/components/qc/config-types';
+import { EMPTY_TARGET_ROW, type LotFormState, type Material, type QcTarget, type RangeBasis, type TargetRow, type TestOption } from '@/components/qc/config-types';
 import { QcTestSelectorModal } from '@/components/qc/QcTestSelectorModal';
 import { useState } from 'react';
 
@@ -25,7 +25,7 @@ interface QcLotsTargetsPanelProps {
   onUpdateLot: (lotId: string, currentLot: { lotNumber: string; expiryDate: string; openedAt?: string | null }) => void;
   onToggleLot: (lotId: string) => void;
   onDeleteLot: (lotId: string, lotNumber: string) => void;
-  onEditTarget?: (target: any) => void;
+  onEditTarget?: (target: QcTarget) => void;
   onTargetRowsChange: React.Dispatch<React.SetStateAction<TargetRow[]>>;
   onSaveTargets: (lotId: string) => void;
 }
@@ -258,13 +258,13 @@ export function QcLotsTargetsPanel({
                               </button>
                             </div>
 
-                            {Number((lot as any).resultsCount30d) > 0 && (
+                            {Number(lot.resultsCount30d) > 0 && (
                               <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
                                 <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
                                 <div>
                                   <p className="font-semibold">Attention : Lot en service</p>
                                   <p className="mt-1 leading-relaxed opacity-90">
-                                    Ce lot possède déjà {(lot as any).resultsCount30d} résultat(s) sur les 30 derniers jours.
+                                    Ce lot possède déjà {lot.resultsCount30d} résultat(s) sur les 30 derniers jours.
                                     Modifier les cibles (Moyenne/SD) changera l'interprétation clinique et les alertes Westgard 
                                     pour l'ensemble des points de ce lot.
                                   </p>

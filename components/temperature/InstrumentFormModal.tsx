@@ -1,8 +1,12 @@
 'use client';
 
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle 
+} from "@/components/ui/dialog";
 import { useEffect, useState } from 'react';
-import { X } from 'lucide-react';
-import { useScrollLock } from '@/hooks/useScrollLock';
 import {
   INSTRUMENT_TYPES,
   type CreateInstrumentPayload,
@@ -35,7 +39,6 @@ export function InstrumentFormModal({
   onPayloadChange,
   onCustomTypeChange,
 }: InstrumentFormModalProps) {
-  useScrollLock(open);
   const [clinicalUnits, setClinicalUnits] = useState<string[]>(['°C', '°F']);
 
   useEffect(() => {
@@ -68,25 +71,15 @@ export function InstrumentFormModal({
     onSubmit(event);
   };
 
-  if (!open) return null;
-
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div
-        className="modal-shell flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="flex items-start justify-between border-b border-[var(--color-border)] px-6 py-5">
-          <div>
-            <h2 className="text-lg font-semibold text-[var(--color-text)]">{title}</h2>
-            <p className="mt-1 text-sm text-[var(--color-text-soft)]">{subtitle}</p>
-          </div>
-          <button onClick={onClose} className="rounded-lg border px-3 py-1 text-xs font-semibold text-[var(--color-text-soft)] transition-colors hover:bg-[var(--color-surface-muted)]">
-            <X className="h-4 w-4" />
-          </button>
-        </div>
+    <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
+      <DialogContent className="flex max-h-[90vh] max-w-2xl flex-col p-0 overflow-hidden">
+        <DialogHeader className="px-6 py-5 border-b">
+          <DialogTitle className="text-lg font-semibold text-[var(--color-text)]">{title}</DialogTitle>
+          <p className="mt-1 text-sm text-[var(--color-text-soft)]">{subtitle}</p>
+        </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div className="custom-scrollbar flex-1 space-y-4 overflow-y-auto px-6 py-5">
             <label className="grid gap-2">
               <span className="form-label">Nom de l&apos;instrument</span>
@@ -181,7 +174,7 @@ export function InstrumentFormModal({
             </div>
           </div>
 
-          <div className="flex flex-wrap justify-end gap-3 border-t border-[var(--color-border)] px-6 py-4">
+          <div className="flex flex-wrap justify-end gap-3 border-t px-6 py-4">
             <button type="button" className="btn-secondary-sm" onClick={onClose}>
               Annuler
             </button>
@@ -190,7 +183,7 @@ export function InstrumentFormModal({
             </button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

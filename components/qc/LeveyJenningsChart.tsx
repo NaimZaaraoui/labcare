@@ -23,6 +23,24 @@ type ChartPoint = {
   inAcceptanceRange?: boolean | null;
 };
 
+type OrderedChartPoint = ChartPoint & {
+  displayMeasured: number;
+  isClamped: boolean;
+  displayDate: string;
+  fullDate: string;
+};
+
+type ChartTooltipProps<T> = {
+  active?: boolean;
+  payload?: Array<{ payload: T }>;
+};
+
+type DotRendererProps = {
+  cx?: number;
+  cy?: number;
+  payload?: OrderedChartPoint;
+};
+
 export function LeveyJenningsChart({
   title,
   points,
@@ -82,9 +100,9 @@ export function LeveyJenningsChart({
     ? mean + sd * 3.5
     : Math.max(...ordered.map(p => p.displayMeasured), maxAcceptable ?? mean, mean) + 1;
 
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({ active, payload }: ChartTooltipProps<OrderedChartPoint>) => {
     if (active && payload && payload.length) {
-      const point = payload[0].payload as ChartPoint & { fullDate: string; isClamped: boolean };
+      const point = payload[0].payload;
       return (
         <div className="min-w-[200px] rounded-2xl border border-slate-700 bg-slate-900 p-3 text-xs text-white shadow-xl opacity-95">
           <div className="flex justify-between items-center mb-2 pb-2 border-b border-slate-700">
@@ -149,8 +167,8 @@ export function LeveyJenningsChart({
     { label: 'Min', value: minAcceptable ?? mean, color: '#444', dash: '6 6' },
   ];
 
-  const dotRenderer = (props: any) => {
-    const { cx, cy, payload } = props;
+  const dotRenderer = ({ cx = 0, cy = 0, payload }: DotRendererProps) => {
+    if (!payload) return null;
     const fill =
       payload.flag === 'fail' ? '#ef4444' :
       payload.flag === 'warn' ? '#f59e0b' :

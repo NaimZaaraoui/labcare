@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { requireAnyRole } from '@/lib/authz';
 import { createAuditLog, getRequestMeta } from '@/lib/audit';
 import { resolveAnalysisTestIds } from '@/lib/analysis-tests';
+import { isAnalysisFinalValidated } from '@/lib/status-flow';
 
 interface SaveResultsPayload {
   results?: Record<string, unknown>;
@@ -50,7 +51,7 @@ export async function PUT(
       );
     }
 
-    if (analysis.status === 'completed' || analysis.status === 'validated_bio') {
+    if (isAnalysisFinalValidated(analysis.status)) {
       return NextResponse.json(
         { error: 'Analyse validée: modification des résultats interdite' },
         { status: 409 }
@@ -149,7 +150,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Analyse non trouvée' }, { status: 404 });
     }
 
-    if (analysis.status === 'completed' || analysis.status === 'validated_bio') {
+    if (isAnalysisFinalValidated(analysis.status)) {
       return NextResponse.json(
         { error: 'Analyse validée: modification des tests interdite' },
         { status: 409 }

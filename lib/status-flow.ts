@@ -8,7 +8,8 @@
  * - lib/constants.ts (status definitions)
  */
 
-import type { Analysis, UserRole } from '@/lib/types';
+import type { Analysis } from '@/lib/types';
+import type { AppRole } from '@/lib/authz';
 
 // ============================================================================
 // STATUS DEFINITIONS & CONSTANTS
@@ -74,7 +75,7 @@ export const STATUS_UI_MAP: Record<AnalysisStatus, { label: string; color: strin
  * Role-based permissions for status transitions
  * Defines which user roles can transition analyses to each status
  */
-export const ROLE_PERMISSIONS: Record<UserRole, AnalysisStatus[]> = {
+export const ROLE_PERMISSIONS: Record<AppRole, AnalysisStatus[]> = {
   ADMIN: [
     ANALYSIS_STATUSES.PENDING,
     ANALYSIS_STATUSES.IN_PROGRESS,
@@ -85,13 +86,6 @@ export const ROLE_PERMISSIONS: Record<UserRole, AnalysisStatus[]> = {
   TECHNICIEN: [ANALYSIS_STATUSES.IN_PROGRESS, ANALYSIS_STATUSES.VALIDATED_TECH],
   MEDECIN: [ANALYSIS_STATUSES.VALIDATED_BIO],
   RECEPTIONNISTE: [],
-  SUPER_ADMIN: [
-    ANALYSIS_STATUSES.PENDING,
-    ANALYSIS_STATUSES.IN_PROGRESS,
-    ANALYSIS_STATUSES.VALIDATED_TECH,
-    ANALYSIS_STATUSES.VALIDATED_BIO,
-    ANALYSIS_STATUSES.CANCELLED,
-  ],
 };
 
 // ============================================================================
@@ -233,7 +227,7 @@ export function getStatusColors(status: AnalysisStatus) {
  * hasPermissionForStatus('TECHNICIEN', 'validated_tech') // → true
  * hasPermissionForStatus('TECHNICIEN', 'validated_bio') // → false (medecin only)
  */
-export function hasPermissionForStatus(userRole: UserRole, targetStatus: AnalysisStatus): boolean {
+export function hasPermissionForStatus(userRole: AppRole, targetStatus: AnalysisStatus): boolean {
   const allowedStatuses = ROLE_PERMISSIONS[userRole] ?? [];
   return allowedStatuses.includes(targetStatus);
 }
@@ -260,7 +254,7 @@ export function hasPermissionForStatus(userRole: UserRole, targetStatus: Analysi
 export function canTransition(
   analysis: Analysis,
   targetStatus: AnalysisStatus,
-  userRole: UserRole
+  userRole: AppRole
 ): { allowed: boolean; reason?: string } {
   const currentStatus = analysis.status as AnalysisStatus;
 
@@ -436,4 +430,47 @@ export function normalizeStatus(status: AnalysisStatus): AnalysisStatus {
     return ANALYSIS_STATUSES.VALIDATED_BIO;
   }
   return status;
+}
+
+// ============================================================================
+// STATUS PREDICATES (Quick checks)
+// ============================================================================
+
+/**
+ * Check if analysis is in a validated/completed state
+ * Treats COMPLETED and VALIDATED_BIO as the same (both are final states)
+ * 
+ * @param status - Analysis status to check
+ * @returns true if analysis is validated/completed
+ * 
+ * @example
+ * isAnalysisValidated('validated_bio') // → true
+ * isAnalysisValidated('completed') // → true
+ * isAnalysisValidated('in_progress') // → false
+ */
+export function isAnalysisValidated(status: AnalysisStatus): boolean {
+  return status === ANALYSIS_STATUSES.VALIDATED_BIO || status === ANALYSIS_STATUSES.COMPLETED;
+}
+
+/**
+ * Alias for isAnalysisValidated() for semantic clarity
+ * Use this when checking if analysis is in its final, approved state
+ * 
+ * @param status - Analysis status to check
+ * @returns true if analysis is completed/validated
+ */
+export function isAnalysisCompleted(status: AnalysisStatus): boolean {
+  return isAnalysisValidated(status);
+}
+
+/**
+ * Alias for isAnalysisValidated() (compatibility with existing code)
+ * Checks if analysis is in final/locked state (validated_bio or completed)
+ * 
+ * @param status - Analysis status to check (accepts both typed and string)
+ * @returns true if analysis is final/locked
+ */
+export function isAnalysisFinalValidated(status: AnalysisStatus | string | null | undefined): boolean {
+  if (!status) return false;
+  return status === ANALYSIS_STATUSES.VALIDATED_BIO || status === ANALYSIS_STATUSES.COMPLETED;
 }

@@ -21,7 +21,7 @@ export function InventoryRuleModal({
   onSubmit,
 }: Props) {
   return (
-    <InventoryModalShell title="Ajouter une règle de consommation" onClose={onClose}>
+    <InventoryModalShell open={true} title="Ajouter une règle de consommation" onClose={onClose}>
       <form onSubmit={onSubmit} className="flex min-h-full flex-col">
         <div className="grid flex-1 gap-4">
           <label className="grid gap-1">

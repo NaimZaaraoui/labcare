@@ -1,34 +1,31 @@
 'use client';
 
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle 
+} from "@/components/ui/dialog";
 import type { ReactNode } from 'react';
-import { ArrowLeft } from 'lucide-react';
 
 interface InventoryModalShellProps {
+  open: boolean;
   title: string;
   onClose: () => void;
   children: ReactNode;
 }
 
-export function InventoryModalShell({ title, onClose, children }: InventoryModalShellProps) {
+export function InventoryModalShell({ open, title, onClose, children }: InventoryModalShellProps) {
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div
-        className="modal-shell flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="flex items-start justify-between gap-3 border-b border-[var(--color-border)] px-6 py-5">
-          <div>
-            <h2 className="text-lg font-semibold text-[var(--color-text)]">{title}</h2>
-          </div>
-          <button
-            onClick={onClose}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border bg-[var(--color-surface-muted)] text-[var(--color-text-soft)] transition-colors hover:text-[var(--color-text)]"
-          >
-            <ArrowLeft className="h-4 w-4 rotate-45" />
-          </button>
+    <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
+      <DialogContent className="flex max-h-[90vh] w-full max-w-2xl flex-col p-0 overflow-hidden">
+        <DialogHeader className="flex items-start justify-between gap-3 border-b border-[var(--color-border)] px-6 py-5">
+          <DialogTitle className="text-lg font-semibold text-[var(--color-text)]">{title}</DialogTitle>
+        </DialogHeader>
+        <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto px-6 py-5">
+          {children}
         </div>
-        <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto px-6 py-5">{children}</div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

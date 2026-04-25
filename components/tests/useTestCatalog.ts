@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Test } from '@/lib/types';
 import { toLabDisplaySettings } from '@/lib/settings-schema';
+import { validateFormula } from '@/lib/calculated-tests';
 import {
   DEFAULT_TESTS_LAB_SETTINGS,
   EMPTY_INVENTORY_FORM,
@@ -110,6 +111,7 @@ export function useTestCatalog() {
       maxValueF: test.maxValueF?.toString() || '',
       decimals: test.decimals?.toString() || '1',
       resultType: test.resultType || 'numeric',
+      formula: test.resultType === 'calculated' ? (test.options || '') : '',
       categoryId: test.categoryId || '',
       parentId: test.parentId || '',
       options: test.options || '',
@@ -135,15 +137,33 @@ export function useTestCatalog() {
       return;
     }
 
+    if (newTest.resultType === 'calculated') {
+      const validation = validateFormula(
+        newTest.formula,
+        tests.filter((test) => test.id !== editingTestId),
+        newTest.code
+      );
+
+      if (!validation.valid) {
+        showNotification('error', validation.error || 'Formule invalide');
+        return;
+      }
+    }
+
     const payload = {
       ...newTest,
-      minValue: newTest.resultType === 'numeric' && newTest.minValue ? parseFloat(newTest.minValue) : null,
-      maxValue: newTest.resultType === 'numeric' && newTest.maxValue ? parseFloat(newTest.maxValue) : null,
-      minValueM: newTest.resultType === 'numeric' && isSexBased && newTest.minValueM ? parseFloat(newTest.minValueM) : null,
-      maxValueM: newTest.resultType === 'numeric' && isSexBased && newTest.maxValueM ? parseFloat(newTest.maxValueM) : null,
-      minValueF: newTest.resultType === 'numeric' && isSexBased && newTest.minValueF ? parseFloat(newTest.minValueF) : null,
-      maxValueF: newTest.resultType === 'numeric' && isSexBased && newTest.maxValueF ? parseFloat(newTest.maxValueF) : null,
-      decimals: newTest.resultType === 'numeric' ? parseInt(newTest.decimals) : 1
+      minValue: (newTest.resultType === 'numeric' || newTest.resultType === 'calculated') && newTest.minValue ? parseFloat(newTest.minValue) : null,
+      maxValue: (newTest.resultType === 'numeric' || newTest.resultType === 'calculated') && newTest.maxValue ? parseFloat(newTest.maxValue) : null,
+      minValueM: (newTest.resultType === 'numeric' || newTest.resultType === 'calculated') && isSexBased && newTest.minValueM ? parseFloat(newTest.minValueM) : null,
+      maxValueM: (newTest.resultType === 'numeric' || newTest.resultType === 'calculated') && isSexBased && newTest.maxValueM ? parseFloat(newTest.maxValueM) : null,
+      minValueF: (newTest.resultType === 'numeric' || newTest.resultType === 'calculated') && isSexBased && newTest.minValueF ? parseFloat(newTest.minValueF) : null,
+      maxValueF: (newTest.resultType === 'numeric' || newTest.resultType === 'calculated') && isSexBased && newTest.maxValueF ? parseFloat(newTest.maxValueF) : null,
+      decimals: newTest.resultType === 'numeric' || newTest.resultType === 'calculated' ? parseInt(newTest.decimals) : 1,
+      options: newTest.resultType === 'dropdown'
+        ? newTest.options
+        : newTest.resultType === 'calculated'
+          ? newTest.formula.trim()
+          : '',
     };
 
     try {

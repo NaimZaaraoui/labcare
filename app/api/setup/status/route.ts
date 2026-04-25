@@ -8,6 +8,8 @@ async function createInstallerPrisma() {
   return new PrismaClient({ adapter });
 }
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const prisma = await createInstallerPrisma();

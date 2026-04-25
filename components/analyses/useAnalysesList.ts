@@ -3,7 +3,8 @@ import { useSearchParams } from 'next/navigation';
 import { isThisWeek } from 'date-fns';
 import { Analysis } from '@/lib/types';
 
-import { ANALYSIS_STATUSES, AnalysisStatus, isAnalysisFinalValidated } from '@/lib/analysis-status';
+import { ANALYSIS_STATUSES, AnalysisStatus } from '@/lib/analysis-status';
+import { isAnalysisFinalValidated } from '@/lib/status-flow';
 
 export type StatusFilter = 'all' | AnalysisStatus;
 export type DateFilter = 'today' | 'yesterday' | 'week' | 'custom' | 'all';
@@ -209,8 +210,9 @@ export function useAnalysesList() {
       // Optimistic UI update
       setAnalyses((prev) => prev.map((a) => a.id === analysis.id ? { ...a, emailedAt: new Date() } : a));
       alert(`Email envoyé avec succès à ${recipientEmail}`);
-    } catch (error: any) {
-      alert(error.message || 'Une erreur est survenue.');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Une erreur est survenue.';
+      alert(message);
     } finally {
       setSendingEmailId(null);
     }

@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import {prisma} from '@/lib/prisma';
 import { requireAnyRole } from '@/lib/authz';
 import { createAuditLog, getRequestMeta } from '@/lib/audit';
-import { updateResultSchema } from '@/lib/validations';
+import { resultUpdateSchema } from '@/lib/validators';
 
 export async function PUT(request: NextRequest) {
   try {
@@ -13,7 +13,7 @@ export async function PUT(request: NextRequest) {
     const meta = getRequestMeta({ headers: request.headers });
 
     const body = await request.json();
-    const parsed = updateResultSchema.safeParse(body);
+    const parsed = resultUpdateSchema.safeParse(body);
     
     if (!parsed.success) {
       return NextResponse.json({ 

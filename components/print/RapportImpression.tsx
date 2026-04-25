@@ -1,20 +1,22 @@
 import React, { forwardRef, useMemo } from 'react';
-import { HistogramView } from '../analyses/HistogramView';
-import { getHematologyFlags } from '@/lib/calculations';
+import { isAnalysisValidated } from '@/lib/status-flow';
 import { ReportPrintProps } from '@/components/print/types';
 import {
   buildReportReferenceMap,
   filterSelectedReportResults,
   groupReportResultsByCategory,
   parseReportHistograms,
-} from '@/components/print/report-helpers';
+} from '@/lib/report-generation';
 import { ReportHeader } from '@/components/print/ReportHeader';
 import { ReportFooterSignature } from '@/components/print/ReportFooterSignature';
 import { ReportResultsTable } from '@/components/print/ReportResultsTable';
+import { ReportPageFrame } from '@/components/print/ReportPageFrame';
+import { ReportMorphologySection } from '@/components/print/ReportMorphologySection';
+import type { AnalysisStatus } from '@/lib/status-flow';
 
 export const RapportImpression = forwardRef<HTMLDivElement, ReportPrintProps>(
   ({ analysis, results, selectedResultIds = [], settings }, ref) => {
-    const isValidated = analysis.status === 'completed' || analysis.status === 'validated_bio';
+    const isValidated = isAnalysisValidated(analysis.status as AnalysisStatus);
     const globalNote = analysis.globalNote?.trim();
     const globalNotePlacement = analysis.globalNotePlacement || 'all';
 
@@ -63,12 +65,7 @@ export const RapportImpression = forwardRef<HTMLDivElement, ReportPrintProps>(
         {allOrderedCategories.map((cat, index) => {
           const isNFS = cat === 'NFS';
           return (
-            <div key={cat} className={`${index > 0 ? 'print:break-before-page' : ''} relative`}>
-            {!isValidated && (
-               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-[35deg] text-[var(--color-text-soft)]/[0.07] text-[120px] font-black pointer-events-none select-none z-0 tracking-tighter whitespace-nowrap px-12 py-4 rounded-[60px] print:text-black/[0.05] print:border-black/[0.05]">
-                 BROUILLON
-               </div>
-            )}
+            <ReportPageFrame key={cat} isValidated={isValidated} breakBefore={index > 0}>
               <table className="w-full border-collapse border-none mb-4 relative z-10 flex-1">
                 <ReportHeader analysis={analysis} settings={settings} />
                 <ReportResultsTable 
@@ -80,81 +77,29 @@ export const RapportImpression = forwardRef<HTMLDivElement, ReportPrintProps>(
                 />
                 <tbody><tr><td>{renderGlobalNote(index)}</td></tr></tbody>
                 <ReportFooterSignature analysis={analysis} settings={settings} showFull={!isNFS} />
-          </table>
-          </div>
+              </table>
+            </ReportPageFrame>
           );
         })}
 
         {analysis.histogramData && (
-          <div className="print:break-before-page mt-8 relative">
-            {!isValidated && (
-               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-[35deg] text-[var(--color-text-soft)]/[0.07] text-[120px] font-black pointer-events-none select-none z-90 tracking-tighter whitespace-nowrap px-12 py-4 rounded-[60px] print:text-black/[0.05] print:border-black/[0.05]">
-                 BROUILLON
-               </div>
-            )}
+          <ReportPageFrame isValidated={isValidated} breakBefore>
             <table className="w-full border-collapse border-none mb-4 relative z-10">
               <ReportHeader analysis={analysis} settings={settings} />
-                <tbody>
-                    <tr>
-                        <td>
-                            <div className="mb-8">
-                      <div className="py-1.75">
-                                      <div className="flex items-center gap-3 px-4">
-                          <span className="text-xs font-black text-slate-400 uppercase tracking-[0.4em] print:text-black/60">Morphologie & Histogrammes</span>
-                                        <div className="h-px flex-1 bg-slate-200/50 print:bg-black/10"></div>
-                                      </div>
-                                    </div>
-
-                                <div className="mt-8 grid grid-cols-3 gap-8">
-                                {(() => {
-                          if (!parsedHistograms) return null;
-                                        return (
-                                          <>
-                                              <div className="space-y-4">
-                                <HistogramView data={parsedHistograms.wbc} title="Distribution leucocytaire (WBC)" color="#000000" width={220} height={140} xAxisMax={400} variant="report" />
-                                              </div>
-                                              <div className="space-y-4">
-                                <HistogramView data={parsedHistograms.rbc} title="Distribution érythrocytaire (RBC)" color="#000000" width={220} height={140} xAxisMax={250} variant="report" />
-                                              </div>
-                                              <div className="space-y-4">
-                                <HistogramView data={pltData!} title="Distribution plaquettaire (PLT)" color="#000000" width={220} height={140} xAxisMax={60} variant="report" />
-                                              </div>
-                                          </>
-                                        );
-                                })()}
-                                </div>
-                            </div>
-
-                            {(() => {
-                                try {
-                                    const interpretations = getHematologyFlags(analysis, results);
-                                    if (interpretations.length === 0) return (
-                          <p className="my-8 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Conclusion Morphologique : Absence d&apos;anomalies majeures détectables</p>
-                                    );
-                                    
-                                    return (
-                                        <div className='p-6'>
-                            <h4 className="text-[11px] font-black text-[var(--color-accent)] uppercase tracking-[0.2em] mb-4 print:text-black">Interprétations Diagnostiques</h4>
-                                            <div className="flex flex-wrap gap-2">
-                                                {interpretations.map(flag => (
-                                <span key={flag} className="px-3 py-1.5 bg-[var(--color-surface)] border border-indigo-100 rounded-lg text-[10px] font-medium text-indigo-700 print:border-black/80 print:text-black">
-                                                        {flag}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                            </div>
-                                    );
-                      } catch { return null; }
-                            })()}
-                        </td>
-                    </tr>
+              <ReportMorphologySection
+                analysis={analysis}
+                results={results}
+                parsedHistograms={parsedHistograms}
+                pltData={pltData}
+              />
+              <tbody>
                 <tr>
                   <td>{renderGlobalNote(allOrderedCategories.length)}</td>
                 </tr>
-                </tbody>
+              </tbody>
               <ReportFooterSignature analysis={analysis} settings={settings} showFull={true} />
             </table>
-          </div>
+          </ReportPageFrame>
         )}
 
         <style jsx global>{`

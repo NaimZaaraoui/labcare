@@ -32,3 +32,13 @@ dist/
 output-standalone/
 main.js
 preload.js
+
+# Deployment Artifacts
+nexlab-install/
+nexlab-image.tar
+
+# Local Database
+data/
+*.db
+*.db-journal
+*.sqlite

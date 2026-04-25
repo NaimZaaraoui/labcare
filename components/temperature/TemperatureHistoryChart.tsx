@@ -21,6 +21,24 @@ interface TemperatureHistoryChartProps {
   printWidth?: number;
 }
 
+type TemperatureChartPoint = TemperatureReading & {
+  displayValue: number;
+  isClamped: boolean;
+  timestamp: number;
+  displayDate: string;
+};
+
+type ChartTooltipProps<T> = {
+  active?: boolean;
+  payload?: Array<{ payload: T }>;
+};
+
+type ScatterShapeProps<T> = {
+  cx?: number;
+  cy?: number;
+  payload?: T;
+};
+
 export function TemperatureHistoryChart({ readings, min, max, unit, printWidth }: TemperatureHistoryChartProps) {
   if (readings.length === 0) {
     return (
@@ -47,9 +65,9 @@ export function TemperatureHistoryChart({ readings, min, max, unit, printWidth }
   const domainMin = min - 0.5;
   const domainMax = max + 0.5;
 
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({ active, payload }: ChartTooltipProps<TemperatureChartPoint>) => {
     if (active && payload && payload.length) {
-      const item = payload[0].payload as TemperatureReading & { isClamped: boolean };
+      const item = payload[0].payload;
       return (
         <div className="min-w-[180px] rounded-2xl border border-slate-700 bg-slate-900 p-3 text-xs text-white shadow-xl opacity-95">
           <div className="flex justify-between items-center mb-2 pb-2 border-b border-slate-800">
@@ -123,8 +141,9 @@ export function TemperatureHistoryChart({ readings, min, max, unit, printWidth }
               <ReferenceLine y={max} stroke="#94a3b8" strokeDasharray="4 4" label={{ position: 'left', value: `${max}${unit}`, fontSize: 9, fill: '#94a3b8', fontWeight: 800 }} />
               <ReferenceLine y={min} stroke="#94a3b8" strokeDasharray="4 4" label={{ position: 'left', value: `${min}${unit}`, fontSize: 9, fill: '#94a3b8', fontWeight: 800 }} />
               <Line type="monotone" dataKey="displayValue" stroke="var(--color-text)" strokeWidth={2.5} dot={false} activeDot={false} isAnimationActive={false} />
-              <Scatter dataKey="displayValue" isAnimationActive={false} shape={(props: any) => {
-                const { cx, cy, payload } = props;
+              <Scatter dataKey="displayValue" isAnimationActive={false} shape={(props: ScatterShapeProps<TemperatureChartPoint>) => {
+                const { cx = 0, cy = 0, payload } = props;
+                if (!payload) return null;
                 const isOut = payload.isOutOfRange;
                 if (payload.isClamped) {
                   const goingUp = payload.value > max;
@@ -146,8 +165,9 @@ export function TemperatureHistoryChart({ readings, min, max, unit, printWidth }
                 <ReferenceLine y={min} stroke="#94a3b8" strokeDasharray="4 4" label={{ position: 'left', value: `${min}${unit}`, fontSize: 9, fill: '#94a3b8', fontWeight: 800 }} />
                 <RechartsTooltip content={<CustomTooltip />} cursor={{ stroke: '#e2e8f0', strokeWidth: 1 }} />
                 <Line type="monotone" dataKey="displayValue" stroke="var(--color-text)" strokeWidth={2.5} dot={false} activeDot={false} isAnimationActive={false} />
-                <Scatter dataKey="displayValue" isAnimationActive={false} shape={(props: any) => {
-                  const { cx, cy, payload } = props;
+                <Scatter dataKey="displayValue" isAnimationActive={false} shape={(props: ScatterShapeProps<TemperatureChartPoint>) => {
+                  const { cx = 0, cy = 0, payload } = props;
+                  if (!payload) return null;
                   const isOut = payload.isOutOfRange;
                   if (payload.isClamped) {
                     const goingUp = payload.value > max;

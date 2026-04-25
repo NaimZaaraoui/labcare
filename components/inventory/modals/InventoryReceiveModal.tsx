@@ -22,7 +22,7 @@ export function InventoryReceiveModal({
   onSubmit,
 }: Props) {
   return (
-    <InventoryModalShell title="Réceptionner un lot" onClose={onClose}>
+    <InventoryModalShell open={true} title="Réceptionner un lot" onClose={onClose}>
       <form onSubmit={onSubmit} className="flex min-h-full flex-col">
         <div className="grid flex-1 gap-4">
           <label className="grid gap-1">

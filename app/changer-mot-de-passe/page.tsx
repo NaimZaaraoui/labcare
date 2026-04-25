@@ -59,35 +59,77 @@ export default function ChangePasswordPage() {
     }
   };
 
+  const inputCls = 'h-12 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-4 text-sm text-slate-800 placeholder-slate-400 shadow-sm transition focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100';
+
   return (
-    <div className="auth-shell">
-      <div className="w-full max-w-md">
-        
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-20 h-20 bg-amber-500 rounded-3xl flex items-center justify-center shadow-2xl shadow-amber-100/70 mb-6 rotate-3">
-            <ShieldCheck size={40} className="text-white" />
+    <div className="min-h-screen flex">
+      {/* Left brand panel */}
+      <div className="hidden lg:flex lg:w-[420px] xl:w-[480px] flex-col justify-between bg-gradient-to-b from-indigo-700 via-indigo-600 to-indigo-900 p-10 relative overflow-hidden shrink-0">
+        <div className="absolute -top-20 -left-20 h-80 w-80 rounded-full bg-white/10 blur-3xl" />
+        <div className="absolute bottom-10 -right-20 h-60 w-60 rounded-full bg-indigo-300/20 blur-3xl" />
+
+        {/* Logo */}
+        <div className="relative z-10 flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/20 backdrop-blur">
+            <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6 text-white" stroke="currentColor" strokeWidth={1.8}>
+              <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </div>
-          <h1 className="text-2xl font-semibold text-[var(--color-text)] tracking-tight text-center">Sécurité de votre compte</h1>
-          <p className="text-sm font-medium text-slate-400 uppercase tracking-widest mt-2 text-center">
-            Mise à jour obligatoire
-          </p>
+          <span className="text-lg font-bold tracking-tight text-white">NexLab LIMS</span>
         </div>
 
-        <div className="auth-card">
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold text-[var(--color-text)] mb-2">Changer votre mot de passe</h2>
-            <p className="text-[var(--color-text-soft)] font-medium text-sm">
-              Pour des raisons de sécurité, vous devez définir un nouveau mot de passe lors de votre première connexion.
-            </p>
+        {/* Quote / value props */}
+        <div className="relative z-10 space-y-8">
+          <blockquote className="text-3xl font-bold leading-tight text-white">
+            "Sécurité avant<br />tout."
+          </blockquote>
+          <div className="space-y-4">
+            {[
+              { stat: '100%', label: 'Chiffrement local des données' },
+              { stat: '24/7', label: 'Protection d\'accès stricte' },
+              { stat: '0', label: 'Dépendance Cloud externe' },
+            ].map(({ stat, label }) => (
+              <div key={label} className="flex items-center gap-4">
+                <span className="w-14 shrink-0 text-xl font-black text-white">{stat}</span>
+                <span className="text-sm text-indigo-100">{label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <p className="relative z-10 text-xs text-indigo-200/60">
+          © {new Date().getFullYear()} NexLab — Tous droits réservés
+        </p>
+      </div>
+
+      {/* Right form panel */}
+      <div className="flex flex-1 flex-col items-center justify-center bg-[#f8fafc] p-6 lg:p-12">
+        <div className="w-full max-w-sm">
+
+          {/* Mobile logo */}
+          <div className="mb-8 flex items-center gap-3 lg:hidden">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600">
+              <ShieldCheck className="h-5 w-5 text-white" />
+            </div>
+            <span className="text-base font-bold text-slate-800">NexLab LIMS</span>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="mb-8">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-amber-500/10 text-amber-600 mb-4">
+              <ShieldCheck className="w-6 h-6" />
+            </div>
+            <h1 className="text-2xl font-bold text-slate-800">Sécurité de votre compte</h1>
+            <p className="mt-1 text-sm text-slate-500">Vous devez définir un nouveau mot de passe personnalisé pour continuer.</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Nouveau mot de passe */}
             <div>
-              <label htmlFor="new-password" className="form-label mb-3 ml-1">
+              <label htmlFor="new-password" className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                 Nouveau mot de passe
               </label>
-              <div className="relative input-premium flex gap-2 items-center group">
-                <Lock size={18} className="text-slate-400 group-focus-within:text-indigo-500" />
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
                   id="new-password"
                   type={showPassword ? 'text' : 'password'}
@@ -95,27 +137,26 @@ export default function ChangePasswordPage() {
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  aria-invalid={Boolean(error)}
-                  aria-describedby={error ? 'change-password-error' : undefined}
-                  className="h-14 border-none w-full outline-none bg-transparent"
+                  className={`${inputCls} pr-11`}
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-slate-400 hover:text-indigo-500 transition-colors rounded-xl hover:bg-[var(--color-surface)]"
+                  onClick={() => setShowPassword(v => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                  aria-label={showPassword ? 'Masquer' : 'Afficher'}
                 >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
             </div>
 
+            {/* Confirmer le mot de passe */}
             <div>
-              <label htmlFor="confirm-password" className="form-label mb-3 ml-1">
+              <label htmlFor="confirm-password" className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                 Confirmer le mot de passe
               </label>
-              <div className="relative input-premium flex gap-2 items-center group">
-                <Lock size={18} className="text-slate-400 group-focus-within:text-indigo-500" />
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
                   id="confirm-password"
                   type={showPassword ? 'text' : 'password'}
@@ -123,32 +164,37 @@ export default function ChangePasswordPage() {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  aria-invalid={Boolean(error)}
-                  aria-describedby={error ? 'change-password-error' : undefined}
-                  className="h-14 border-none w-full outline-none bg-transparent"
+                  className={`${inputCls} pr-11`}
                 />
               </div>
             </div>
 
+            {/* Error */}
             {error && (
-              <div id="change-password-error" role="alert" className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-start gap-3">
-                <AlertCircle size={18} className="text-rose-600 shrink-0 mt-0.5" />
-                <p className="text-sm font-bold text-rose-600">{error}</p>
+              <div className="flex items-center gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3">
+                <AlertCircle className="h-4 w-4 shrink-0 text-rose-500" />
+                <p className="text-sm font-medium text-rose-700">{error}</p>
               </div>
             )}
 
             <button
               type="submit"
-              disabled={loading}
-              className="btn-primary-md w-full h-12 text-sm"
+              disabled={loading || !newPassword || !confirmPassword}
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 active:scale-[0.98] disabled:opacity-60"
             >
               {loading ? (
-                <><Loader2 size={20} className="animate-spin" /> Mise à jour...</>
+                <><Loader2 className="h-4 w-4 animate-spin" /> Mise à jour...</>
               ) : (
                 'Enregistrer le mot de passe'
               )}
             </button>
           </form>
+
+          {/* Footer */}
+          <div className="mt-8 flex items-center justify-center gap-2 text-xs text-slate-400">
+            <ShieldCheck className="h-3.5 w-3.5" />
+            Mise à jour obligatoire de sécurité
+          </div>
         </div>
       </div>
     </div>

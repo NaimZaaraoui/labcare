@@ -2,7 +2,7 @@
 
 import React from 'react';
 import type { PrintSettings } from '@/components/print/types';
-import { buildInvoiceItems } from '@/components/print/report-helpers';
+import { buildInvoiceItems } from '@/lib/report-generation';
 import type { Result } from '@/lib/types';
 
 interface InvoiceTableProps {

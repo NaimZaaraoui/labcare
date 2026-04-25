@@ -12,6 +12,7 @@ import {
   Users,
   Printer,
   FileText,
+  type LucideIcon,
 } from 'lucide-react';
 import { 
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
@@ -58,8 +59,35 @@ interface StatsData {
   topTests: TopTest[];
 }
 
+type RangeOption = '7d' | '30d' | 'ytd' | 'all';
+
+type TooltipPayloadEntry<T> = {
+  value: number | string;
+  payload: T;
+};
+
+type ChartTooltipProps<T> = {
+  active?: boolean;
+  payload?: TooltipPayloadEntry<T>[];
+  label?: string;
+};
+
+interface KpiCardProps {
+  title: string;
+  value: string;
+  icon: LucideIcon;
+  tone: keyof typeof toneClasses;
+}
+
+const toneClasses = {
+  default: 'bg-[var(--color-surface-muted)] text-[var(--color-text-secondary)]',
+  warning: 'bg-amber-50 text-amber-700',
+  critical: 'bg-rose-50 text-rose-700',
+  success: 'bg-emerald-50 text-emerald-700',
+} as const;
+
 export default function StatisticsPage() {
-  const [range, setRange] = useState<'7d' | '30d' | 'ytd' | 'all'>('30d');
+  const [range, setRange] = useState<RangeOption>('30d');
   const [data, setData] = useState<StatsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [cnamDateFrom, setCnamDateFrom] = useState('');
@@ -93,13 +121,13 @@ export default function StatisticsPage() {
       .replace('DZD', currency);
   };
 
-  const CustomTooltipRevenue = ({ active, payload, label }: any) => {
+  const CustomTooltipRevenue = ({ active, payload, label }: ChartTooltipProps<TimelineEntry>) => {
     if (active && payload && payload.length) {
       return (
         <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3 shadow-lg">
           <p className="font-semibold text-slate-700">{label}</p>
           <p className="text-sm font-medium text-[var(--color-accent)]">
-            Chiffre d'Affaires : {formatCurrency(payload[0].value)}
+            Chiffre d'Affaires : {formatCurrency(Number(payload[0].value))}
           </p>
           {payload[1] && (
             <p className="text-sm font-medium text-[var(--color-text-secondary)]">
@@ -112,7 +140,7 @@ export default function StatisticsPage() {
     return null;
   };
 
-  const CustomTooltipTests = ({ active, payload }: any) => {
+  const CustomTooltipTests = ({ active, payload }: ChartTooltipProps<TopTest>) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
@@ -146,14 +174,14 @@ export default function StatisticsPage() {
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-1">
               {[
-                { id: '7d', label: '7 Jours' },
-                { id: '30d', label: '30 Jours' },
-                { id: 'ytd', label: 'Cette année' },
-                { id: 'all', label: 'Tout' }
+                { id: '7d' as const, label: '7 Jours' },
+                { id: '30d' as const, label: '30 Jours' },
+                { id: 'ytd' as const, label: 'Cette année' },
+                { id: 'all' as const, label: 'Tout' }
               ].map(r => (
                 <button
                   key={r.id}
-                  onClick={() => setRange(r.id as any)}
+                  onClick={() => setRange(r.id)}
                   className={`rounded-md px-4 py-1.5 text-sm font-medium transition-all ${
                     range === r.id
                       ? 'bg-[var(--color-surface)] text-indigo-700 shadow-sm'
@@ -432,14 +460,7 @@ export default function StatisticsPage() {
   );
 }
 
-function KpiCard({ title, value, icon: Icon, tone }: any) {
-  const toneClasses: any = {
-    default: 'bg-[var(--color-surface-muted)] text-[var(--color-text-secondary)]',
-    warning: 'bg-amber-50 text-amber-700',
-    critical: 'bg-rose-50 text-rose-700',
-    success: 'bg-emerald-50 text-emerald-700',
-  };
-
+function KpiCard({ title, value, icon: Icon, tone }: KpiCardProps) {
   return (
     <article className="flex flex-col justify-center rounded-[2rem] border border-[var(--color-border)]/50 bg-[var(--color-surface)] p-6 shadow-sm ring-1 ring-slate-900/5 transition-all hover:shadow-md">
       <div className="flex items-center justify-between">

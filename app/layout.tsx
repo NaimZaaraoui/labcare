@@ -1,5 +1,18 @@
 import type { Metadata, Viewport } from "next";
+import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-jakarta",
+  display: "swap",
+});
+
+const jetbrains = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "NEXLAB - Système de Gestion Laboratoire",
@@ -15,6 +28,8 @@ export const viewport: Viewport = {
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Providers } from "@/components/Providers";
 import { auth } from "@/lib/auth";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { SessionManager } from "@/components/SessionManager";
 
 export default async function RootLayout({
   children,
@@ -25,11 +40,15 @@ export default async function RootLayout({
   
   return (
     <html lang="fr" suppressHydrationWarning>
-      <body className="bg-[var(--color-page)] font-sans antialiased text-[var(--color-text-secondary)]">
+      <body className={`${jakarta.variable} ${jetbrains.variable} bg-[var(--color-page)] font-sans antialiased text-[var(--color-text-secondary)]`}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem storageKey="nexlab-theme" disableTransitionOnChange>
-          <Providers session={session}>
-            {children}
-          </Providers>
+          <ErrorBoundary>
+            <Providers session={session}>
+              <SessionManager>
+                {children}
+              </SessionManager>
+            </Providers>
+          </ErrorBoundary>
         </ThemeProvider>
       </body>
     </html>

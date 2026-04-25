@@ -1,8 +1,12 @@
 'use client';
 
-import { Check, Filter, Save, Search, FolderKanban, X } from 'lucide-react';
-import { useScrollLock } from '@/hooks/useScrollLock';
-import { createPortal } from 'react-dom';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle 
+} from "@/components/ui/dialog";
+import { Check, Filter, Save, Search, FolderKanban } from 'lucide-react';
 import type { BilanItem, BilanTest } from '@/components/bilans/types';
 
 interface BilanEditorModalProps {
@@ -21,7 +25,6 @@ interface BilanEditorModalProps {
 }
 
 export function BilanEditorModal({
-  mounted,
   open,
   editingBilan,
   formData,
@@ -34,28 +37,22 @@ export function BilanEditorModal({
   onSearchQueryChange,
   onToggleTest,
 }: BilanEditorModalProps) {
-  useScrollLock(open);
-  if (!mounted || !open) return null;
-
-  return createPortal(
-    <div className="modal-overlay z-[60]">
-      <div className="modal-shell flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden" onClick={(event) => event.stopPropagation()}>
-        <div className="flex items-start justify-between border-b border-[var(--color-border)] p-6">
+  return (
+    <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
+      <DialogContent className="flex max-h-[90vh] max-w-3xl flex-col p-0 overflow-hidden">
+        <DialogHeader className="flex items-start justify-between border-b border-[var(--color-border)] p-6">
           <div className="flex items-start gap-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border bg-[var(--color-surface-muted)] text-[var(--color-text-secondary)]">
               <FolderKanban size={18} />
             </div>
             <div>
-              <h3 className="text-xl font-semibold tracking-tight text-[var(--color-text)] sm:text-2xl">
+              <DialogTitle className="text-xl font-semibold tracking-tight text-[var(--color-text)] sm:text-2xl">
                 {editingBilan ? 'Modifier le Bilan' : 'Nouveau Bilan'}
-              </h3>
-              <p className="mt-1 text-sm text-[var(--color-text-secondary)]">Gérez vos raccourcis d&apos;analyses pour une saisie rapide.</p>
+              </DialogTitle>
+              <p className="mt-1 text-sm text-[var(--color-text-secondary)]">Gerez vos raccourcis d&apos;analyses pour une saisie rapide.</p>
             </div>
           </div>
-          <button onClick={onClose} className="rounded-xl p-2 text-[var(--color-text-soft)] transition-all hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]">
-            <X size={20} />
-          </button>
-        </div>
+        </DialogHeader>
 
         <div className="custom-scrollbar flex-1 space-y-6 overflow-y-auto bg-[var(--color-surface)] p-6">
           <div className="grid grid-cols-1 gap-5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-5 md:grid-cols-2">
@@ -64,7 +61,7 @@ export function BilanEditorModal({
               <input
                 value={formData.name}
                 onChange={(event) => onFormDataChange({ ...formData, name: event.target.value })}
-                placeholder="Ex: Bilan Pré-opératoire"
+                placeholder="Ex: Bilan Pre-operatoire"
                 className="input-premium h-11 bg-[var(--color-surface)]"
               />
             </div>
@@ -130,14 +127,14 @@ export function BilanEditorModal({
                   <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--color-surface-muted)] text-slate-200">
                     <Search size={32} />
                   </div>
-                  <p className="text-sm font-medium italic text-slate-400">Aucune analyse trouvée pour &quot;{searchQuery}&quot;</p>
+                  <p className="text-sm font-medium italic text-slate-400">Aucune analyse trouvee pour &quot;{searchQuery}&quot;</p>
                 </div>
               )}
             </div>
           </div>
         </div>
 
-        <div className="mt-auto flex justify-end gap-3 border-t border-[var(--color-border)] bg-[var(--color-surface)] p-6">
+        <div className="flex justify-end gap-3 border-t border-[var(--color-border)] bg-[var(--color-surface)] p-6">
           <button onClick={onClose} className="btn-secondary-md">
             Annuler
           </button>
@@ -146,8 +143,7 @@ export function BilanEditorModal({
             <span>Enregistrer</span>
           </button>
         </div>
-      </div>
-    </div>,
-    document.body
+      </DialogContent>
+    </Dialog>
   );
 }

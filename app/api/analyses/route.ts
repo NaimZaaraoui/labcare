@@ -7,7 +7,8 @@ import { auth } from '@/lib/auth';
 import { notifyUsers, getUserIdsByRoles } from '@/lib/notifications';
 import { requireAnyRole, requireAuthUser } from '@/lib/authz';
 import { createAuditLog, getRequestMeta } from '@/lib/audit';
-import { createAnalysisSchema } from '@/lib/validations';
+import { resolveAnalysisTestIds } from '@/lib/analysis-tests';
+import { analysisCreateSchema } from '@/lib/validators';
 import { getLicenseStatus } from '@/lib/license';
 
 export async function GET(request: NextRequest) {
@@ -78,7 +79,6 @@ export async function GET(request: NextRequest) {
     const findOptions = {
       where,
       include: {
-        patient: true,
         results: includeResults ? {
           include: {
             test: {
@@ -161,7 +161,7 @@ export async function POST(request: NextRequest) {
     const meta = getRequestMeta({ headers: request.headers });
 
     const body = await request.json();
-    const parsed = createAnalysisSchema.safeParse(body);
+    const parsed = analysisCreateSchema.safeParse(body);
     
     if (!parsed.success) {
       return NextResponse.json({ 
@@ -214,32 +214,6 @@ export async function POST(request: NextRequest) {
     }
     const receiptNumber = `Q${nextReceiptNum.toString().padStart(6, '0')}`;
     
-    // Fonction récursive pour récupérer tous les tests enfants (panels)
-    const resolveTests = async (ids: string[]): Promise<string[]> => {
-      const allIds = new Set<string>();
-      
-      const fetchChildren = async (id: string) => {
-        if (allIds.has(id)) return;
-        allIds.add(id);
-        
-        const test = await prisma.test.findUnique({
-          where: { id },
-          include: { children: true }
-        });
-        
-        if (test?.children) {
-          for (const child of test.children) {
-            await fetchChildren(child.id);
-          }
-        }
-      };
-
-      for (const id of ids) {
-        await fetchChildren(id);
-      }
-      return Array.from(allIds);
-    };
-
     const { 
       dailyId,
       patientId, 
@@ -295,7 +269,7 @@ export async function POST(request: NextRequest) {
        finalPatientId = newPatient.id;
     }
     
-    const resolvedTestsIds = await resolveTests(testsIds);
+    const resolvedTestsIds = await resolveAnalysisTestIds(testsIds);
     
     // Calculate total price based on resolved tests
     const testsData = await prisma.test.findMany({

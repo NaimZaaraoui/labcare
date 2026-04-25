@@ -16,6 +16,24 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/',
 }));
 
+// Mock next/server (NextResponse) to avoid next-auth CJS/ESM resolution issue in Vitest
+vi.mock('next/server', () => ({
+  NextResponse: {
+    json: vi.fn((body: unknown, init?: ResponseInit) => new Response(JSON.stringify(body), {
+      ...init,
+      headers: { 'Content-Type': 'application/json', ...(init?.headers ?? {}) },
+    })),
+    redirect: vi.fn((url: string) => new Response(null, { status: 302, headers: { Location: url } })),
+    next: vi.fn(() => new Response(null, { status: 200 })),
+  },
+  NextRequest: Request,
+}));
+
+// Mock next-auth and @/lib/auth to avoid next-auth deep import issues in unit tests
+vi.mock('@/lib/auth', () => ({
+  auth: vi.fn(() => Promise.resolve(null)),
+}));
+
 // Mock Prisma client
 vi.mock('@/lib/prisma', () => ({
   prisma: {

@@ -13,7 +13,7 @@ interface DiatronImportDialogProps {
 export function DiatronImportDialog({ preview, onCancel, onSelect }: DiatronImportDialogProps) {
   return (
     <Dialog open={!!preview} onOpenChange={(open) => !open && onCancel()}>
-      <DialogContent className="flex max-h-[85vh] overflow-hidden border-[var(--color-border)] bg-[var(--color-surface)] p-0 shadow-[0_10px_26px_rgba(15,31,51,0.10)] sm:max-w-2xl">
+      <DialogContent className="flex flex-col max-h-[85vh] overflow-hidden border-[var(--color-border)] bg-[var(--color-surface)] p-0 shadow-[0_10px_26px_rgba(15,31,51,0.10)] sm:max-w-2xl">
         <DialogHeader className="border-b border-[var(--color-border)] p-6 pb-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl border bg-[var(--color-surface-muted)] text-[var(--color-text-secondary)]">
@@ -26,7 +26,7 @@ export function DiatronImportDialog({ preview, onCancel, onSelect }: DiatronImpo
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="overflow-y-auto p-6">
           <div className="mb-5 flex items-center gap-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4 text-[var(--color-text-secondary)]">
             <AlertCircle size={18} className="shrink-0" />
             <p className="text-sm font-medium">Plusieurs analyses ont été détectées dans ce fichier. Choisissez celle qui correspond à votre patient.</p>

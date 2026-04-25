@@ -43,6 +43,7 @@ export type TestFormState = {
   maxValueF: string;
   decimals: string;
   resultType: string;
+  formula: string;
   categoryId: string;
   parentId: string;
   options: string;
@@ -76,6 +77,7 @@ export const EMPTY_TEST_FORM: TestFormState = {
   maxValueF: '',
   decimals: '1',
   resultType: 'numeric',
+  formula: '',
   categoryId: '',
   parentId: '',
   options: '',
@@ -94,4 +96,5 @@ export const RESULT_TYPES = [
   { value: 'text', label: 'Texte court' },
   { value: 'long_text', label: 'Texte long' },
   { value: 'dropdown', label: 'Liste' },
+  { value: 'calculated', label: 'Calculé' },
 ] as const;

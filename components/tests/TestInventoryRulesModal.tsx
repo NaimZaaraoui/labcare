@@ -1,7 +1,12 @@
 'use client';
 
-import { Package, Pencil, Save, Trash2, X } from 'lucide-react';
-import { useScrollLock } from '@/hooks/useScrollLock';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle 
+} from "@/components/ui/dialog";
+import { Package, Pencil, Save, Trash2 } from 'lucide-react';
 import type { Test } from '@/lib/types';
 import type { InventoryFormState, InventoryItemOption, InventoryRule } from '@/components/tests/types';
 
@@ -36,35 +41,24 @@ export function TestInventoryRulesModal({
   onDeleteRule,
   onCancelEdit,
 }: TestInventoryRulesModalProps) {
-  useScrollLock(open);
-  if (!open) {
-    return null;
-  }
-
   return (
-    <div className="modal-overlay z-[70]" onClick={onClose}>
-      <div
-        className="modal-shell flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="flex items-start justify-between border-b border-[var(--color-border)] p-6">
+    <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
+      <DialogContent className="flex max-h-[90vh] max-w-3xl flex-col p-0 overflow-hidden">
+        <DialogHeader className="flex items-start justify-between border-b border-[var(--color-border)] p-6">
           <div className="flex items-start gap-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border bg-[var(--color-surface-muted)] text-[var(--color-text-secondary)]">
               <Package size={22} />
             </div>
             <div>
-              <h3 className="text-xl font-semibold text-[var(--color-text)] tracking-tight">
+              <DialogTitle className="text-xl font-semibold text-[var(--color-text)] tracking-tight">
                 Consommation liée au test
-              </h3>
+              </DialogTitle>
               <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
                 {test ? `${test.code} · ${test.name}` : 'Chargement...'}
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="rounded-lg p-2 text-[var(--color-text-soft)] transition-colors hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]">
-            <X size={20} />
-          </button>
-        </div>
+        </DialogHeader>
 
         <div className="custom-scrollbar flex-1 space-y-6 overflow-y-auto bg-[var(--color-surface)] p-6">
           <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-5">
@@ -176,7 +170,7 @@ export function TestInventoryRulesModal({
             )}
           </div>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

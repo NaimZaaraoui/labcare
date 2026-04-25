@@ -1,5 +1,7 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+
 import { NotificationToast } from '@/components/ui/notification-toast';
 import { EditAnalysisDialog } from './EditAnalysisDialog';
 import { DiatronImportDialog } from './DiatronImportDialog';
@@ -69,14 +71,50 @@ function ResultatsFormContent() {
         savingMeta={savingMeta}
       />
 
-      {printUrl && (
-        <iframe
-          src={printUrl}
-          title="Print Engine Frame"
-          className="absolute w-[1px] h-[1px] opacity-0 pointer-events-none"
-          tabIndex={-1}
-          style={{ border: 0, left: -10000, top: -10000 }}
-        />
+      <PrintIframe printUrl={printUrl} />
+    </>
+  );
+}
+
+function PrintIframe({ printUrl }: { printUrl: string | null }) {
+  const [printStatus, setPrintStatus] = useState<'idle' | 'sent' | 'failed'>('idle');
+
+  useEffect(() => {
+    if (!printUrl) { setPrintStatus('idle'); return; }
+    setPrintStatus('idle');
+    const timer = setTimeout(() => {
+      setPrintStatus('failed');
+    }, 10000);
+    return () => clearTimeout(timer);
+  }, [printUrl]);
+
+  if (!printUrl) return null;
+
+  return (
+    <>
+      <iframe
+        src={printUrl}
+        title="Print Engine Frame"
+        className="absolute w-[1px] h-[1px] opacity-0 pointer-events-none"
+        tabIndex={-1}
+        style={{ border: 0, left: -10000, top: -10000 }}
+        onLoad={() => setPrintStatus('sent')}
+      />
+      {printStatus === 'sent' && (
+        <NotificationToast type="success" message="Impression envoyée ✓" />
+      )}
+      {printStatus === 'failed' && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 shadow-lg">
+          <span className="text-sm font-medium text-amber-800">Impression bloquée — </span>
+          <a
+            href={printUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm font-semibold text-amber-700 underline underline-offset-2 hover:text-amber-900"
+          >
+            Ouvrir dans un onglet
+          </a>
+        </div>
       )}
     </>
   );

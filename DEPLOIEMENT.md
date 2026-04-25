@@ -135,13 +135,18 @@ docker run --rm \
 docker compose up -d
 ```
 
----
+## 7. Observabilité & Télémétrie (Nouveau)
 
-## 7. Commandes utiles
+L'application est dotée d'une page de supervision complète pour analyser la charge CPU, la mémoire RAM, la latence de Prisma et les _Logs_ d'erreur bruts de Node.js.
+- **Accès** (Admin) : `http://<IP_SERVEUR>/dashboard/monitoring`
+- **Fichier de Logs** : Monté dans le volume Docker à l'emplacement `/app/logs/server-YYYY-MM-DD.log`.
+
+## 8. Commandes utiles
 
 | Action | Commande |
 |--------|----------|
-| Voir les logs | `docker logs nexlab-app -f` |
+| Voir les logs Docker bruts | `docker logs nexlab-app -f` |
+| Voir les logs Applicatifs JSON | `cat logs/server-$(date +%F).log` |
 | Redémarrer | `docker compose restart` |
 | Arrêter | `docker compose down` |
 | Statut | `docker ps` |

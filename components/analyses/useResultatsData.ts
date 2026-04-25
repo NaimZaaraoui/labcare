@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { Analysis, Result } from '@/lib/types';
+import { performHematologyCalculations } from './resultats-metrics';
 import type {
   AnalysisNotePlacement,
   AnalysisResultHistory,
@@ -59,7 +60,7 @@ export function useResultatsData({
         loadHistory(data.patientId, result.testId, result.id);
       });
 
-      setResults(initialResults);
+      setResults(performHematologyCalculations(data, initialResults));
       setInitialResultNotes(initialNotes);
       setGlobalNote(data.globalNote || '');
       setGlobalNotePlacement(data.globalNotePlacement || 'all');

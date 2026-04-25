@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAnyRole, requireAuthUser } from '@/lib/authz';
 import { createAuditLog, getRequestMeta } from '@/lib/audit';
+import { validateFormula } from '@/lib/calculated-tests';
 
 export async function GET(request: NextRequest) {
   try {
@@ -59,6 +60,17 @@ export async function POST(request: NextRequest) {
     const meta = getRequestMeta({ headers: request.headers });
 
     const body = await request.json();
+    const code = String(body.code || '').toUpperCase();
+
+    if (body.resultType === 'calculated') {
+      const availableTests = await prisma.test.findMany({
+        select: { code: true, resultType: true, options: true, decimals: true },
+      });
+      const validation = validateFormula(body.formula || body.options || '', availableTests, code);
+      if (!validation.valid) {
+        return NextResponse.json({ error: validation.error || 'Formule invalide' }, { status: 400 });
+      }
+    }
     
     let categoryId = body.categoryId || null;
     if (!categoryId && body.category) {
@@ -70,7 +82,7 @@ export async function POST(request: NextRequest) {
 
     const test = await prisma.test.create({
         data: {
-          code: body.code.toUpperCase(),
+          code,
           name: body.name,
           unit: body.unit || null,
           minValue: body.minValue ? parseFloat(body.minValue) : null,
@@ -83,7 +95,7 @@ export async function POST(request: NextRequest) {
           resultType: body.resultType || 'numeric',
           categoryId: categoryId,
           parentId: body.parentId || null,
-          options: body.options || null,
+          options: body.resultType === 'calculated' ? (body.formula || body.options || null) : (body.options || null),
           isGroup: !!body.isGroup,
           sampleType: body.sampleType || null,
           price: body.price ? parseFloat(body.price) : 0,
@@ -127,6 +139,7 @@ export async function PUT(request: NextRequest) {
 
     const body = await request.json();
     const { id, ...data } = body;
+    const code = String(data.code || '').toUpperCase();
 
     if (!id) {
       return NextResponse.json(
@@ -143,23 +156,34 @@ export async function PUT(request: NextRequest) {
       categoryId = cat?.id || null;
     }
 
+    if (data.resultType === 'calculated') {
+      const availableTests = await prisma.test.findMany({
+        where: { id: { not: id } },
+        select: { code: true, resultType: true, options: true, decimals: true },
+      });
+      const validation = validateFormula(data.formula || data.options || '', availableTests, code);
+      if (!validation.valid) {
+        return NextResponse.json({ error: validation.error || 'Formule invalide' }, { status: 400 });
+      }
+    }
+
     const test = await prisma.test.update({
       where: { id },
         data: {
-          code: data.code.toUpperCase(),
+          code,
           name: data.name,
           unit: data.unit || null,
-          minValue: data.resultType === 'numeric' && data.minValue ? parseFloat(data.minValue) : null,
-          maxValue: data.resultType === 'numeric' && data.maxValue ? parseFloat(data.maxValue) : null,          
-          minValueM: data.resultType === 'numeric' && data.minValueM ? parseFloat(data.minValueM) : null,
-          maxValueM: data.resultType === 'numeric' && data.maxValueM ? parseFloat(data.maxValueM) : null,
-          minValueF: data.resultType === 'numeric' && data.minValueF ? parseFloat(data.minValueF) : null,
-          maxValueF: data.resultType === 'numeric' && data.maxValueF ? parseFloat(data.maxValueF) : null,          
-          decimals: data.resultType === 'numeric' ? data.decimals : 1,
+          minValue: (data.resultType === 'numeric' || data.resultType === 'calculated') && data.minValue ? parseFloat(data.minValue) : null,
+          maxValue: (data.resultType === 'numeric' || data.resultType === 'calculated') && data.maxValue ? parseFloat(data.maxValue) : null,          
+          minValueM: (data.resultType === 'numeric' || data.resultType === 'calculated') && data.minValueM ? parseFloat(data.minValueM) : null,
+          maxValueM: (data.resultType === 'numeric' || data.resultType === 'calculated') && data.maxValueM ? parseFloat(data.maxValueM) : null,
+          minValueF: (data.resultType === 'numeric' || data.resultType === 'calculated') && data.minValueF ? parseFloat(data.minValueF) : null,
+          maxValueF: (data.resultType === 'numeric' || data.resultType === 'calculated') && data.maxValueF ? parseFloat(data.maxValueF) : null,          
+          decimals: data.resultType === 'numeric' || data.resultType === 'calculated' ? data.decimals : 1,
           resultType: data.resultType || 'numeric',
           categoryId: categoryId,
           parentId: data.parentId || null,
-          options: data.options || null,
+          options: data.resultType === 'calculated' ? (data.formula || data.options || null) : (data.options || null),
           isGroup: !!data.isGroup,
           sampleType: data.sampleType || null,
           price: data.price ? parseFloat(data.price) : 0,

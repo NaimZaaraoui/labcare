@@ -3,6 +3,7 @@ import { AnalysisChartsTab } from './AnalysisChartsTab';
 import { AnalysisResultRow } from './AnalysisResultRow';
 import { AnalysisResultsToolbar } from './AnalysisResultsToolbar';
 import { isResultAbnormal } from '@/lib/calculations';
+import { isAnalysisFinalValidated } from '@/lib/status-flow';
 
 import { useAnalysisContext } from './AnalysisContext';
 
@@ -14,7 +15,7 @@ export function AnalysisResultsPanel() {
     results,
   } = useAnalysisContext();
 
-  const isFinalValidated = analysis?.status === 'validated_bio' || analysis?.status === 'completed';
+  const isFinalValidated = isAnalysisFinalValidated(analysis?.status);
   if (!analysis) return null;
   return (
     <div className="rounded-xl border bg-[var(--color-surface)] p-5 shadow-[0_2px_8px_rgba(15,31,51,0.03)] lg:p-6">

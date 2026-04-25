@@ -14,6 +14,7 @@ import {
   isPrintOnlyAnalysisUpdate,
   type AnalysisPatchPayload,
 } from '@/lib/analysis-updates';
+import { isAnalysisFinalValidated } from '@/lib/status-flow';
 
 export async function GET(
   request: NextRequest,
@@ -73,7 +74,7 @@ export async function PUT(
       );
     }
 
-    if (existing.status === 'completed' || existing.status === 'validated_bio') {
+    if (isAnalysisFinalValidated(existing.status)) {
       return NextResponse.json(
         { error: 'Analyse validée: modification interdite' },
         { status: 409 }
@@ -141,7 +142,7 @@ export async function PATCH(
     const isPrintOnlyUpdate = isPrintOnlyAnalysisUpdate(body);
     const isPaymentOnlyUpdate = isPaymentOnlyAnalysisUpdate(body);
 
-    if ((existing.status === 'completed' || existing.status === 'validated_bio') && !isPrintOnlyUpdate && !isPaymentOnlyUpdate) {
+    if (isAnalysisFinalValidated(existing.status) && !isPrintOnlyUpdate && !isPaymentOnlyUpdate) {
       return NextResponse.json(
         { error: 'Analyse validée: modification interdite' },
         { status: 409 }
@@ -234,7 +235,7 @@ export async function DELETE(
       );
     }
 
-    if (analysis.status === 'completed' || analysis.status === 'validated_bio') {
+    if (isAnalysisFinalValidated(analysis.status)) {
       return NextResponse.json(
         { error: 'Analyse validée: suppression interdite' },
         { status: 409 }

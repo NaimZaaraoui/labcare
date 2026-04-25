@@ -1,14 +1,59 @@
 import '@/app/globals.css';
 
-export default function SetupLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function SetupLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 flex items-center justify-center p-4">
-      <div className="w-full max-w-lg">
-        {children}
+    <div className="min-h-screen flex">
+      {/* Left brand panel */}
+      <div className="hidden lg:flex lg:w-[420px] xl:w-[480px] flex-col justify-between bg-gradient-to-b from-indigo-700 via-indigo-600 to-indigo-900 p-10 relative overflow-hidden shrink-0">
+        {/* Decorative blobs */}
+        <div className="absolute -top-20 -left-20 h-80 w-80 rounded-full bg-white/10 blur-3xl" />
+        <div className="absolute bottom-10 -right-20 h-60 w-60 rounded-full bg-indigo-300/20 blur-3xl" />
+
+        {/* Logo */}
+        <div className="relative z-10">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/20 backdrop-blur">
+              <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6 text-white" stroke="currentColor" strokeWidth={1.8}>
+                <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+            <span className="text-lg font-bold tracking-tight text-white">NexLab LIMS</span>
+          </div>
+        </div>
+
+        {/* Hero text */}
+        <div className="relative z-10">
+          <h1 className="text-3xl font-bold leading-tight text-white">
+            Bienvenue dans<br />votre laboratoire
+          </h1>
+          <p className="mt-4 text-base leading-relaxed text-indigo-100">
+            Configurez NexLab en quelques minutes. Toutes vos données restent sur votre serveur, sans aucune dépendance Cloud.
+          </p>
+
+          <div className="mt-8 space-y-3">
+            {['Base de données locale sécurisée', 'Catalogue de tests préconfigurés', 'Interface optimisée pour les techniciens'].map((feature) => (
+              <div key={feature} className="flex items-center gap-3">
+                <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/25">
+                  <svg viewBox="0 0 12 12" fill="currentColor" className="h-3 w-3 text-white">
+                    <path d="M10 3L5 8.5 2 5.5" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                  </svg>
+                </div>
+                <span className="text-sm text-indigo-50">{feature}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <p className="relative z-10 text-xs text-indigo-200/60">
+          © {new Date().getFullYear()} NexLab — Tous droits réservés
+        </p>
+      </div>
+
+      {/* Right form panel */}
+      <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto bg-[#f8fafc] p-6 lg:p-12">
+        <div className="w-full max-w-md">
+          {children}
+        </div>
       </div>
     </div>
   );

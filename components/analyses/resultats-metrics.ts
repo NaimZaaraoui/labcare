@@ -1,4 +1,12 @@
 import { getTestReferenceValues } from '@/lib/utils';
+import { 
+  parseLocaleNumber, 
+  formatLocaleNumber,
+  calculateHematologyIndices,
+  calculateAbsoluteFromPercentage,
+  calculatePercentageFromAbsolute
+} from '@/lib/calculations';
+import { applyCalculatedTestFormulas } from '@/lib/calculated-tests';
 import type { Analysis, Result, Test } from '@/lib/types';
 
 export interface PaymentStatusDisplay {
@@ -46,25 +54,50 @@ export function performHematologyCalculations(
     const res = analysis.results.find((result: Result) => result.test?.code === code);
     if (!res) return null;
     const val = updatedResults[res.id];
-    return val ? parseFloat(val.replace(',', '.')) : null;
+    return val ? parseLocaleNumber(val) : null;
   };
 
-  const setVal = (code: string, value: number) => {
+  const setVal = (code: string, value: number | null) => {
+    if (value === null) return;
     const res = analysis.results.find((result: Result) => result.test?.code === code);
     if (res) {
       const decimals = res.test?.decimals ?? 1;
-      updatedResults[res.id] = value.toFixed(decimals).replace('.', ',');
+      updatedResults[res.id] = formatLocaleNumber(value, decimals);
     }
   };
 
+  // Calculate hematology indices (VGM, TCMH, CCMH)
   const rbc = getVal('RBC') || getVal('GR');
   const hgb = getVal('HGB') || getVal('HB');
   const hct = getVal('HCT') || getVal('HT');
-  const wbc = getVal('WBC') || getVal('GB');
+  const rdw = getVal('RDW') || getVal('IDW');
+  
+  const indicesInput: Record<string, number> = {};
+  if (rbc !== null) {
+    indicesInput.RBC = rbc;
+    indicesInput.GR = rbc;
+  }
+  if (hgb !== null) {
+    indicesInput.HGB = hgb;
+    indicesInput.HB = hgb;
+  }
+  if (hct !== null) {
+    indicesInput.HCT = hct;
+    indicesInput.HT = hct;
+  }
+  if (rdw !== null) {
+    indicesInput.RDW = rdw;
+    indicesInput.IDW = rdw;
+  }
 
-  if (rbc && hct && rbc > 0) setVal('VGM', (hct / rbc) * 10);
-  if (hgb && rbc && rbc > 0) setVal('TCMH', (hgb * 10) / rbc);
-  if (hgb && hct && hct > 0) setVal('CCMH', (hgb / hct) * 100);
+  const indices = calculateHematologyIndices(indicesInput);
+
+  if (indices.vgm !== undefined) setVal('VGM', indices.vgm);
+  if (indices.tcmh !== undefined) setVal('TCMH', indices.tcmh);
+  if (indices.ccmh !== undefined) setVal('CCMH', indices.ccmh);
+
+  // Calculate WBC differential absolute counts from percentages
+  const wbc = getVal('WBC') || getVal('GB');
 
   if (wbc) {
     const diffMap = [
@@ -75,13 +108,14 @@ export function performHematologyCalculations(
 
     diffMap.forEach(({ pct, abs }) => {
       const pVal = getVal(pct);
-      if (pVal !== null) {
-        setVal(abs, (pVal / 100) * wbc);
+      const absVal = calculateAbsoluteFromPercentage(pVal, wbc);
+      if (absVal !== null) {
+        setVal(abs, absVal);
       }
     });
   }
 
-  return updatedResults;
+  return applyCalculatedTestFormulas(analysis, updatedResults);
 }
 
 export function calculateResultMetrics(

@@ -102,13 +102,11 @@ async function seed() {
       data: {
         code: 'GB',
         name: 'Globules Blancs',
-        category: 'HEMATOLOGIE',
+        categoryId: 'HEMATOLOGIE',
         unit: '10³/µL',
         minValue: 4.0,
         maxValue: 10.0,
-        decimalPlaces: 1,
-        referenceRangeMin: 4.0,
-        referenceRangeMax: 10.0,
+        decimals: 1
       },
     });
 
@@ -116,7 +114,7 @@ async function seed() {
       data: {
         code: 'HGB',
         name: 'Hémoglobine',
-        category: 'HEMATOLOGIE',
+        categoryId: 'HEMATOLOGIE',
         unit: 'g/dL',
         minValue: 10.0,
         maxValue: 20.0,
@@ -128,7 +126,7 @@ async function seed() {
       data: {
         code: 'PLT',
         name: 'Plaquettes',
-        category: 'HEMATOLOGIE',
+        categoryId: 'HEMATOLOGIE',
         unit: '10³/µL',
         minValue: 100,
         maxValue: 600,

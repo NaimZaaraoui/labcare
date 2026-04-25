@@ -1,9 +1,13 @@
 'use client';
 
-import type React from 'react';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle 
+} from "@/components/ui/dialog";
 import { ClipboardList, Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useScrollLock } from '@/hooks/useScrollLock';
 import { type InventoryCategoryConfig } from '@/lib/inventory-categories';
 import { type InventoryItemFormValues } from '@/components/inventory/types';
 
@@ -32,7 +36,6 @@ export function InventoryItemFormModal({
   onSubmit,
   onFormChange,
 }: InventoryItemFormModalProps) {
-  useScrollLock(open);
   const [clinicalUnits, setClinicalUnits] = useState<string[]>(['mL', 'mg', 'g/L', 'Boite', 'Test']);
 
   useEffect(() => {
@@ -65,28 +68,17 @@ export function InventoryItemFormModal({
     onSubmit(event);
   };
 
-  if (!open) return null;
-
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div
-        className="modal-shell flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="flex items-start justify-between border-b border-[var(--color-border)] px-6 py-5">
+    <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
+      <DialogContent className="flex max-h-[90vh] max-w-3xl flex-col p-0 overflow-hidden">
+        <DialogHeader className="flex items-start justify-between border-b border-[var(--color-border)] px-6 py-5">
           <div>
-            <h2 className="text-lg font-semibold text-[var(--color-text)]">{title}</h2>
+            <DialogTitle className="text-lg font-semibold text-[var(--color-text)]">{title}</DialogTitle>
             <p className="text-sm text-[var(--color-text-soft)]">{subtitle}</p>
           </div>
-          <button
-            onClick={onClose}
-            className="rounded-lg border px-3 py-1 text-xs font-semibold text-[var(--color-text-soft)] transition-colors hover:bg-[var(--color-surface-muted)]"
-          >
-            Fermer
-          </button>
-        </div>
+        </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div className="custom-scrollbar grid min-h-0 flex-1 gap-4 overflow-y-auto px-6 py-5">
             <div className="grid gap-4 md:grid-cols-2">
               <div>
@@ -194,7 +186,7 @@ export function InventoryItemFormModal({
               />
             </div>
           </div>
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--color-border)] px-6 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t px-6 py-4">
             <div className="flex items-center gap-2 text-xs text-[var(--color-text-soft)]">
               <ClipboardList className="h-4 w-4" />
               Les mouvements seront historisés automatiquement.
@@ -205,7 +197,7 @@ export function InventoryItemFormModal({
             </button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

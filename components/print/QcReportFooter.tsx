@@ -1,5 +1,5 @@
 import React from 'react';
-import { resolvePrintBranding } from '@/components/print/report-helpers';
+import { resolvePrintBranding } from '@/lib/report-generation';
 import type { PrintSettings } from '@/components/print/types';
 
 interface QcReportFooterProps {

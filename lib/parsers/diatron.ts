@@ -28,6 +28,8 @@ export interface DiatronResult {
 
 import { MACHINE_ALIASES } from '@/lib/lab-rules';
 
+type RawDiatronRecord = Record<string, string>;
+
 export function parseDiatronFile(content: string): DiatronResult[] {
   // Split by line and filter empty lines (including those with just whitespace)
   const lines = content.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
@@ -60,7 +62,7 @@ export function parseDiatronFile(content: string): DiatronResult[] {
     // Check if we have at least the identifying columns (ID, Date, Heure are usually first 3)
     if (values.length < 3) continue;
 
-    const record: any = {};
+    const record: RawDiatronRecord = {};
     headers.forEach((header, index) => {
       if (header && index < values.length) {
         record[header] = values[index];
@@ -83,7 +85,7 @@ export function parseDiatronFile(content: string): DiatronResult[] {
     });
 
     // Extract Histograms and Flags
-    let histograms: any = undefined;
+    let histograms: DiatronResult['histograms'];
     if (wbcHistIdx !== -1 && rbcHistIdx !== -1) {
       histograms = {
         wbc: {

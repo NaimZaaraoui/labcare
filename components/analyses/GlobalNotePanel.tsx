@@ -1,7 +1,7 @@
 // components/analyses/GlobalNotePanel.tsx
 import React from 'react';
 import { Save } from 'lucide-react';
-
+import { isAnalysisFinalValidated } from '@/lib/status-flow';
 import { useAnalysisContext } from './AnalysisContext';
 
 export function GlobalNotePanel() {
@@ -15,7 +15,7 @@ export function GlobalNotePanel() {
     saveGlobalNoteBusy,
   } = useAnalysisContext();
 
-  const isFinalValidated = analysis?.status === 'validated_bio' || analysis?.status === 'completed';
+  const isFinalValidated = isAnalysisFinalValidated(analysis?.status);
   return (
     <div className="mt-6 border-t border-[var(--color-border)] pt-6 space-y-3">
       <span className="section-label">Note globale du rapport</span>

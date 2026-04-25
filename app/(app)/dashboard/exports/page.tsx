@@ -214,6 +214,10 @@ export default function ExportsPage() {
       }
       const data = await response.json();
 
+      if (!formatter) {
+        throw new Error(`Aucun formateur défini pour le type d'export ${exportType}.`);
+      }
+
       if (data && Array.isArray(data)) {
         setStatusMessage('Formatage des données...');
         const formattedData = formatter(data);

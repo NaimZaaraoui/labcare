@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 
-export const APP_ROLES = ['ADMIN', 'TECHNICIEN', 'RECEPTIONNISTE', 'MEDECIN'] as const;
+export const APP_ROLES = Object.freeze(['ADMIN', 'TECHNICIEN', 'RECEPTIONNISTE', 'MEDECIN'] as const);
 export type AppRole = (typeof APP_ROLES)[number];
 
 export function getInternalPrintToken() {

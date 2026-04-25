@@ -23,7 +23,7 @@ export function InventoryAdjustModal({
   const diff = Number(newStock || 0) - item.currentStock;
 
   return (
-    <InventoryModalShell title="Ajustement manuel" onClose={onClose}>
+    <InventoryModalShell open={true} title="Ajustement manuel" onClose={onClose}>
       <form onSubmit={onSubmit} className="flex min-h-full flex-col">
         <div className="grid flex-1 gap-4">
           <label className="grid gap-1">

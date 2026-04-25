@@ -1,7 +1,8 @@
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { CheckCircle, Mail, PencilLine, Printer, ReceiptText, Save, Tags } from 'lucide-react';
-import { getAnalysisStatusMeta, isAnalysisFinalValidated } from '@/lib/analysis-status';
+import { getAnalysisStatusMeta } from '@/lib/analysis-status';
+import { isAnalysisFinalValidated } from '@/lib/status-flow';
 import { useDirectPrint } from '@/lib/hooks/useDirectPrint';
 import { LabelQuantityModal } from './LabelQuantityModal';
 import { useAnalysisContext } from './AnalysisContext';

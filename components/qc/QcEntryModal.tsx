@@ -1,7 +1,11 @@
 'use client';
 
-import { X } from 'lucide-react';
-import { useScrollLock } from '@/hooks/useScrollLock';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle 
+} from "@/components/ui/dialog";
 import { getQcZone } from '@/lib/qc';
 import type { QcLot } from '@/components/qc/types';
 
@@ -32,25 +36,19 @@ export function QcEntryModal({
   onInstrumentNameChange,
   onValueChange,
 }: QcEntryModalProps) {
-  useScrollLock(showEntry);
-  if (!showEntry || !selectedLot) return null;
+  if (!selectedLot) return null;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-shell flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden" onClick={(event) => event.stopPropagation()}>
-        <div className="flex items-start justify-between border-b border-[var(--color-border)] px-6 py-5">
-          <div>
-            <h2 className="text-lg font-semibold text-[var(--color-text)]">Saisie QC</h2>
-            <p className="mt-1 text-sm text-[var(--color-text-soft)]">
-              Lot {selectedLot.lotNumber} · {selectedLot.targets.length} paramètre(s)
-            </p>
-          </div>
-          <button onClick={onClose} className="rounded-lg border px-3 py-1 text-xs font-semibold text-[var(--color-text-soft)] transition-colors hover:bg-[var(--color-surface-muted)]">
-            <X className="h-4 w-4" />
-          </button>
-        </div>
+    <Dialog open={showEntry} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="flex max-h-[90vh] bg-white max-w-6xl w-[90%] flex-col p-0 overflow-hidden">
+        <DialogHeader className="px-6 py-5 border-b border-[var(--color-border)]">
+          <DialogTitle className="text-lg font-semibold text-[var(--color-text)]">Saisie QC</DialogTitle>
+          <p className="mt-1 text-sm text-[var(--color-text-soft)]">
+            Lot {selectedLot.lotNumber} · {selectedLot.targets.length} paramètre(s)
+          </p>
+        </DialogHeader>
 
-        <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col">
+        <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div className="custom-scrollbar flex-1 space-y-4 overflow-y-auto px-6 py-5">
             <div className="grid gap-4 md:grid-cols-2">
               <label className="grid gap-1">
@@ -178,7 +176,7 @@ export function QcEntryModal({
             </button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

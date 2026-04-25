@@ -1,7 +1,11 @@
 'use client';
 
-import { X } from 'lucide-react';
-import { useScrollLock } from '@/hooks/useScrollLock';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle 
+} from "@/components/ui/dialog";
 import type { TemperatureReading } from '@/components/temperature/types';
 
 interface TemperatureInvalidateModalProps {
@@ -24,24 +28,16 @@ export function TemperatureInvalidateModal({
   if (!reading) return null;
 
   return (
-    <div className="modal-overlay" onClick={() => !saving && onClose()}>
-      <div className="modal-shell flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden" onClick={(event) => event.stopPropagation()}>
-        <div className="flex items-start justify-between border-b px-6 py-5">
-          <div>
-            <h2 className="text-lg font-semibold text-[var(--color-text)]">Annuler un relevé</h2>
-            <p className="mt-1 text-sm text-[var(--color-text-soft)]">
-              {new Date(reading.recordedAt).toLocaleString('fr-FR')} · {reading.period}
-            </p>
-          </div>
-          <button
-            onClick={() => !saving && onClose()}
-            className="rounded-full border px-3 py-1 text-xs font-semibold text-[var(--color-text-soft)] hover:bg-[var(--color-surface-muted)]"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
+    <Dialog open={!!reading} onOpenChange={(val) => !val && !saving && onClose()}>
+      <DialogContent className="flex bg-white max-h-[90vh] max-w-lg flex-col p-0 overflow-hidden">
+        <DialogHeader className="px-6 py-5 border-b">
+          <DialogTitle className="text-lg font-semibold text-[var(--color-text)]">Annuler un relevé</DialogTitle>
+          <p className="mt-1 text-sm text-[var(--color-text-soft)]">
+            {new Date(reading.recordedAt).toLocaleString('fr-FR')} · {reading.period}
+          </p>
+        </DialogHeader>
 
-        <div className="space-y-4 px-6 py-5">
+        <div className="space-y-4 px-6 py-5 overflow-y-auto">
           <p className="text-sm text-[var(--color-text-soft)]">
             Indiquez le motif d’annulation pour garder une trace claire dans l’historique et l’audit.
           </p>
@@ -65,7 +61,7 @@ export function TemperatureInvalidateModal({
             {saving ? 'Annulation...' : 'Confirmer l’annulation'}
           </button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

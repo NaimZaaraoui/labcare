@@ -1,5 +1,5 @@
 import React from 'react';
-import { sortReportResults } from '@/components/print/report-helpers';
+import { sortReportResults } from '@/lib/report-generation';
 import type { Analysis, Result } from '@/lib/types';
 import type { ReferenceDisplay } from '@/components/print/types';
 

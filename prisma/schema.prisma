@@ -23,43 +23,43 @@ model Category {
 }
 
 model Test {
-  id          String    @id @default(uuid())
-  name        String
-  code        String    @unique
-  unit        String?
-  minValue    Float?
-  maxValue    Float?
-  minValueM   Float?
-  maxValueM   Float?
-  minValueF   Float?
-  maxValueF   Float?
-  decimals    Int?      @default(1)
-  resultType  String    @default("numeric")
-  categoryId  String?
-  rank        Int       @default(0)
-  options     String?
-  isGroup     Boolean   @default(false)
-  parentId    String?
-  sampleType  String?
-  price       Float     @default(0)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  results     Result[]
-  parent      Test?     @relation("TestHierarchy", fields: [parentId], references: [id])
-  children    Test[]    @relation("TestHierarchy")
-  categoryRel Category? @relation(fields: [categoryId], references: [id])
-  bilans      Bilan[]   @relation("BilanToTest")
+  id             String                @id @default(uuid())
+  name           String
+  code           String                @unique
+  unit           String?
+  minValue       Float?
+  maxValue       Float?
+  minValueM      Float?
+  maxValueM      Float?
+  minValueF      Float?
+  maxValueF      Float?
+  decimals       Int?                  @default(1)
+  resultType     String                @default("numeric")
+  categoryId     String?
+  rank           Int                   @default(0)
+  options        String?
+  isGroup        Boolean               @default(false)
+  parentId       String?
+  sampleType     String?
+  price          Float                 @default(0)
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  results        Result[]
+  parent         Test?                 @relation("TestHierarchy", fields: [parentId], references: [id])
+  children       Test[]                @relation("TestHierarchy")
+  categoryRel    Category?             @relation(fields: [categoryId], references: [id])
+  bilans         Bilan[]               @relation("BilanToTest")
   inventoryRules ItemTestRule[]
-  consumptions AnalysisConsumption[]
-  qcTargets   QcTarget[]
-  qcValues    QcValue[]
+  consumptions   AnalysisConsumption[]
+  qcTargets      QcTarget[]
+  qcValues       QcValue[]
 
   @@map("tests")
 }
 
 model Analysis {
-  id                  String    @id @default(uuid())
-  orderNumber         String    @unique
+  id                  String                @id @default(uuid())
+  orderNumber         String                @unique
   patientId           String?
   patientFirstName    String?
   patientLastName     String?
@@ -69,38 +69,39 @@ model Analysis {
   dailyId             String?
   provenance          String?
   medecinPrescripteur String?
-  isUrgent            Boolean   @default(false)
-  creationDate        DateTime  @default(now())
+  isUrgent            Boolean               @default(false)
+  creationDate        DateTime              @default(now())
   drawingDate         DateTime?
-  status              String?   @default("pending")
+  status              String?               @default("pending")
   printedAt           DateTime?
   emailedAt           DateTime?
   histogramData       String?
-  totalPrice          Float     @default(0)
-  amountPaid          Float     @default(0)
-  paymentStatus       String    @default("UNPAID")
+  totalPrice          Float                 @default(0)
+  amountPaid          Float                 @default(0)
+  paymentStatus       String                @default("UNPAID")
   paymentMethod       String?
   paidAt              DateTime?
   insuranceProvider   String?
   insuranceCoverage   Float?
-  insuranceShare      Float     @default(0)
-  patientShare        Float     @default(0)
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  insuranceShare      Float                 @default(0)
+  patientShare        Float                 @default(0)
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
   globalNote          String?
-  globalNotePlacement String    @default("all")
+  globalNotePlacement String                @default("all")
   validatedBioAt      DateTime?
   validatedBioBy      String?
   validatedBioName    String?
   validatedTechAt     DateTime?
   validatedTechBy     String?
   validatedTechName   String?
-  patient             Patient?  @relation(fields: [patientId], references: [id])
+  patient             Patient?              @relation(fields: [patientId], references: [id])
   results             Result[]
   notifications       Notification[]
   consumptions        AnalysisConsumption[]
 
   @@index([patientId, creationDate])
+  @@index([status])
   @@map("analyses")
 }
 
@@ -134,33 +135,35 @@ model Bilan {
 }
 
 model Patient {
-  id          String     @id @default(uuid())
-  firstName   String
-  lastName    String
-  birthDate   DateTime?
-  gender      String     @default("M")
+  id                String     @id @default(uuid())
+  firstName         String
+  lastName          String
+  birthDate         DateTime?
+  gender            String     @default("M")
   phoneNumber       String?
   email             String?
   address           String?
   insuranceProvider String?
   insuranceNumber   String?
   createdAt         DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  analyses    Analysis[]
+  updatedAt         DateTime   @updatedAt
+  analyses          Analysis[]
 
+  @@index([lastName, firstName])
+  @@index([phoneNumber])
   @@map("patients")
 }
 
 model User {
-  id                 String   @id @default(cuid())
+  id                 String         @id @default(cuid())
   name               String
-  email              String   @unique
+  email              String         @unique
   password           String
-  role               String   @default("TECHNICIEN")
-  isActive           Boolean  @default(true)
-  mustChangePassword Boolean  @default(true)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  role               String         @default("TECHNICIEN")
+  isActive           Boolean        @default(true)
+  mustChangePassword Boolean        @default(true)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
   notifications      Notification[]
   auditLogs          AuditLog[]
 
@@ -178,35 +181,35 @@ model Setting {
 }
 
 model Notification {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type        String
-  title       String
-  message     String
-  analysisId  String?
-  analysis    Analysis? @relation(fields: [analysisId], references: [id], onDelete: SetNull)
-  isRead      Boolean  @default(false)
-  createdAt   DateTime @default(now())
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type       String
+  title      String
+  message    String
+  analysisId String?
+  analysis   Analysis? @relation(fields: [analysisId], references: [id], onDelete: SetNull)
+  isRead     Boolean   @default(false)
+  createdAt  DateTime  @default(now())
 
   @@map("notifications")
 }
 
 model AuditLog {
-  id         String   @id @default(cuid())
-  userId     String?
-  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  userName   String?
-  userEmail  String?
-  userRole   String?
-  action     String
-  severity   String   @default("INFO")
-  entity     String
-  entityId   String?
-  details    String?
-  ipAddress  String?
-  userAgent  String?
-  createdAt  DateTime @default(now())
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userName  String?
+  userEmail String?
+  userRole  String?
+  action    String
+  severity  String   @default("INFO")
+  entity    String
+  entityId  String?
+  details   String?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
 
   @@index([createdAt])
   @@index([action])
@@ -239,24 +242,24 @@ model AuditLogArchive {
 }
 
 model InventoryItem {
-  id           String   @id @default(cuid())
+  id           String                @id @default(cuid())
   name         String
   reference    String?
   category     String
-  kind         String   @default("REAGENT")
+  kind         String                @default("REAGENT")
   unit         String
-  currentStock Float    @default(0)
+  currentStock Float                 @default(0)
   minThreshold Float
   storage      String?
   supplier     String?
   notes        String?
-  isActive     Boolean  @default(true)
+  isActive     Boolean               @default(true)
   lots         InventoryLot[]
   movements    StockMovement[]
   rules        ItemTestRule[]
   consumptions AnalysisConsumption[]
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
 
   @@index([name])
   @@index([category])
@@ -360,32 +363,32 @@ model QcLot {
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
 
+  @@unique([materialId, lotNumber])
   @@index([materialId, isActive])
   @@index([expiryDate])
-  @@unique([materialId, lotNumber])
   @@map("qc_lots")
 }
 
 model QcTarget {
-  id            String  @id @default(cuid())
+  id            String   @id @default(cuid())
   lotId         String
-  lot           QcLot   @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  lot           QcLot    @relation(fields: [lotId], references: [id], onDelete: Cascade)
   testId        String?
-  test          Test?   @relation(fields: [testId], references: [id], onDelete: SetNull)
+  test          Test?    @relation(fields: [testId], references: [id], onDelete: SetNull)
   testCode      String
   testName      String
-  controlMode   String  @default("STATISTICAL")
+  controlMode   String   @default("STATISTICAL")
   mean          Float
   sd            Float?
   minAcceptable Float?
   maxAcceptable Float?
   unit          String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
+  @@unique([lotId, testCode])
   @@index([lotId])
   @@index([testCode])
-  @@unique([lotId, testCode])
   @@map("qc_targets")
 }
 

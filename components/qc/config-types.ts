@@ -1,28 +1,33 @@
+export type QcTarget = {
+  id: string;
+  testId: string | null;
+  testCode: string;
+  testName: string;
+  controlMode: 'STATISTICAL' | 'ACCEPTANCE_RANGE';
+  mean: number;
+  sd: number | null;
+  minAcceptable: number | null;
+  maxAcceptable: number | null;
+  unit: string | null;
+};
+
+export type QcLot = {
+  id: string;
+  lotNumber: string;
+  expiryDate: string;
+  openedAt?: string | null;
+  isActive: boolean;
+  resultsCount30d?: number;
+  targets: QcTarget[];
+};
+
 export type Material = {
   id: string;
   name: string;
   level: string;
   manufacturer: string | null;
   isActive?: boolean;
-  lots: Array<{
-    id: string;
-    lotNumber: string;
-    expiryDate: string;
-    openedAt?: string | null;
-    isActive: boolean;
-    targets: Array<{
-      id: string;
-      testId: string | null;
-      testCode: string;
-      testName: string;
-      controlMode: 'STATISTICAL' | 'ACCEPTANCE_RANGE';
-      mean: number;
-      sd: number | null;
-      minAcceptable: number | null;
-      maxAcceptable: number | null;
-      unit: string | null;
-    }>;
-  }>;
+  lots: QcLot[];
 };
 
 export type TestOption = {

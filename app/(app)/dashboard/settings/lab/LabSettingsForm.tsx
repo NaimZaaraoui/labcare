@@ -20,7 +20,8 @@ export function LabSettingsForm() {
     lab_bio_name: '',
     lab_bio_onmpt: '',
     tat_warn: '45',
-    tat_alert: '60'
+    tat_alert: '60',
+    diatron_enabled: 'false',
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -45,7 +46,8 @@ export function LabSettingsForm() {
           lab_bio_name: data.lab_bio_name || '',
           lab_bio_onmpt: data.lab_bio_onmpt || '',
           tat_warn: data.tat_warn || '45',
-          tat_alert: data.tat_alert || '60'
+          tat_alert: data.tat_alert || '60',
+          diatron_enabled: data.diatron_enabled || 'false',
         });
         setLoading(false);
       })
@@ -307,6 +309,38 @@ export function LabSettingsForm() {
           </div>
         </div>
 
+      </div>
+
+      {/* SECTION: Intégrations Automates */}
+      <div className="rounded-xl border bg-[var(--color-surface)] p-6 sm:p-7 shadow-[0_2px_8px_rgba(15,31,51,0.03)]">
+        <div className="flex items-start justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-slate-700">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-5 w-5">
+                <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-[var(--color-text)]">Intégration automate Diatron</h3>
+              <p className="text-sm text-[var(--color-text-soft)]">
+                Activez uniquement si votre laboratoire dispose d'un automate Diatron Abacus 380. Affiche le bouton d'import de fichier .txt dans le formulaire de saisie des résultats.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={settings.diatron_enabled === 'true'}
+            onClick={() => setSettings({ ...settings, diatron_enabled: settings.diatron_enabled === 'true' ? 'false' : 'true' })}
+            className={`relative shrink-0 h-6 w-11 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 ${
+              settings.diatron_enabled === 'true' ? 'bg-indigo-600' : 'bg-slate-200'
+            }`}
+          >
+            <span className={`block h-5 w-5 rounded-full bg-white shadow transition-transform ${
+              settings.diatron_enabled === 'true' ? 'translate-x-5' : 'translate-x-0.5'
+            }`} />
+          </button>
+        </div>
       </div>
 
       <div className="sticky bottom-8 flex justify-end pt-2">

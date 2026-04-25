@@ -1,7 +1,12 @@
 'use client';
 
-import { Search, X, CheckSquare, Square } from 'lucide-react';
-import { useScrollLock } from '@/hooks/useScrollLock';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle 
+} from "@/components/ui/dialog";
+import { Search, CheckSquare, Square } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import type { TestOption } from '@/components/qc/config-types';
 
@@ -13,7 +18,6 @@ interface QcTestSelectorModalProps {
 }
 
 export function QcTestSelectorModal({ open, onClose, tests, onSelect }: QcTestSelectorModalProps) {
-  useScrollLock(open);
   const [search, setSearch] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
@@ -42,22 +46,14 @@ export function QcTestSelectorModal({ open, onClose, tests, onSelect }: QcTestSe
     }
   };
 
-  if (!open) return null;
-
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div 
-        className="modal-shell flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden" 
-        onClick={e => e.stopPropagation()}
-      >
+    <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
+      <DialogContent className="flex max-h-[90vh] max-w-2xl flex-col p-0 overflow-hidden">
         <div className="flex items-start justify-between border-b border-[var(--color-border)] px-6 py-5">
-          <div>
-            <h2 className="text-lg font-semibold text-[var(--color-text)]">Importer des paramètres</h2>
+          <DialogHeader className="p-0 border-none">
+            <DialogTitle className="text-lg font-semibold text-[var(--color-text)]">Importer des paramètres</DialogTitle>
             <p className="mt-1 text-sm text-[var(--color-text-soft)]">Sélectionnez les tests à ajouter au lot actuel.</p>
-          </div>
-          <button onClick={onClose} className="rounded-lg p-2 text-[var(--color-text-soft)] transition-colors hover:bg-[var(--color-surface-muted)]">
-            <X className="h-5 w-5" />
-          </button>
+          </DialogHeader>
         </div>
 
         <div className="flex flex-col flex-1 overflow-hidden p-6 space-y-4">
@@ -136,7 +132,7 @@ export function QcTestSelectorModal({ open, onClose, tests, onSelect }: QcTestSe
             </button>
           </div>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

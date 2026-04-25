@@ -25,7 +25,7 @@ export function InventoryWasteModal({
   onSubmit,
 }: Props) {
   return (
-    <InventoryModalShell title="Mise au rebut / retrait de stock" onClose={onClose}>
+    <InventoryModalShell open={true} title="Mise au rebut / retrait de stock" onClose={onClose}>
       <form onSubmit={onSubmit} className="flex min-h-full flex-col">
         <div className="grid flex-1 gap-4">
           <label className="grid gap-1">

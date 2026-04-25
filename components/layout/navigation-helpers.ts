@@ -6,6 +6,7 @@ const BLOCKED_RECEPTIONNISTE = ['/dashboard/settings', '/dashboard/users', '/tes
 
 export function isNavigationLinkVisible(role: string, href: string) {
   if (role === 'ADMIN') return true;
+  if (href.startsWith('/dashboard/support')) return true;
   if (role === 'MEDECIN' && BLOCKED_MEDECIN.some((path) => href.startsWith(path))) return false;
   if (role === 'RECEPTIONNISTE' && BLOCKED_RECEPTIONNISTE.some((path) => href.startsWith(path))) return false;
   if (role !== 'ADMIN' && ADMIN_ONLY.some((path) => href.startsWith(path))) return false;

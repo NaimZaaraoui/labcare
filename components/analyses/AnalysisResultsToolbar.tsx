@@ -16,6 +16,7 @@ export function AnalysisResultsToolbar() {
     handleDiatronFileChange,
     toggleSelectAll,
     selectedIds,
+    diatronEnabled,
   } = useAnalysisContext();
   if (!analysis) return null;
   return (
@@ -36,7 +37,7 @@ export function AnalysisResultsToolbar() {
           )}
         </div>
 
-        {!isFinalValidated && hasNFS && (
+        {!isFinalValidated && hasNFS && diatronEnabled && (
           <div className="flex items-center gap-2">
             <input type="file" ref={fileInputRef} onChange={handleDiatronFileChange} accept=".txt" className="hidden" />
             <button onClick={() => fileInputRef.current?.click()} disabled={isImporting} className="btn-secondary h-9 text-xs">

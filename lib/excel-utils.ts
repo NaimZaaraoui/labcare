@@ -2,10 +2,77 @@ import * as XLSX from 'xlsx';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
+type ExcelRow = Record<string, unknown>;
+
+interface ExcelPatient {
+  id: string;
+  lastName?: string | null;
+  firstName?: string | null;
+  gender?: string | null;
+  birthDate?: string | Date | null;
+  phoneNumber?: string | null;
+  email?: string | null;
+  address?: string | null;
+  createdAt?: string | Date | null;
+}
+
+interface ExcelAnalysisSummary {
+  patientId?: string | null;
+  orderNumber?: string | null;
+  dailyId?: string | null;
+  patientFirstName?: string | null;
+  patientLastName?: string | null;
+  patientGender?: string | null;
+  patientAge?: number | null;
+  status?: string | null;
+  totalPrice?: number | null;
+  creationDate: string | Date;
+  validatedBioName?: string | null;
+  validatedTechName?: string | null;
+}
+
+interface ExcelTestCategory {
+  name?: string | null;
+}
+
+interface ExcelTestDefinition {
+  code?: string | null;
+  name?: string | null;
+  categoryRel?: ExcelTestCategory | null;
+  isGroup?: boolean | null;
+  resultType?: string | null;
+  unit?: string | null;
+  minValue?: number | null;
+  maxValue?: number | null;
+  minValueM?: number | null;
+  maxValueM?: number | null;
+  minValueF?: number | null;
+  maxValueF?: number | null;
+  price?: number | null;
+  sampleType?: string | null;
+  parentId?: string | null;
+}
+
+interface ExcelResultEntry {
+  test?: ExcelTestDefinition | null;
+  value?: string | null;
+  unit?: string | null;
+  abnormal?: boolean | null;
+  notes?: string | null;
+}
+
+interface ExcelAnalysisWithResults extends ExcelAnalysisSummary {
+  results?: ExcelResultEntry[] | null;
+}
+
 /**
  * Utility to export data to Excel
  */
-export const exportToExcel = (data: any[], fileName: string, sheetName: string = 'Sheet1') => {
+export const exportToExcel = <T extends Record<string, unknown>>(
+  data: T[],
+  fileName: string,
+  sheetName: string = 'Sheet1'
+) => {
   const ws = XLSX.utils.json_to_sheet(data);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, sheetName);
@@ -24,8 +91,8 @@ export const exportToExcel = (data: any[], fileName: string, sheetName: string =
 /**
  * Format patient data for Excel
  */
-export const formatPatientsForExcel = (patients: any[]) => {
-  return patients.map(p => ({
+export const formatPatientsForExcel = (patients: unknown[]): ExcelRow[] => {
+  return (patients as ExcelPatient[]).map(p => ({
     'ID': p.id.substring(0, 8).toUpperCase(),
     'Nom': p.lastName?.toUpperCase() || '',
     'Prénom': p.firstName || '',
@@ -41,8 +108,11 @@ export const formatPatientsForExcel = (patients: any[]) => {
 /**
  * Format analysis data for Excel
  */
-export const formatAnalysesForExcel = (analyses: any[], currencyUnit: string = 'DA') => {
-  return analyses.map(a => ({
+export const formatAnalysesForExcel = (
+  analyses: unknown[],
+  currencyUnit: string = 'DA'
+): ExcelRow[] => {
+  return (analyses as ExcelAnalysisSummary[]).map(a => ({
     'N° Commande': a.orderNumber,
     'ID Paillasse': a.dailyId || '',
     'Patient': `${a.patientFirstName || ''} ${a.patientLastName || ''}`.trim(),
@@ -59,11 +129,13 @@ export const formatAnalysesForExcel = (analyses: any[], currencyUnit: string = '
 /**
  * Format detailed results for Excel
  */
-export const formatResultsForExcel = (analysesWithResults: any[]) => {
-  const rows: any[] = [];
+export const formatResultsForExcel = (
+  analysesWithResults: unknown[]
+): ExcelRow[] => {
+  const rows: ExcelRow[] = [];
   
-  analysesWithResults.forEach(analysis => {
-    analysis.results?.forEach((res: any) => {
+  (analysesWithResults as ExcelAnalysisWithResults[]).forEach(analysis => {
+    analysis.results?.forEach((res) => {
       if (res.test?.isGroup) return;
       if (!res.test) return; // Skip orphaned results
       
@@ -98,8 +170,11 @@ function differenceInYears(dateLeft: Date, dateRight: Date): number {
 /**
  * Format tests catalog for Excel
  */
-export const formatTestsForExcel = (tests: any[], currencyUnit: string = 'DA') => {
-  return tests
+export const formatTestsForExcel = (
+  tests: unknown[],
+  currencyUnit: string = 'DA'
+): ExcelRow[] => {
+  return (tests as ExcelTestDefinition[])
     .filter(t => !t.parentId)
     .map(t => {
       const refRange = buildReferenceRange(t);
@@ -135,8 +210,11 @@ interface MonthlySummary {
 /**
  * Format analyses summary per day
  */
-export const formatDailySummaryForExcel = (analyses: any[], currencyUnit: string = 'DA'): Record<string, unknown>[] => {
-  const byDate = analyses.reduce<Record<string, DailySummary>>((acc, a) => {
+export const formatDailySummaryForExcel = (
+  analyses: unknown[],
+  currencyUnit: string = 'DA'
+): ExcelRow[] => {
+  const byDate = (analyses as ExcelAnalysisSummary[]).reduce<Record<string, DailySummary>>((acc, a) => {
     const dateKey = format(new Date(a.creationDate), 'yyyy-MM-dd');
     if (!acc[dateKey]) {
       acc[dateKey] = { date: dateKey, count: 0, total: 0, validated: 0, pending: 0 };
@@ -166,8 +244,11 @@ export const formatDailySummaryForExcel = (analyses: any[], currencyUnit: string
 /**
  * Format analyses summary per month
  */
-export const formatMonthlySummaryForExcel = (analyses: any[], currencyUnit: string = 'DA'): Record<string, unknown>[] => {
-  const byMonth = analyses.reduce<Record<string, MonthlySummary>>((acc, a) => {
+export const formatMonthlySummaryForExcel = (
+  analyses: unknown[],
+  currencyUnit: string = 'DA'
+): ExcelRow[] => {
+  const byMonth = (analyses as ExcelAnalysisSummary[]).reduce<Record<string, MonthlySummary>>((acc, a) => {
     const monthKey = format(new Date(a.creationDate), 'yyyy-MM');
     if (!acc[monthKey]) {
       acc[monthKey] = { month: monthKey, count: 0, total: 0, validated: 0, pending: 0 };
@@ -197,9 +278,11 @@ export const formatMonthlySummaryForExcel = (analyses: any[], currencyUnit: stri
 /**
  * Format analyses summary per category
  */
-export const formatCategorySummaryForExcel = (analysesWithResults: any[]): Record<string, unknown>[] => {
-  const byCategory = analysesWithResults.reduce<Record<string, { category: string; count: number; abnormal: number; normal: number }>>((acc, a) => {
-    (a.results || []).forEach((res: any) => {
+export const formatCategorySummaryForExcel = (
+  analysesWithResults: unknown[]
+): ExcelRow[] => {
+  const byCategory = (analysesWithResults as ExcelAnalysisWithResults[]).reduce<Record<string, { category: string; count: number; abnormal: number; normal: number }>>((acc, a) => {
+    (a.results || []).forEach((res) => {
       if (!res.test || res.test?.isGroup) return; // Skip groups & orphans
       const cat = res.test?.categoryRel?.name || 'Non classé';
       if (!acc[cat]) {
@@ -229,14 +312,17 @@ export const formatCategorySummaryForExcel = (analysesWithResults: any[]): Recor
 /**
  * Format analyses per patient
  */
-export const formatPatientAnalysesForExcel = (analyses: any[], currencyUnit: string = 'DA'): Record<string, unknown>[] => {
-  const byPatient = analyses.reduce<Record<string, { patient: string; gender: string; age: number; count: number; total: number; lastVisit: Date }>>((acc, a) => {
-    const key = a.patientId || a.patientFirstName + a.patientLastName;
+export const formatPatientAnalysesForExcel = (
+  analyses: unknown[],
+  currencyUnit: string = 'DA'
+): ExcelRow[] => {
+  const byPatient = (analyses as ExcelAnalysisSummary[]).reduce<Record<string, { patient: string; gender: string; age: number; count: number; total: number; lastVisit: Date }>>((acc, a) => {
+    const key = a.patientId || `${a.patientFirstName ?? ''}${a.patientLastName ?? ''}`;
     if (!acc[key]) {
       acc[key] = {
         patient: `${a.patientFirstName || ''} ${a.patientLastName || ''}`.trim(),
-        gender: a.patientGender,
-        age: a.patientAge,
+        gender: a.patientGender ?? '',
+        age: a.patientAge ?? 0,
         count: 0,
         total: 0,
         lastVisit: new Date(a.creationDate)
@@ -262,8 +348,8 @@ export const formatPatientAnalysesForExcel = (analyses: any[], currencyUnit: str
     }));
 };
 
-function buildReferenceRange(test: any): string {
-  const parts = [];
+function buildReferenceRange(test: ExcelTestDefinition): string {
+  const parts: string[] = [];
   
   if (test.minValue !== null && test.maxValue !== null) {
     parts.push(`${test.minValue} - ${test.maxValue}`);

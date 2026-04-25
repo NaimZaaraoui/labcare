@@ -74,5 +74,11 @@ export const NAVIGATION_GROUPS = [
       { name: 'Utilisateurs', href: '/dashboard/users', icon: UserCheck },
       { name: 'Paramètres', href: '/dashboard/settings', icon: Settings },
     ]
+  },
+  {
+    title: "Assistance",
+    links: [
+      { name: 'Support & Aide', href: '/dashboard/support', icon: Activity },
+    ]
   }
 ];

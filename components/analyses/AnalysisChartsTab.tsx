@@ -3,9 +3,10 @@ import React from 'react';
 import { Sparkles, Activity } from 'lucide-react';
 import { HistogramView } from './HistogramView';
 import { getHematologyFlags } from '@/lib/calculations';
+import type { Analysis } from '@/lib/types';
 
 interface AnalysisChartsTabProps {
-  analysis: any;
+  analysis: Analysis;
   results: Record<string, string>;
 }
 

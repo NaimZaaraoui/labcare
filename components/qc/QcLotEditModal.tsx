@@ -1,7 +1,11 @@
 'use client';
 
-import { X } from 'lucide-react';
-import { useScrollLock } from '@/hooks/useScrollLock';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle 
+} from "@/components/ui/dialog";
 
 interface QcLotEditModalProps {
   open: boolean;
@@ -18,26 +22,17 @@ interface QcLotEditModalProps {
 }
 
 export function QcLotEditModal({ open, saving, lot, onClose, onChange, onSave }: QcLotEditModalProps) {
-  useScrollLock(open);
-  if (!open || !lot) return null;
+  if (!lot) return null;
 
   return (
-    <div className="modal-overlay" onClick={() => !saving && onClose()}>
-      <div className="modal-shell flex max-h-[90vh] w-full max-w-xl flex-col overflow-hidden" onClick={(event) => event.stopPropagation()}>
-        <div className="flex items-start justify-between border-b px-6 py-5">
-          <div>
-            <h2 className="text-lg font-semibold text-[var(--color-text)]">Modifier le lot QC</h2>
-            <p className="mt-1 text-sm text-[var(--color-text-soft)]">Ajustez les informations du lot sans quitter la configuration QC.</p>
-          </div>
-          <button
-            onClick={() => !saving && onClose()}
-            className="rounded-lg border px-3 py-1 text-xs font-semibold text-[var(--color-text-soft)] transition-colors hover:bg-[var(--color-surface-muted)]"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
+    <Dialog open={open} onOpenChange={(val) => !val && !saving && onClose()}>
+      <DialogContent className="flex max-h-[90vh] max-w-xl flex-col p-0 overflow-hidden">
+        <DialogHeader className="px-6 py-5 border-b">
+          <DialogTitle className="text-lg font-semibold text-[var(--color-text)]">Modifier le lot QC</DialogTitle>
+          <p className="mt-1 text-sm text-[var(--color-text-soft)]">Ajustez les informations du lot sans quitter la configuration QC.</p>
+        </DialogHeader>
 
-        <div className="grid gap-4 px-6 py-5">
+        <div className="grid gap-4 px-6 py-5 overflow-y-auto">
           <label className="grid gap-2">
             <span className="form-label">Numero du lot</span>
             <input
@@ -74,7 +69,7 @@ export function QcLotEditModal({ open, saving, lot, onClose, onChange, onSave }:
             {saving ? 'Enregistrement...' : 'Enregistrer'}
           </button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

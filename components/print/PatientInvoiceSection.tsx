@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import type { Analysis } from '@/lib/types';
 import type { PrintSettings } from '@/components/print/types';
-import { resolvePrintBranding } from '@/components/print/report-helpers';
+import { resolvePrintBranding } from '@/lib/report-generation';
 
 interface PatientInvoiceSectionProps {
   analysis: Analysis;

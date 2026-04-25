@@ -3,7 +3,9 @@
 import { Activity, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
+import { isAnalysisValidated } from '@/lib/status-flow';
 import type { PatientAnalysis } from '@/components/patients/types';
+import type { AnalysisStatus } from '@/lib/status-flow';
 
 interface PatientHistoryTabProps {
   analyses: PatientAnalysis[];
@@ -32,12 +34,12 @@ export function PatientHistoryTab({ analyses }: PatientHistoryTabProps) {
                 <h3 className="text-lg font-semibold tracking-tight text-[var(--color-text)]">{analysis.orderNumber}</h3>
                 <span
                   className={`rounded-md px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] ${
-                    analysis.status === 'completed' || analysis.status === 'validated_bio'
+                    isAnalysisValidated(analysis.status as AnalysisStatus)
                       ? 'bg-emerald-50 text-emerald-600'
                       : 'bg-amber-100/50 text-amber-600'
                   }`}
                 >
-                  {analysis.status === 'completed' || analysis.status === 'validated_bio' ? 'Dossier Validé' : 'En cours'}
+                  {isAnalysisValidated(analysis.status as AnalysisStatus) ? 'Dossier Validé' : 'En cours'}
                 </span>
               </div>
               <div className="flex items-center gap-4 text-xs font-medium text-slate-400">

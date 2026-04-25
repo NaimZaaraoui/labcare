@@ -5,7 +5,8 @@ import { fr } from 'date-fns/locale';
 import { PrinterCheck, Trash2, MailCheck } from 'lucide-react';
 import type { Analysis } from '@/lib/types';
 import { formatTatLabel, getTatMinutes, getTatTextClass } from '@/lib/tat';
-import { getAnalysisStatusMeta, isAnalysisFinalValidated } from '@/lib/analysis-status';
+import { getAnalysisStatusMeta } from '@/lib/analysis-status';
+import { isAnalysisFinalValidated } from '@/lib/status-flow';
 
 const PAYMENT_STATUS_MAP: Record<string, { label: string; classes: string }> = {
   UNPAID: { label: 'Non payé', classes: 'bg-rose-50 text-rose-700 border border-rose-200/70' },
