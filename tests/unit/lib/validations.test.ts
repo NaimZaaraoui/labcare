@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { analysisCreateSchema, resultUpdateSchema } from '@/lib/validators';
+import { analysisCreateSchema, resultUpdateSchema, testCreateSchema, testUpdateSchema } from '@/lib/validators';
 
 describe('Validation Schemas', () => {
   describe('createAnalysisSchema', () => {
@@ -323,6 +323,68 @@ describe('Validation Schemas', () => {
 
       const result = resultUpdateSchema.safeParse(data);
       expect(result.success).toBe(true);
+    });
+  });
+
+  describe('test schemas', () => {
+    it('should normalize code and name for a valid numeric test', () => {
+      const result = testCreateSchema.safeParse({
+        code: '  hgb ',
+        name: ' Hemoglobine ',
+        resultType: 'numeric',
+        price: '12.5',
+      });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.code).toBe('HGB');
+        expect(result.data.name).toBe('Hemoglobine');
+      }
+    });
+
+    it('should reject dropdown tests without usable options', () => {
+      const result = testCreateSchema.safeParse({
+        code: 'STATUT',
+        name: 'Statut',
+        resultType: 'dropdown',
+        options: ' , , ',
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject incoherent numeric ranges', () => {
+      const result = testCreateSchema.safeParse({
+        code: 'CRP',
+        name: 'CRP',
+        resultType: 'numeric',
+        minValue: 10,
+        maxValue: 5,
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject calculated panels', () => {
+      const result = testCreateSchema.safeParse({
+        code: 'NFSCALC',
+        name: 'Panel calcule',
+        isGroup: true,
+        resultType: 'calculated',
+        formula: 'HGB + HCT',
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    it('should require an id for test updates', () => {
+      const result = testUpdateSchema.safeParse({
+        code: 'GLU',
+        name: 'Glycemie',
+        resultType: 'numeric',
+      });
+
+      expect(result.success).toBe(false);
     });
   });
 });

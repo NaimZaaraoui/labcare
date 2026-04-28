@@ -25,6 +25,8 @@ export default function DatabaseBackupsPage() {
     data,
     recoveryBundles,
     health,
+    backupValidationStatuses,
+    recoveryValidationStatuses,
     recoveryImportFile,
     restoreModal,
     notification,
@@ -162,6 +164,7 @@ export default function DatabaseBackupsPage() {
         getDownloadHref={(fileName) => `/api/database/backups/${encodeURIComponent(fileName)}/download`}
         emptyLabel="Aucune sauvegarde n'a encore été créée."
         formatBytes={formatBytes}
+        validationStatuses={backupValidationStatuses}
       />
 
       <section className="overflow-hidden rounded-xl border bg-[var(--color-surface)] shadow-[0_2px_8px_rgba(15,31,51,0.03)]">
@@ -212,6 +215,7 @@ export default function DatabaseBackupsPage() {
         getDownloadHref={(fileName) => `/api/database/recovery-bundles/${encodeURIComponent(fileName)}`}
         emptyLabel="Aucun bundle de reprise n'a encore été créé."
         formatBytes={formatBytes}
+        validationStatuses={recoveryValidationStatuses}
       />
 
       <ConfirmationModal

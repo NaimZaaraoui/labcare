@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   applyCalculatedTestFormulas,
   evaluateFormula,
+  extractFormulaDependencies,
   isCalculatedFormulaTest,
   validateFormula,
 } from '@/lib/calculated-tests';
@@ -10,10 +11,11 @@ import type { Analysis } from '@/lib/types';
 describe('Calculated Tests', () => {
   describe('validateFormula', () => {
     const availableTests = [
-      { code: 'HGB', resultType: 'numeric', options: null, decimals: 1 },
-      { code: 'HCT', resultType: 'numeric', options: null, decimals: 1 },
-      { code: 'RBC', resultType: 'numeric', options: null, decimals: 1 },
-      { code: 'CCMH', resultType: 'calculated', options: '(HGB / HCT) * 100', decimals: 1 },
+      { code: 'HGB', resultType: 'numeric', options: null, decimals: 1, isGroup: false },
+      { code: 'HCT', resultType: 'numeric', options: null, decimals: 1, isGroup: false },
+      { code: 'RBC', resultType: 'numeric', options: null, decimals: 1, isGroup: false },
+      { code: 'CCMH', resultType: 'calculated', options: '(HGB / HCT) * 100', decimals: 1, isGroup: false },
+      { code: 'COMMENT', resultType: 'text', options: null, decimals: 1, isGroup: false },
     ];
 
     it('accepts a valid formula with existing dependencies', () => {
@@ -35,6 +37,17 @@ describe('Calculated Tests', () => {
     it('rejects dependencies on calculated tests in V1', () => {
       const result = validateFormula('(CCMH / HCT) * 10', availableTests, 'VGM2');
       expect(result.valid).toBe(false);
+    });
+
+    it('rejects non-numeric dependencies', () => {
+      const result = validateFormula('(COMMENT / HCT) * 10', availableTests, 'TESTX');
+      expect(result.valid).toBe(false);
+    });
+  });
+
+  describe('extractFormulaDependencies', () => {
+    it('returns unique normalized dependencies', () => {
+      expect(extractFormulaDependencies('(hgb / HCT) * hgb')).toEqual(['HGB', 'HCT']);
     });
   });
 
@@ -60,8 +73,8 @@ describe('Calculated Tests', () => {
 
   describe('isCalculatedFormulaTest', () => {
     it('detects formula-based calculated tests', () => {
-      expect(isCalculatedFormulaTest({ resultType: 'calculated', options: '(HGB / HCT) * 100', code: 'CCMH', decimals: 1 })).toBe(true);
-      expect(isCalculatedFormulaTest({ resultType: 'numeric', options: '(HGB / HCT) * 100', code: 'CCMH', decimals: 1 })).toBe(false);
+      expect(isCalculatedFormulaTest({ resultType: 'calculated', options: '(HGB / HCT) * 100', code: 'CCMH', decimals: 1, isGroup: false })).toBe(true);
+      expect(isCalculatedFormulaTest({ resultType: 'numeric', options: '(HGB / HCT) * 100', code: 'CCMH', decimals: 1, isGroup: false })).toBe(false);
     });
   });
 

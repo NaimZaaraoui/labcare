@@ -8,10 +8,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Tags } from 'lucide-react';
+import { Tags, Minus, Plus, Printer } from 'lucide-react';
 
 interface Props {
   open: boolean;
@@ -21,63 +18,127 @@ interface Props {
 }
 
 export function LabelQuantityModal({ open, onOpenChange, onConfirm, defaultCount = 3 }: Props) {
-  const [count, setCount] = useState(defaultCount);
+  const [draftCount, setDraftCount] = useState<number | null>(null);
+  const count = draftCount ?? defaultCount;
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      setDraftCount(null);
+    }
+    onOpenChange(nextOpen);
+  };
 
   const handleConfirm = () => {
     onConfirm(count);
+    setDraftCount(null);
     onOpenChange(false);
   };
 
+  const increment = () => setDraftCount(Math.min(100, count + 1));
+  const decrement = () => setDraftCount(Math.max(1, count - 1));
+  const handleCountChange = (value: string) => {
+    const numericValue = Number(value);
+    if (!Number.isFinite(numericValue)) {
+      setDraftCount(1);
+      return;
+    }
+
+    setDraftCount(Math.min(100, Math.max(1, Math.round(numericValue))));
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[400px] rounded-[32px] p-8 border-none shadow-[0_20px_50px_rgba(0,0,0,0.15)] bg-white">
-        <DialogHeader>
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 mb-4 mx-auto">
-            <Tags size={28} />
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="flex max-h-[90vh] max-w-md flex-col p-0 overflow-hidden">
+        <DialogHeader className="flex items-start justify-between border-b border-[var(--color-border)] p-6">
+          <div className="flex items-start gap-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border bg-[var(--color-surface-muted)] text-[var(--color-text-secondary)]">
+              <Tags size={18} />
+            </div>
+            <div>
+              <DialogTitle className="text-xl font-semibold tracking-tight text-[var(--color-text)] sm:text-2xl">
+                Impression d&apos;étiquettes
+              </DialogTitle>
+              <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+                Choisissez combien d&apos;étiquettes imprimer pour ce dossier.
+              </p>
+            </div>
           </div>
-          <DialogTitle className="text-center text-2xl font-black text-slate-900 tracking-tight">
-            Impression Étiquettes
-          </DialogTitle>
-          <p className="text-center text-slate-500 text-sm mt-1">
-            Combien d'étiquettes de tubes souhaitez-vous imprimer pour ce patient ?
-          </p>
         </DialogHeader>
 
-        <div className="py-8">
-          <div className="space-y-3">
-            <Label htmlFor="quantity" className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-              Nombre d'étiquettes
-            </Label>
-            <Input
-              id="quantity"
-              type="number"
-              min={1}
-              max={100}
-              value={count}
-              onChange={(e) => setCount(Math.max(1, parseInt(e.target.value) || 1))}
-              className="h-14 rounded-2xl border-slate-100 bg-slate-50 text-center text-xl font-bold focus:ring-4 focus:ring-indigo-500/10 transition-all"
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleConfirm();
-              }}
-            />
+        <div
+          className="custom-scrollbar space-y-5 overflow-y-auto bg-[var(--color-surface)] p-6"
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              handleConfirm();
+            }
+          }}
+          tabIndex={0}
+        >
+          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-4 py-4">
+            <p className="text-sm font-medium text-[var(--color-text)]">
+              L&apos;impression générera autant d&apos;étiquettes que nécessaire pour l&apos;identification des tubes.
+            </p>
+            <p className="mt-1 text-xs text-[var(--color-text-soft)]">
+              Vous pouvez ajuster la quantité avant de lancer l&apos;impression.
+            </p>
+          </div>
+
+          <div className="space-y-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="form-label">Quantité</p>
+                <p className="mt-1 text-sm text-[var(--color-text-secondary)]">Entre 1 et 100 étiquettes</p>
+              </div>
+              <span className="rounded-full border bg-[var(--color-surface)] px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-soft)]">
+                {count} sélectionnée{count > 1 ? 's' : ''}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={decrement}
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-surface-muted)]"
+              >
+                <Minus size={18} strokeWidth={2.5} />
+              </button>
+
+              <input
+                type="number"
+                min={1}
+                max={100}
+                value={count}
+                onChange={(event) => handleCountChange(event.target.value)}
+                className="input-premium h-12 bg-[var(--color-surface)] text-center text-2xl font-semibold tabular-nums text-[var(--color-text)]"
+              />
+
+              <button
+                type="button"
+                onClick={increment}
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-surface-muted)]"
+              >
+                <Plus size={18} strokeWidth={2.5} />
+              </button>
+            </div>
           </div>
         </div>
 
-        <DialogFooter className="flex-col sm:flex-row gap-3 mt-2">
-          <Button
-            variant="ghost"
-            onClick={() => onOpenChange(false)}
-            className="flex-1 h-14 rounded-2xl font-bold text-slate-500 hover:bg-slate-50"
+        <DialogFooter className="flex flex-col gap-3 border-t border-[var(--color-border)] bg-[var(--color-surface)] px-6 py-4 sm:flex-row sm:justify-end">
+            <button
+            type="button"
+            onClick={() => handleOpenChange(false)}
+            className="btn-secondary-md order-2 sm:order-1"
           >
             Annuler
-          </Button>
-          <Button
+          </button>
+          <button
+            type="button"
             onClick={handleConfirm}
-            className="flex-1 h-14 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-lg shadow-indigo-200"
+            className="btn-primary-md order-1 min-w-[190px] justify-center sm:order-2"
           >
-            Imprimer {count} {count > 1 ? 'étiquettes' : 'étiquette'}
-          </Button>
+            <Printer size={18} />
+            Imprimer {count > 1 ? 'étiquettes' : 'étiquette'}
+          </button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

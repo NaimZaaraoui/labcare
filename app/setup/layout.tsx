@@ -1,4 +1,5 @@
 import '@/app/globals.css';
+import { NexLabLockup } from '@/components/branding/NexLabLockup';
 
 export default function SetupLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -11,14 +12,7 @@ export default function SetupLayout({ children }: { children: React.ReactNode })
 
         {/* Logo */}
         <div className="relative z-10">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/20 backdrop-blur">
-              <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6 text-white" stroke="currentColor" strokeWidth={1.8}>
-                <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
-            <span className="text-lg font-bold tracking-tight text-white">NexLab LIMS</span>
-          </div>
+          <NexLabLockup variant="light" size="md" />
         </div>
 
         {/* Hero text */}

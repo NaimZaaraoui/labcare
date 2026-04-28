@@ -10,6 +10,12 @@ import { createAuditLog, getRequestMeta } from '@/lib/audit';
 import { resolveAnalysisTestIds } from '@/lib/analysis-tests';
 import { analysisCreateSchema } from '@/lib/validators';
 import { getLicenseStatus } from '@/lib/license';
+import {
+  buildDailyIdConflictMessage,
+  findDailyIdConflict,
+  isDailyIdConflictError,
+  normalizeDailyId,
+} from '@/lib/analysis-daily-id';
 
 export async function GET(request: NextRequest) {
   try {
@@ -100,7 +106,7 @@ export async function GET(request: NextRequest) {
           }
         }
       },
-      orderBy: { creationDate: 'desc' } as any
+      orderBy: { creationDate: 'desc' } as Prisma.AnalysisOrderByWithRelationInput
     };
 
     if (isPaginated) {
@@ -186,6 +192,8 @@ export async function POST(request: NextRequest) {
       }
     });
 
+    const creationTimestamp = new Date();
+
     let nextOrderNum = 1;
     if (lastAnalysisToday) {
       const lastPart = lastAnalysisToday.orderNumber.split('-')[1];
@@ -238,8 +246,32 @@ export async function POST(request: NextRequest) {
     } = parsed.data;
 
     // Determine Patient UUID and Daily ID (handling naming inconsistencies)
-    let finalPatientId = selectedPatientId || (typeof patientId === 'string' && patientId.includes('-') ? patientId : null);
-    const finalDailyId = dailyId || (typeof patientId === 'string' && !patientId.includes('-') ? patientId : patientId);
+    const finalPatientId = selectedPatientId || (typeof patientId === 'string' && patientId.includes('-') ? patientId : null);
+    const finalDailyId = normalizeDailyId(
+      dailyId || (typeof patientId === 'string' && !patientId.includes('-') ? patientId : patientId)
+    );
+
+    if (!finalDailyId) {
+      return NextResponse.json(
+        { error: 'Données invalides', details: 'Le numéro de paillasse est requis.' },
+        { status: 400 }
+      );
+    }
+
+    const dailyIdConflict = await findDailyIdConflict({
+      dailyId: finalDailyId,
+      referenceDate: creationTimestamp,
+    });
+
+    if (dailyIdConflict) {
+      return NextResponse.json(
+        {
+          error: 'ID paillasse déjà utilisé',
+          details: buildDailyIdConflictMessage(finalDailyId, dailyIdConflict.orderNumber),
+        },
+        { status: 409 }
+      );
+    }
 
     // If no existing patient selected, create one
     const parseDate = (d: string | null | undefined) => {
@@ -251,24 +283,6 @@ export async function POST(request: NextRequest) {
     const birthDateObj = parseDate(patientBirthDate);
     const calculatedAge = birthDateObj ? new Date().getFullYear() - birthDateObj.getFullYear() : null;
 
-    // Use a transaction or separate catch for patient creation
-    if (!finalPatientId) {
-       const newPatient = await prisma.patient.create({
-         data: {
-           firstName: patientFirstName,
-           lastName: patientLastName,
-           gender: patientGender,
-           birthDate: birthDateObj,
-           phoneNumber: patientPhone,
-           email: patientEmail,
-           address: patientAddress,
-           insuranceProvider: insuranceProvider || null,
-           insuranceNumber: insuranceNumber || null,
-         }
-       });
-       finalPatientId = newPatient.id;
-    }
-    
     const resolvedTestsIds = await resolveAnalysisTestIds(testsIds);
     
     // Calculate total price based on resolved tests
@@ -282,40 +296,62 @@ export async function POST(request: NextRequest) {
     const insuranceShare = coveragePct > 0 ? Math.round((totalPrice * coveragePct / 100) * 100) / 100 : 0;
     const patientShare = Math.round((totalPrice - insuranceShare) * 100) / 100;
     
-    const analysis = await prisma.analysis.create({
-      data: {
-        orderNumber,
-        dailyId: String(finalDailyId),
-        patientId: finalPatientId,
-        totalPrice: totalPrice,
-        patientFirstName,
-        patientLastName,
-        patientAge: calculatedAge,
-        patientGender,
-        receiptNumber: receiptNumberFromBody || receiptNumber,
-        provenance: provenance || null,
-        medecinPrescripteur: medecinPrescripteur || null,
-        isUrgent: Boolean(isUrgent),
-        globalNote: globalNote?.trim() || null,
-        globalNotePlacement: ['all', 'first', 'last'].includes(globalNotePlacement) ? globalNotePlacement : 'all',
-        status: 'pending',
-        insuranceProvider: insuranceProvider || null,
-        insuranceCoverage: coveragePct > 0 ? coveragePct : null,
-        insuranceShare,
-        patientShare,
-        results: {
-          create: resolvedTestsIds.map((testId: string) => ({
-            testId,
-          }))
-        }
-      },
-      include: {
-        results: {
-          include: {
-            test: true
+    const analysis = await prisma.$transaction(async (tx) => {
+      let transactionPatientId = finalPatientId;
+
+      if (!transactionPatientId) {
+        const newPatient = await tx.patient.create({
+          data: {
+            firstName: patientFirstName,
+            lastName: patientLastName,
+            gender: patientGender,
+            birthDate: birthDateObj,
+            phoneNumber: patientPhone,
+            email: patientEmail,
+            address: patientAddress,
+            insuranceProvider: insuranceProvider || null,
+            insuranceNumber: insuranceNumber || null,
+          }
+        });
+        transactionPatientId = newPatient.id;
+      }
+
+      return tx.analysis.create({
+        data: {
+          orderNumber,
+          dailyId: finalDailyId,
+          patientId: transactionPatientId,
+          creationDate: creationTimestamp,
+          totalPrice: totalPrice,
+          patientFirstName,
+          patientLastName,
+          patientAge: calculatedAge,
+          patientGender,
+          receiptNumber: receiptNumberFromBody || receiptNumber,
+          provenance: provenance || null,
+          medecinPrescripteur: medecinPrescripteur || null,
+          isUrgent: Boolean(isUrgent),
+          globalNote: globalNote?.trim() || null,
+          globalNotePlacement: ['all', 'first', 'last'].includes(globalNotePlacement) ? globalNotePlacement : 'all',
+          status: 'pending',
+          insuranceProvider: insuranceProvider || null,
+          insuranceCoverage: coveragePct > 0 ? coveragePct : null,
+          insuranceShare,
+          patientShare,
+          results: {
+            create: resolvedTestsIds.map((testId: string) => ({
+              testId,
+            }))
+          }
+        },
+        include: {
+          results: {
+            include: {
+              test: true
+            }
           }
         }
-      }
+      });
     });
     
     // Notifications
@@ -371,6 +407,16 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(analysis, { status: 201 });
   } catch (error: unknown) {
+    if (isDailyIdConflictError(error)) {
+      return NextResponse.json(
+        {
+          error: 'ID paillasse déjà utilisé',
+          details: 'Cet ID paillasse est déjà utilisé aujourd’hui par un autre dossier.',
+        },
+        { status: 409 }
+      );
+    }
+
     const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
     console.error('Erreur POST /api/analyses:', error);
     return NextResponse.json(

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { CheckCircle, AlertCircle } from 'lucide-react';
 
 interface NotificationToastProps {
@@ -9,9 +10,12 @@ interface NotificationToastProps {
 }
 
 export function NotificationToast({ type, message }: NotificationToastProps) {
+  const [isMounted, setIsMounted] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
+    setIsMounted(true);
+
     const timer = setTimeout(() => {
       setIsVisible(false);
     }, 4700);
@@ -21,7 +25,11 @@ export function NotificationToast({ type, message }: NotificationToastProps) {
     };
   }, []);
 
-  return (
+  if (!isMounted) {
+    return null;
+  }
+
+  return createPortal(
     <div className={`fixed bottom-4 right-4 z-[100] flex items-center gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/95 px-4 py-3 shadow-[0_14px_40px_rgba(15,31,51,0.18)]  transition-all duration-300 lg:bottom-8 lg:right-8 ${
       isVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0 pointer-events-none'
     } ${
@@ -34,6 +42,7 @@ export function NotificationToast({ type, message }: NotificationToastProps) {
         <p className="text-sm font-semibold text-[var(--color-text)]">{type === 'success' ? 'Succès' : 'Erreur'}</p>
         <p className="text-sm text-[var(--color-text-secondary)]">{message}</p>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

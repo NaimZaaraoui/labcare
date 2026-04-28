@@ -3,7 +3,6 @@
 import {
   DndContext,
   closestCenter,
-  DragOverlay,
   type DragStartEvent,
   type DragEndEvent,
 } from '@dnd-kit/core';
@@ -12,6 +11,7 @@ import { ChevronRight, Edit2, GripVertical, Layers, Trash2 } from 'lucide-react'
 import type { SensorDescriptor } from '@dnd-kit/core';
 import { SortableItem } from './SortableItem';
 import { CategoryIcon } from './CategoryIcon';
+import { DragOverlayPortal } from './DragOverlayPortal';
 
 import type { Category } from './types';
 
@@ -129,7 +129,7 @@ export function CategoryListPanel({
         <Layers size={18} className="text-[var(--color-accent)]" />
         <h2 className="font-semibold text-[var(--color-text)]">Catégories</h2>
       </div>
-      <div className="bento-panel rounded-t-none p-2 min-h-[400px]">
+      <div className="bento-panel rounded-t-none p-2 min-h-[400px] hover:translate-y-0">
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -153,7 +153,7 @@ export function CategoryListPanel({
               })}
             </div>
           </SortableContext>
-          <DragOverlay>
+          <DragOverlayPortal>
             {activeCategoryId
               ? (() => {
                   const cat = categories.find((c) => c.id === activeCategoryId);
@@ -172,7 +172,7 @@ export function CategoryListPanel({
                   );
                 })()
               : null}
-          </DragOverlay>
+          </DragOverlayPortal>
         </DndContext>
       </div>
     </div>

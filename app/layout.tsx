@@ -17,6 +17,10 @@ const jetbrains = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "NEXLAB - Système de Gestion Laboratoire",
   description: "LIMS professionnel - NEXLAB",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-icon.png",
+  },
 };
 
 export const viewport: Viewport = {

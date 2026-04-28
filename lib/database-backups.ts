@@ -1,5 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import os from 'node:os';
+import crypto from 'node:crypto';
 import Database from 'better-sqlite3';
 
 export type DatabaseBackupFile = {
@@ -12,6 +14,13 @@ export type DatabaseBackupFile = {
 export type DatabaseBackupValidation = {
   valid: boolean;
   issues: string[];
+};
+
+export type DatabaseBackupRestoreTest = {
+  valid: boolean;
+  issues: string[];
+  checksumSha256: string;
+  restoredValidation: DatabaseBackupValidation;
 };
 
 const BACKUP_DIR = path.join(process.cwd(), 'backups', 'database');
@@ -37,6 +46,11 @@ export function getDatabaseBackupDirectory() {
 
 export async function ensureBackupDirectory() {
   await fs.mkdir(BACKUP_DIR, { recursive: true });
+}
+
+export async function computeFileSha256(absolutePath: string) {
+  const file = await fs.readFile(absolutePath);
+  return crypto.createHash('sha256').update(file).digest('hex');
 }
 
 export async function createDatabaseBackup() {
@@ -91,6 +105,112 @@ export function validateDatabaseBackupFile(absolutePath: string): DatabaseBackup
 
 export function validateActiveDatabase(): DatabaseBackupValidation {
   return validateDatabaseBackupFile(getDatabaseFilePath());
+}
+
+function getSqliteSidecarPaths(databasePath: string) {
+  return [`${databasePath}-wal`, `${databasePath}-shm`];
+}
+
+export async function removeSqliteSidecars(databasePath: string) {
+  await Promise.all(
+    getSqliteSidecarPaths(databasePath).map((sidecarPath) =>
+      fs.rm(sidecarPath, { force: true }).catch(() => undefined)
+    )
+  );
+}
+
+async function restoreValidatedSqliteFile(sourcePath: string, targetPath: string) {
+  const validation = validateDatabaseBackupFile(sourcePath);
+  if (!validation.valid) {
+    throw new Error(`Le fichier SQLite à restaurer est invalide: ${validation.issues.join(', ')}`);
+  }
+
+  const targetDirectory = path.dirname(targetPath);
+  const timestamp = new Date().toISOString().replaceAll(':', '-');
+  const stagedPath = path.join(targetDirectory, `.nexlab-restore-${timestamp}.sqlite`);
+  const previousPath = path.join(targetDirectory, `.nexlab-restore-previous-${timestamp}.sqlite`);
+  let previousMoved = false;
+
+  await fs.mkdir(targetDirectory, { recursive: true });
+  await removeSqliteSidecars(targetPath);
+
+  try {
+    const sourceDb = new Database(sourcePath, { fileMustExist: true, readonly: true });
+    try {
+      await sourceDb.backup(stagedPath);
+    } finally {
+      sourceDb.close();
+    }
+
+    const stagedValidation = validateDatabaseBackupFile(stagedPath);
+    if (!stagedValidation.valid) {
+      throw new Error(`La base restaurée en staging est invalide: ${stagedValidation.issues.join(', ')}`);
+    }
+
+    try {
+      await fs.access(targetPath);
+      await fs.rename(targetPath, previousPath);
+      previousMoved = true;
+    } catch {
+      previousMoved = false;
+    }
+
+    await fs.rename(stagedPath, targetPath);
+    await removeSqliteSidecars(targetPath);
+
+    const activeValidation = validateDatabaseBackupFile(targetPath);
+    if (!activeValidation.valid) {
+      throw new Error(`La base active restaurée a échoué à la validation: ${activeValidation.issues.join(', ')}`);
+    }
+
+    if (previousMoved) {
+      await fs.rm(previousPath, { force: true });
+    }
+
+    return activeValidation;
+  } catch (error) {
+    await fs.rm(stagedPath, { force: true }).catch(() => undefined);
+    if (previousMoved) {
+      try {
+        await fs.rename(previousPath, targetPath);
+      } catch {
+        // Best effort rollback.
+      }
+    }
+    await removeSqliteSidecars(targetPath);
+    throw error;
+  }
+}
+
+export async function testDatabaseBackupRestore(fileName: string): Promise<DatabaseBackupRestoreTest> {
+  const backup = await getBackupFileByName(fileName);
+  if (!backup) {
+    throw new Error('Sauvegarde introuvable.');
+  }
+
+  const sourceValidation = validateDatabaseBackupFile(backup.absolutePath);
+  const checksumSha256 = await computeFileSha256(backup.absolutePath);
+
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'nexlab-backup-test-'));
+  const tempDbPath = path.join(tempDir, 'restored-test.sqlite');
+
+  try {
+    const restoredValidation = sourceValidation.valid
+      ? await restoreValidatedSqliteFile(backup.absolutePath, tempDbPath)
+      : { valid: false, issues: [...sourceValidation.issues] };
+
+    return {
+      valid: sourceValidation.valid && restoredValidation.valid,
+      issues: [
+        ...sourceValidation.issues,
+        ...restoredValidation.issues.filter((issue) => !sourceValidation.issues.includes(issue)),
+      ],
+      checksumSha256,
+      restoredValidation,
+    };
+  } finally {
+    await fs.rm(tempDir, { recursive: true, force: true });
+  }
 }
 
 export async function createNamedDatabaseBackup(prefix: string) {
@@ -173,13 +293,7 @@ export async function restoreDatabaseBackup(fileName: string) {
   }
 
   const destinationPath = getDatabaseFilePath();
-  const sourceDb = new Database(backup.absolutePath, { fileMustExist: true, readonly: true });
-
-  try {
-    await sourceDb.backup(destinationPath);
-  } finally {
-    sourceDb.close();
-  }
+  await restoreValidatedSqliteFile(backup.absolutePath, destinationPath);
 
   return backup;
 }

@@ -5,6 +5,13 @@ import { prisma } from '@/lib/prisma';
 import { requireAnyRole, requireAuthUser } from '@/lib/authz';
 import { createAuditLog, getRequestMeta } from '@/lib/audit';
 import { validateFormula } from '@/lib/calculated-tests';
+import { testCreateSchema, testUpdateSchema } from '@/lib/validators';
+import {
+  assertCalculatedDependentsRemainValid,
+  assertGroupCanBeConverted,
+  assertValidParentAssignment,
+  buildTestPersistenceData,
+} from '@/lib/test-catalog-validation';
 
 export async function GET(request: NextRequest) {
   try {
@@ -60,19 +67,50 @@ export async function POST(request: NextRequest) {
     const meta = getRequestMeta({ headers: request.headers });
 
     const body = await request.json();
-    const code = String(body.code || '').toUpperCase();
+    const parsed = testCreateSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        {
+          error: 'Données invalides',
+          details: parsed.error.issues[0]?.message || 'Les données du test sont invalides.',
+        },
+        { status: 400 }
+      );
+    }
 
-    if (body.resultType === 'calculated') {
-      const availableTests = await prisma.test.findMany({
-        select: { code: true, resultType: true, options: true, decimals: true },
-      });
-      const validation = validateFormula(body.formula || body.options || '', availableTests, code);
+    const data = parsed.data;
+    const code = data.code;
+
+    const existingTests = await prisma.test.findMany({
+      select: {
+        id: true,
+        code: true,
+        name: true,
+        parentId: true,
+        isGroup: true,
+        resultType: true,
+        options: true,
+        decimals: true,
+      },
+    });
+
+    assertValidParentAssignment(existingTests, data.parentId);
+
+    if (data.resultType === 'calculated' && !data.isGroup) {
+      const availableTests = existingTests.map((test) => ({
+        code: test.code,
+        resultType: test.resultType,
+        options: test.options,
+        decimals: test.decimals,
+        isGroup: test.isGroup,
+      }));
+      const validation = validateFormula(data.formula || '', availableTests, code);
       if (!validation.valid) {
         return NextResponse.json({ error: validation.error || 'Formule invalide' }, { status: 400 });
       }
     }
     
-    let categoryId = body.categoryId || null;
+    let categoryId = data.categoryId || null;
     if (!categoryId && body.category) {
       const cat = await prisma.category.findFirst({
         where: { name: body.category }
@@ -80,27 +118,21 @@ export async function POST(request: NextRequest) {
       categoryId = cat?.id || null;
     }
 
-    const test = await prisma.test.create({
-        data: {
-          code,
-          name: body.name,
-          unit: body.unit || null,
-          minValue: body.minValue ? parseFloat(body.minValue) : null,
-          maxValue: body.maxValue ? parseFloat(body.maxValue) : null,
-          minValueM: body.minValueM ? parseFloat(body.minValueM) : null,
-          maxValueM: body.maxValueM ? parseFloat(body.maxValueM) : null,
-          minValueF: body.minValueF ? parseFloat(body.minValueF) : null,
-          maxValueF: body.maxValueF ? parseFloat(body.maxValueF) : null,
-          decimals: body.decimals || 1,
-          resultType: body.resultType || 'numeric',
-          categoryId: categoryId,
-          parentId: body.parentId || null,
-          options: body.resultType === 'calculated' ? (body.formula || body.options || null) : (body.options || null),
-          isGroup: !!body.isGroup,
-          sampleType: body.sampleType || null,
-          price: body.price ? parseFloat(body.price) : 0,
-        }
+    if (categoryId) {
+      const category = await prisma.category.findUnique({
+        where: { id: categoryId },
+        select: { id: true },
+      });
+      if (!category) {
+        return NextResponse.json(
+          { error: 'La catégorie sélectionnée est introuvable' },
+          { status: 400 }
+        );
+      }
+    }
 
+    const test = await prisma.test.create({
+      data: buildTestPersistenceData(data, categoryId),
     });
 
     await createAuditLog({
@@ -123,6 +155,13 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 }
+      );
+    }
     
     return NextResponse.json(
       { error: 'Erreur lors de la création du test' },
@@ -138,8 +177,19 @@ export async function PUT(request: NextRequest) {
     const meta = getRequestMeta({ headers: request.headers });
 
     const body = await request.json();
-    const { id, ...data } = body;
-    const code = String(data.code || '').toUpperCase();
+    const parsed = testUpdateSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        {
+          error: 'Données invalides',
+          details: parsed.error.issues[0]?.message || 'Les données du test sont invalides.',
+        },
+        { status: 400 }
+      );
+    }
+
+    const { id, ...data } = parsed.data;
+    const code = data.code;
 
     if (!id) {
       return NextResponse.json(
@@ -148,47 +198,56 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    let categoryId = data.categoryId || null;
-    if (!categoryId && data.category) {
-      const cat = await prisma.category.findFirst({
-        where: { name: data.category }
-      });
-      categoryId = cat?.id || null;
-    }
+    const existingTests = await prisma.test.findMany({
+      select: {
+        id: true,
+        code: true,
+        name: true,
+        parentId: true,
+        isGroup: true,
+        resultType: true,
+        options: true,
+        decimals: true,
+      },
+    });
 
-    if (data.resultType === 'calculated') {
-      const availableTests = await prisma.test.findMany({
-        where: { id: { not: id } },
-        select: { code: true, resultType: true, options: true, decimals: true },
-      });
-      const validation = validateFormula(data.formula || data.options || '', availableTests, code);
+    assertValidParentAssignment(existingTests, data.parentId, id);
+    assertGroupCanBeConverted(existingTests, id, data.isGroup);
+    assertCalculatedDependentsRemainValid(existingTests, id, data);
+
+    if (data.resultType === 'calculated' && !data.isGroup) {
+      const availableTests = existingTests
+        .filter((test) => test.id !== id)
+        .map((test) => ({
+          code: test.code,
+          resultType: test.resultType,
+          options: test.options,
+          decimals: test.decimals,
+          isGroup: test.isGroup,
+        }));
+      const validation = validateFormula(data.formula || '', availableTests, code);
       if (!validation.valid) {
         return NextResponse.json({ error: validation.error || 'Formule invalide' }, { status: 400 });
       }
     }
 
+    const categoryId = data.categoryId || null;
+    if (categoryId) {
+      const category = await prisma.category.findUnique({
+        where: { id: categoryId },
+        select: { id: true },
+      });
+      if (!category) {
+        return NextResponse.json(
+          { error: 'La catégorie sélectionnée est introuvable' },
+          { status: 400 }
+        );
+      }
+    }
+
     const test = await prisma.test.update({
       where: { id },
-        data: {
-          code,
-          name: data.name,
-          unit: data.unit || null,
-          minValue: (data.resultType === 'numeric' || data.resultType === 'calculated') && data.minValue ? parseFloat(data.minValue) : null,
-          maxValue: (data.resultType === 'numeric' || data.resultType === 'calculated') && data.maxValue ? parseFloat(data.maxValue) : null,          
-          minValueM: (data.resultType === 'numeric' || data.resultType === 'calculated') && data.minValueM ? parseFloat(data.minValueM) : null,
-          maxValueM: (data.resultType === 'numeric' || data.resultType === 'calculated') && data.maxValueM ? parseFloat(data.maxValueM) : null,
-          minValueF: (data.resultType === 'numeric' || data.resultType === 'calculated') && data.minValueF ? parseFloat(data.minValueF) : null,
-          maxValueF: (data.resultType === 'numeric' || data.resultType === 'calculated') && data.maxValueF ? parseFloat(data.maxValueF) : null,          
-          decimals: data.resultType === 'numeric' || data.resultType === 'calculated' ? data.decimals : 1,
-          resultType: data.resultType || 'numeric',
-          categoryId: categoryId,
-          parentId: data.parentId || null,
-          options: data.resultType === 'calculated' ? (data.formula || data.options || null) : (data.options || null),
-          isGroup: !!data.isGroup,
-          sampleType: data.sampleType || null,
-          price: data.price ? parseFloat(data.price) : 0,
-        }
-
+      data: buildTestPersistenceData(data, categoryId),
     });
 
     await createAuditLog({
@@ -204,6 +263,21 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json(test);
   } catch (error) {
     console.error('Erreur PUT /api/tests:', error);
+
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'P2002') {
+      return NextResponse.json(
+        { error: 'Un test avec ce code existe déjà' },
+        { status: 400 }
+      );
+    }
+
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json(
       { error: 'Erreur lors de la mise à jour du test' },
       { status: 500 }

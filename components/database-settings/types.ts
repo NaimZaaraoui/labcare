@@ -7,6 +7,11 @@ export type BackupItem = {
   absolutePath: string;
 };
 
+export type DatabaseFileValidationStatus = {
+  validationOk: boolean;
+  restoreTestOk?: boolean;
+};
+
 export type BackupsResponse = {
   databasePath: string;
   backupDirectory: string;

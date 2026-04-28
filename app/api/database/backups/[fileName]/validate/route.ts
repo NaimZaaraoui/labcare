@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAnyRole } from '@/lib/authz';
 import { createAuditLog, getRequestMeta } from '@/lib/audit';
-import { getBackupFileByName, validateDatabaseBackupFile } from '@/lib/database-backups';
+import { getBackupFileByName, testDatabaseBackupRestore, validateDatabaseBackupFile } from '@/lib/database-backups';
 
 export const runtime = 'nodejs';
 
@@ -22,15 +22,17 @@ export async function POST(request: Request, context: RouteContext) {
   }
 
   const validation = validateDatabaseBackupFile(backup.absolutePath);
+  const restoreTest = await testDatabaseBackupRestore(backup.fileName);
 
   await createAuditLog({
     action: 'database.backup_test',
-    severity: validation.valid ? 'INFO' : 'CRITICAL',
+    severity: restoreTest.valid ? 'INFO' : 'CRITICAL',
     entity: 'database_backup',
     entityId: backup.fileName,
     details: {
       fileName: backup.fileName,
       validation,
+      restoreTest,
     },
     ipAddress: meta.ipAddress,
     userAgent: meta.userAgent,
@@ -39,5 +41,6 @@ export async function POST(request: Request, context: RouteContext) {
   return NextResponse.json({
     fileName: backup.fileName,
     validation,
+    restoreTest,
   });
 }

@@ -55,6 +55,16 @@ export function useTestCatalog() {
     setTimeout(() => setNotification(null), 3000);
   }, []);
 
+  const readResponseErrorMessage = useCallback(async (response: Response, fallback: string) => {
+    const bodyText = await response.text();
+    try {
+      const parsed = JSON.parse(bodyText) as { error?: string; details?: string };
+      return parsed.details || parsed.error || fallback;
+    } catch {
+      return bodyText || fallback;
+    }
+  }, []);
+
   useEffect(() => {
     fetch('/api/settings')
       .then(res => res.json())
@@ -176,7 +186,7 @@ export function useTestCatalog() {
       });
 
       if (!response.ok) {
-        showNotification('error', 'Erreur lors de l\'enregistrement');
+        showNotification('error', await readResponseErrorMessage(response, 'Erreur lors de l\'enregistrement'));
         return;
       }
 

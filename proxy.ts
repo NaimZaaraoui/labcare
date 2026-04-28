@@ -8,12 +8,15 @@ const BLOCKED_RECEPTIONNISTE = ['/dashboard/settings', '/dashboard/users', '/tes
 const PUBLIC_PREFIXES = [
   '/login',
   '/setup',
+  '/branding',
   '/api/setup',
   '/api/diagnostic',
   '/api/auth',
   '/api/notifications',
   '/_next',
   '/favicon.ico',
+  '/icon.png',
+  '/apple-icon.png',
   '/public',
   '/uploads',
   '/diagnostic',
@@ -33,7 +36,7 @@ const SECURITY_HEADERS: Record<string, string> = {
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data: blob:",
     "connect-src 'self'",
-    "frame-ancestors 'none'",
+    "frame-ancestors 'self'",
   ].join('; '),
 };
 
@@ -94,5 +97,5 @@ export async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|public|uploads).*)'],
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|icon.png|apple-icon.png|branding|public|uploads).*)'],
 };

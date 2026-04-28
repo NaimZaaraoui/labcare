@@ -15,6 +15,12 @@ import {
   type AnalysisPatchPayload,
 } from '@/lib/analysis-updates';
 import { isAnalysisFinalValidated } from '@/lib/status-flow';
+import {
+  buildDailyIdConflictMessage,
+  findDailyIdConflict,
+  isDailyIdConflictError,
+  normalizeDailyId,
+} from '@/lib/analysis-daily-id';
 
 export async function GET(
   request: NextRequest,
@@ -126,6 +132,8 @@ export async function PATCH(
         paymentStatus: true,
         paymentMethod: true,
         paidAt: true,
+        dailyId: true,
+        creationDate: true,
         orderNumber: true,
         patientFirstName: true,
         patientLastName: true,
@@ -147,6 +155,28 @@ export async function PATCH(
         { error: 'Analyse validée: modification interdite' },
         { status: 409 }
       );
+    }
+
+    if (body.dailyId !== undefined) {
+      body.dailyId = normalizeDailyId(body.dailyId);
+
+      if (body.dailyId) {
+        const dailyIdConflict = await findDailyIdConflict({
+          dailyId: body.dailyId,
+          referenceDate: existing.creationDate,
+          excludeAnalysisId: id,
+        });
+
+        if (dailyIdConflict) {
+          return NextResponse.json(
+            {
+              error: 'ID paillasse déjà utilisé',
+              details: buildDailyIdConflictMessage(body.dailyId, dailyIdConflict.orderNumber),
+            },
+            { status: 409 }
+          );
+        }
+      }
     }
 
     const paymentState = buildPaymentState(body, existing);
@@ -204,6 +234,16 @@ export async function PATCH(
 
     return NextResponse.json(analysis);
   } catch (error) {
+    if (isDailyIdConflictError(error)) {
+      return NextResponse.json(
+        {
+          error: 'ID paillasse déjà utilisé',
+          details: 'Cet ID paillasse est déjà utilisé aujourd’hui par un autre dossier.',
+        },
+        { status: 409 }
+      );
+    }
+
     console.error('Erreur PATCH /api/analyses/[id]:', error);
     return NextResponse.json(
       { error: 'Erreur lors de la mise à jour' },

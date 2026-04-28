@@ -79,7 +79,11 @@ export function TestEditorModal({
           <div className="grid grid-cols-2 gap-4">
             <button
               type="button"
-              onClick={() => onFormChange({ ...form, isGroup: false })}
+              onClick={() => onFormChange({
+                ...form,
+                isGroup: false,
+                resultType: form.resultType === 'text' ? 'numeric' : form.resultType,
+              })}
               className={`rounded-xl border p-4 text-xs font-black uppercase tracking-widest transition-all ${!form.isGroup ? 'border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text)]' : 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-soft)] hover:bg-[var(--color-surface-muted)]'}`}
             >
               Individuel
@@ -135,7 +139,7 @@ export function TestEditorModal({
                 className="input-premium h-11 bg-[var(--color-surface)]"
               >
                 <option value="">-- Racine (Catalogue principal) --</option>
-                {tests.filter((test) => test.isGroup).map((panel) => (
+                {tests.filter((test) => test.isGroup && test.id !== editingTestId).map((panel) => (
                   <option key={panel.id} value={panel.id}>
                     {panel.code} - {panel.name}
                   </option>

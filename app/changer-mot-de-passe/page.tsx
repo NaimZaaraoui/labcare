@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Lock, ShieldCheck, Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useSession } from 'next-auth/react';
+import { NexLabLockup } from '@/components/branding/NexLabLockup';
 
 
 export default function ChangePasswordPage() {
@@ -69,13 +70,8 @@ export default function ChangePasswordPage() {
         <div className="absolute bottom-10 -right-20 h-60 w-60 rounded-full bg-indigo-300/20 blur-3xl" />
 
         {/* Logo */}
-        <div className="relative z-10 flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/20 backdrop-blur">
-            <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6 text-white" stroke="currentColor" strokeWidth={1.8}>
-              <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </div>
-          <span className="text-lg font-bold tracking-tight text-white">NexLab LIMS</span>
+        <div className="relative z-10">
+          <NexLabLockup variant="light" size="md" />
         </div>
 
         {/* Quote / value props */}
@@ -107,11 +103,8 @@ export default function ChangePasswordPage() {
         <div className="w-full max-w-sm">
 
           {/* Mobile logo */}
-          <div className="mb-8 flex items-center gap-3 lg:hidden">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600">
-              <ShieldCheck className="h-5 w-5 text-white" />
-            </div>
-            <span className="text-base font-bold text-slate-800">NexLab LIMS</span>
+          <div className="mb-8 lg:hidden">
+            <NexLabLockup size="sm" variant="dark" />
           </div>
 
           <div className="mb-8">

@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react';
 import type {
   BackupsResponse,
   DatabaseAuditItem,
+  DatabaseFileValidationStatus,
   DatabaseAuditResponse,
   HealthResponse,
   RecoveryBundlesResponse,
@@ -42,6 +43,8 @@ export function useDatabaseSettings() {
   const [uploadBackupFile, setUploadBackupFile] = useState<File | null>(null);
   const [uploadingBackup, setUploadingBackup] = useState(false);
   const [savingExternalTarget, setSavingExternalTarget] = useState(false);
+  const [backupValidationStatuses, setBackupValidationStatuses] = useState<Record<string, DatabaseFileValidationStatus>>({});
+  const [recoveryValidationStatuses, setRecoveryValidationStatuses] = useState<Record<string, DatabaseFileValidationStatus>>({});
   const [restoreModal, setRestoreModal] = useState<RestoreModalState>({
     isOpen: false,
     kind: null,
@@ -178,11 +181,20 @@ export function useDatabaseSettings() {
         const response = await fetch(`/api/database/backups/${encodeURIComponent(fileName)}/validate`, { method: 'POST' });
         const json = await response.json();
         if (!response.ok) throw new Error(json.error || 'Erreur lors du test du backup');
+        const validationOk = json.validation?.valid !== false;
+        const restoreTestOk =
+          typeof json.restoreTest?.valid === 'boolean' ? json.restoreTest.valid : undefined;
+        setBackupValidationStatuses((current) => ({
+          ...current,
+          [fileName]: { validationOk, restoreTestOk },
+        }));
         showNotification(
-          json.validation?.valid === false ? 'error' : 'success',
-          json.validation?.valid === false
-            ? `Le backup ${fileName} a échoué au test de validation.`
-            : `Le backup ${fileName} est valide.`
+          !validationOk || restoreTestOk === false ? 'error' : 'success',
+          !validationOk || restoreTestOk === false
+            ? `Le backup ${fileName} a signalé un problème pendant le test.`
+            : restoreTestOk
+              ? `Le backup ${fileName} a passé le test de restauration.`
+              : `Le backup ${fileName} est valide.`
         );
         await loadBackups();
       } catch (error) {
@@ -239,11 +251,20 @@ export function useDatabaseSettings() {
         });
         const json = await response.json();
         if (!response.ok) throw new Error(json.error || 'Erreur lors du test du bundle');
+        const validationOk = json.validation?.valid !== false;
+        const restoreTestOk =
+          typeof json.restoreTest?.valid === 'boolean' ? json.restoreTest.valid : undefined;
+        setRecoveryValidationStatuses((current) => ({
+          ...current,
+          [fileName]: { validationOk, restoreTestOk },
+        }));
         showNotification(
-          json.validation?.valid === false ? 'error' : 'success',
-          json.validation?.valid === false
-            ? `Le bundle ${fileName} a échoué au test de validation.`
-            : `Le bundle ${fileName} est valide.`
+          !validationOk || restoreTestOk === false ? 'error' : 'success',
+          !validationOk || restoreTestOk === false
+            ? `Le bundle ${fileName} a signalé un problème pendant le test.`
+            : restoreTestOk
+              ? `Le bundle ${fileName} a passé le test de restauration.`
+              : `Le bundle ${fileName} est valide.`
         );
         await loadBackups();
       } catch (error) {
@@ -475,6 +496,8 @@ export function useDatabaseSettings() {
     data,
     recoveryBundles,
     health,
+    backupValidationStatuses,
+    recoveryValidationStatuses,
     history,
     maintenanceMode,
     maintenanceMessage,

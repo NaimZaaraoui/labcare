@@ -40,7 +40,7 @@ export function QcEntryModal({
 
   return (
     <Dialog open={showEntry} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="flex max-h-[90vh] bg-white max-w-6xl w-[90%] flex-col p-0 overflow-hidden">
+      <DialogContent className="flex max-h-[90vh] w-[90%] bg-white flex-col p-0 overflow-hidden">
         <DialogHeader className="px-6 py-5 border-b border-[var(--color-border)]">
           <DialogTitle className="text-lg font-semibold text-[var(--color-text)]">Saisie QC</DialogTitle>
           <p className="mt-1 text-sm text-[var(--color-text-soft)]">

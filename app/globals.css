@@ -137,7 +137,7 @@ body {
 }
 
 .bento-panel {
-  @apply rounded-[32px] border border-[var(--color-border)] bg-[var(--color-surface)]/60 backdrop-blur-md shadow-[0_8px_30px_rgb(0,0,0,0.02)] transition-all duration-300 hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)] hover:-translate-y-1;
+  @apply rounded-[32px] border border-[var(--color-border)] bg-[var(--color-surface)]/60 backdrop-blur-md shadow-[0_8px_30px_rgb(0,0,0,0.02)] transition-colors duration-150;
 }
 
 .status-pill {

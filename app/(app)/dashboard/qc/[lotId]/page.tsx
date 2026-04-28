@@ -68,7 +68,7 @@ export default function QcLotPage({ params }: { params: Promise<{ lotId: string 
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="flex flex-col gap-3 sm:flex-row flex-wrap sm:items-center">
             <div className="relative">
               <select
                 value={state.selectedTestCode || ''}

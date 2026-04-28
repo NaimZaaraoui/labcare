@@ -34,6 +34,16 @@ export function useAnalyseForm() {
     setTimeout(() => setNotification(null), 3000);
   }, []);
 
+  const readErrorMessage = useCallback(async (response: Response, fallback: string) => {
+    const bodyText = await response.text();
+    try {
+      const parsed = JSON.parse(bodyText) as { error?: string; details?: string };
+      return parsed.details || parsed.error || fallback;
+    } catch {
+      return bodyText || fallback;
+    }
+  }, []);
+
   useEffect(() => {
     fetch('/api/settings')
       .then(res => res.json())
@@ -106,8 +116,8 @@ export function useAnalyseForm() {
     return acc;
   }, {} as Record<string, Test[]>);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = useCallback(async (e?: React.FormEvent) => {
+    e?.preventDefault();
     
     if (!dailyId) {
       showNotification('error', 'Le numéro de paillasse est requis');
@@ -142,14 +152,16 @@ export function useAnalyseForm() {
         })
       });
 
-      if (!response.ok) throw new Error();
+      if (!response.ok) {
+        throw new Error(await readErrorMessage(response, 'Erreur lors de la création'));
+      }
       const analysis = await response.json();
       router.push(`/analyses/${analysis.id}`);
-    } catch {
-      showNotification('error', 'Erreur lors de la création');
+    } catch (error) {
+      showNotification('error', error instanceof Error ? error.message : 'Erreur lors de la création');
       setSubmitting(false);
     }
-  };
+  }, [dailyId, isUrgent, medecinPrescripteur, patientState, provenance, readErrorMessage, receiptNumber, router, selectedTests, showNotification]);
 
   return {
     router,

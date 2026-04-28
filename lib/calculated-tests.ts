@@ -25,10 +25,26 @@ type FormulaToken =
   | { type: 'operator'; value: '+' | '-' | '*' | '/' }
   | { type: 'paren'; value: '(' | ')' };
 
-type FormulaTestLike = Pick<Test, 'code' | 'resultType' | 'options' | 'decimals'>;
+type FormulaTestLike = Pick<Test, 'code' | 'resultType' | 'options' | 'decimals' | 'isGroup'>;
 
 export function isCalculatedFormulaTest(test?: FormulaTestLike | null): boolean {
   return Boolean(test && test.resultType === 'calculated' && test.options?.trim());
+}
+
+export function extractFormulaDependencies(formula: string): string[] {
+  const trimmed = formula.trim();
+  if (!trimmed) {
+    return [];
+  }
+
+  const tokens = tokenizeFormula(trimmed);
+  return Array.from(
+    new Set(
+      tokens
+        .filter((token): token is Extract<FormulaToken, { type: 'identifier' }> => token.type === 'identifier')
+        .map((token) => token.value)
+    )
+  );
 }
 
 export function validateFormula(
@@ -77,11 +93,27 @@ export function validateFormula(
       return { valid: false, dependencies, error: `Le test source "${dependency}" est introuvable.` };
     }
 
+    if (dependencyTest.isGroup) {
+      return {
+        valid: false,
+        dependencies,
+        error: `La formule ne peut pas dépendre d'un panel (${dependency}).`,
+      };
+    }
+
     if (dependencyTest.resultType === 'calculated') {
       return {
         valid: false,
         dependencies,
         error: `La formule ne peut pas dépendre d'un autre test calculé (${dependency}).`,
+      };
+    }
+
+    if (dependencyTest.resultType !== 'numeric') {
+      return {
+        valid: false,
+        dependencies,
+        error: `Le test source "${dependency}" doit être numérique.`,
       };
     }
   }

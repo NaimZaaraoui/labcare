@@ -56,7 +56,7 @@ export function AnalyseTestsPanel({
         </div>
       </div>
 
-      <div className="custom-scrollbar flex-1 max-h-[560px] space-y-8 overflow-y-auto pr-1">
+      <div className="custom-scrollbar flex-1 max-h-[620px] space-y-8 overflow-y-auto pr-1">
         {Object.entries(groupedTests).map(([category, categoryTests]) => (
           <div key={category} className="space-y-3">
             <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-[var(--color-border)] bg-[var(--color-surface)] py-2">

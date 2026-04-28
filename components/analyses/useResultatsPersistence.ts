@@ -51,6 +51,16 @@ export function useResultatsPersistence({
   setSavingPayment,
   setPaymentAmountInput,
 }: UseResultatsPersistenceOptions) {
+  const readResponseErrorMessage = useCallback(async (response: Response, fallback: string) => {
+    const bodyText = await response.text();
+    try {
+      const parsed = JSON.parse(bodyText) as { error?: string; details?: string };
+      return parsed.details || parsed.error || fallback;
+    } catch {
+      return bodyText || fallback;
+    }
+  }, []);
+
   const handleSave = useCallback(async () => {
     if (!analysis) return;
     setSaving(true);
@@ -107,7 +117,9 @@ export function useResultatsPersistence({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ testsIds: selectedTestIds }),
       });
-      if (!testsResponse.ok) throw new Error('Impossible de mettre à jour les tests sélectionnés');
+      if (!testsResponse.ok) {
+        throw new Error(await readResponseErrorMessage(testsResponse, 'Impossible de mettre à jour les tests sélectionnés'));
+      }
 
       const response = await fetch(`/api/analyses/${analysisId}`, {
         method: 'PATCH',
@@ -124,17 +136,19 @@ export function useResultatsPersistence({
           isUrgent: editForm.isUrgent,
         }),
       });
-      if (!response.ok) throw new Error('Impossible de mettre à jour le dossier');
+      if (!response.ok) {
+        throw new Error(await readResponseErrorMessage(response, 'Impossible de mettre à jour le dossier'));
+      }
       await response.json();
       await loadAnalysis();
       setEditDialogOpen(false);
       showNotification('success', 'Dossier mis à jour');
-    } catch {
-      showNotification('error', 'Erreur lors de la mise à jour du dossier');
+    } catch (error) {
+      showNotification('error', getErrorMessage(error) || 'Erreur lors de la mise à jour du dossier');
     } finally {
       setSavingMeta(false);
     }
-  }, [analysisId, editForm, loadAnalysis, selectedTestIds, setEditDialogOpen, setSavingMeta, showNotification]);
+  }, [analysisId, editForm, getErrorMessage, loadAnalysis, readResponseErrorMessage, selectedTestIds, setEditDialogOpen, setSavingMeta, showNotification]);
 
   const savePayment = useCallback(async (amount: number) => {
     if (!analysis) return;

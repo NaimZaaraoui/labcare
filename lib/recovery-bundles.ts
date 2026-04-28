@@ -1,10 +1,11 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
+import crypto from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import Database from 'better-sqlite3';
-import { getDatabaseFilePath } from '@/lib/database-backups';
+import { getDatabaseFilePath, removeSqliteSidecars, validateDatabaseBackupFile } from '@/lib/database-backups';
 
 const execFileAsync = promisify(execFile);
 
@@ -21,6 +22,18 @@ export type RecoveryBundleValidation = {
   entries: string[];
 };
 
+export type RecoveryBundleRestoreTest = {
+  valid: boolean;
+  issues: string[];
+  checksumSha256: string;
+  entries: string[];
+  restoredDbValidation: {
+    valid: boolean;
+    issues: string[];
+  };
+  restoredUploads: boolean;
+};
+
 const RECOVERY_DIR = path.join(process.cwd(), 'backups', 'recovery');
 
 async function copyIfExists(sourcePath: string, destinationPath: string) {
@@ -35,6 +48,11 @@ async function copyIfExists(sourcePath: string, destinationPath: string) {
 
 async function removeDirectorySafe(targetPath: string) {
   await fs.rm(targetPath, { recursive: true, force: true });
+}
+
+async function computeFileSha256(absolutePath: string) {
+  const file = await fs.readFile(absolutePath);
+  return crypto.createHash('sha256').update(file).digest('hex');
 }
 
 export function getRecoveryBundleDirectory() {
@@ -169,6 +187,72 @@ export async function validateRecoveryBundleFile(absolutePath: string): Promise<
   }
 }
 
+export async function testRecoveryBundleRestore(fileName: string): Promise<RecoveryBundleRestoreTest> {
+  const bundle = await getRecoveryBundleByName(fileName);
+  if (!bundle) {
+    throw new Error('Bundle de reprise introuvable.');
+  }
+
+  const validation = await validateRecoveryBundleFile(bundle.absolutePath);
+  const checksumSha256 = await computeFileSha256(bundle.absolutePath);
+  const stagingPath = await fs.mkdtemp(path.join(os.tmpdir(), 'nexlab-recovery-test-'));
+
+  try {
+    if (!validation.valid) {
+      return {
+        valid: false,
+        issues: [...validation.issues],
+        checksumSha256,
+        entries: validation.entries,
+        restoredDbValidation: { valid: false, issues: [...validation.issues] },
+        restoredUploads: false,
+      };
+    }
+
+    await execFileAsync('tar', ['-xzf', bundle.absolutePath, '-C', stagingPath]);
+
+    const bundleRoot = path.join(stagingPath, 'nexlab-recovery');
+    const restoredDbPath = path.join(bundleRoot, 'data', 'database.sqlite');
+    const restoredUploadsPath = path.join(bundleRoot, 'app-files', 'uploads');
+    const tempRestoredDbPath = path.join(stagingPath, 'simulated-restore.sqlite');
+
+    const embeddedDbValidation = validateDatabaseBackupFile(restoredDbPath);
+    let restoredDbValidation = embeddedDbValidation;
+
+    if (embeddedDbValidation.valid) {
+      const sourceDb = new Database(restoredDbPath, { fileMustExist: true, readonly: true });
+      try {
+        await sourceDb.backup(tempRestoredDbPath);
+      } finally {
+        sourceDb.close();
+      }
+      restoredDbValidation = validateDatabaseBackupFile(tempRestoredDbPath);
+    }
+
+    const restoredUploads = await fs
+      .stat(restoredUploadsPath)
+      .then((stat) => stat.isDirectory())
+      .catch(() => false);
+
+    const issues = [
+      ...validation.issues,
+      ...embeddedDbValidation.issues,
+      ...restoredDbValidation.issues.filter((issue) => !embeddedDbValidation.issues.includes(issue)),
+    ];
+
+    return {
+      valid: issues.length === 0,
+      issues,
+      checksumSha256,
+      entries: validation.entries,
+      restoredDbValidation,
+      restoredUploads,
+    };
+  } finally {
+    await removeDirectorySafe(stagingPath);
+  }
+}
+
 export async function listRecoveryBundles() {
   await ensureRecoveryBundleDirectory();
 
@@ -262,6 +346,11 @@ export async function restoreRecoveryBundle(fileName: string) {
     throw new Error('Bundle de reprise introuvable.');
   }
 
+  const bundleValidation = await validateRecoveryBundleFile(bundle.absolutePath);
+  if (!bundleValidation.valid) {
+    throw new Error(`Bundle de reprise invalide: ${bundleValidation.issues.join(', ')}`);
+  }
+
   const stagingPath = await fs.mkdtemp(path.join(os.tmpdir(), 'nexlab-recovery-restore-'));
 
   try {
@@ -272,12 +361,9 @@ export async function restoreRecoveryBundle(fileName: string) {
     const restoredUploadsPath = path.join(bundleRoot, 'app-files', 'uploads');
     const targetDbPath = getDatabaseFilePath();
     const targetUploadsPath = path.join(process.cwd(), 'public', 'uploads');
-
-    const db = new Database(restoredDbPath, { fileMustExist: true, readonly: true });
-    try {
-      await db.backup(targetDbPath);
-    } finally {
-      db.close();
+    const restoredDbValidation = validateDatabaseBackupFile(restoredDbPath);
+    if (!restoredDbValidation.valid) {
+      throw new Error(`La base contenue dans le bundle est invalide: ${restoredDbValidation.issues.join(', ')}`);
     }
 
     const uploadsExists = await fs
@@ -285,16 +371,97 @@ export async function restoreRecoveryBundle(fileName: string) {
       .then((stat) => stat.isDirectory())
       .catch(() => false);
 
-    if (uploadsExists) {
-      await fs.rm(targetUploadsPath, { recursive: true, force: true });
-      await fs.mkdir(path.dirname(targetUploadsPath), { recursive: true });
-      await fs.cp(restoredUploadsPath, targetUploadsPath, { recursive: true });
+    const targetDbDirectory = path.dirname(targetDbPath);
+    const timestamp = new Date().toISOString().replaceAll(':', '-');
+    const stagedDbPath = path.join(targetDbDirectory, `.nexlab-bundle-restore-${timestamp}.sqlite`);
+    const previousDbPath = path.join(targetDbDirectory, `.nexlab-bundle-restore-previous-${timestamp}.sqlite`);
+    let previousDbMoved = false;
+
+    const sourceDb = new Database(restoredDbPath, { fileMustExist: true, readonly: true });
+    try {
+      await sourceDb.backup(stagedDbPath);
+    } finally {
+      sourceDb.close();
     }
 
-    return {
-      bundle,
-      restoredUploads: uploadsExists,
-    };
+    const stagedDbValidation = validateDatabaseBackupFile(stagedDbPath);
+    if (!stagedDbValidation.valid) {
+      throw new Error(`La base du bundle restaurée en staging est invalide: ${stagedDbValidation.issues.join(', ')}`);
+    }
+
+    let stagedUploadsPath: string | null = null;
+    let previousUploadsPath: string | null = null;
+
+    if (uploadsExists) {
+      stagedUploadsPath = path.join(path.dirname(targetUploadsPath), `.nexlab-bundle-uploads-${timestamp}`);
+      await fs.rm(stagedUploadsPath, { recursive: true, force: true });
+      await fs.cp(restoredUploadsPath, stagedUploadsPath, { recursive: true });
+    }
+
+    try {
+      try {
+        await fs.access(targetDbPath);
+        await removeSqliteSidecars(targetDbPath);
+        await fs.rename(targetDbPath, previousDbPath);
+        previousDbMoved = true;
+      } catch {
+        previousDbMoved = false;
+      }
+
+      await fs.rename(stagedDbPath, targetDbPath);
+      await removeSqliteSidecars(targetDbPath);
+
+      if (stagedUploadsPath) {
+        previousUploadsPath = path.join(path.dirname(targetUploadsPath), `.nexlab-bundle-uploads-previous-${timestamp}`);
+        try {
+          await fs.access(targetUploadsPath);
+          await fs.rename(targetUploadsPath, previousUploadsPath);
+        } catch {
+          previousUploadsPath = null;
+        }
+
+        try {
+          await fs.rename(stagedUploadsPath, targetUploadsPath);
+        } catch (error) {
+          if (previousUploadsPath) {
+            await fs.rename(previousUploadsPath, targetUploadsPath).catch(() => undefined);
+          }
+          throw error;
+        }
+
+        if (previousUploadsPath) {
+          await fs.rm(previousUploadsPath, { recursive: true, force: true });
+        }
+      }
+
+      const activeValidation = validateDatabaseBackupFile(targetDbPath);
+      if (!activeValidation.valid) {
+        throw new Error(`La base active restaurée depuis le bundle a échoué à la validation: ${activeValidation.issues.join(', ')}`);
+      }
+
+      if (previousDbMoved) {
+        await fs.rm(previousDbPath, { force: true });
+      }
+
+      return {
+        bundle,
+        restoredUploads: uploadsExists,
+      };
+    } catch (error) {
+      await fs.rm(stagedDbPath, { force: true }).catch(() => undefined);
+      if (stagedUploadsPath) {
+        await fs.rm(stagedUploadsPath, { recursive: true, force: true }).catch(() => undefined);
+      }
+      if (previousUploadsPath) {
+        await fs.rm(targetUploadsPath, { recursive: true, force: true }).catch(() => undefined);
+        await fs.rename(previousUploadsPath, targetUploadsPath).catch(() => undefined);
+      }
+      if (previousDbMoved) {
+        await fs.rename(previousDbPath, targetDbPath).catch(() => undefined);
+      }
+      await removeSqliteSidecars(targetDbPath).catch(() => undefined);
+      throw error;
+    }
   } finally {
     await removeDirectorySafe(stagingPath);
   }

@@ -101,6 +101,7 @@ model Analysis {
   consumptions        AnalysisConsumption[]
 
   @@index([patientId, creationDate])
+  @@index([dailyId, creationDate])
   @@index([status])
   @@map("analyses")
 }

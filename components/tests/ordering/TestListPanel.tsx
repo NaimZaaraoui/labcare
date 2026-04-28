@@ -3,7 +3,6 @@
 import {
   DndContext,
   closestCenter,
-  DragOverlay,
   type DragStartEvent,
   type DragEndEvent,
 } from '@dnd-kit/core';
@@ -11,6 +10,7 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { Beaker, GripVertical, Layers } from 'lucide-react';
 import type { SensorDescriptor } from '@dnd-kit/core';
 import { SortableItem } from './SortableItem';
+import { DragOverlayPortal } from './DragOverlayPortal';
 import type { Category, Test } from './types';
 
 interface Props {
@@ -43,7 +43,7 @@ export function TestListPanel({
           <span className="text-[var(--color-text-secondary)]">{selectedCategory?.name}</span>
         </h2>
       </div>
-      <div className="bento-panel rounded-t-none p-2 min-h-[400px]">
+      <div className="bento-panel rounded-t-none p-2 min-h-[400px] hover:translate-y-0">
         {selectedCategory ? (
           <DndContext
             sensors={sensors}
@@ -81,7 +81,7 @@ export function TestListPanel({
                 )}
               </div>
             </SortableContext>
-            <DragOverlay>
+            <DragOverlayPortal>
               {activeTestId
                 ? (() => {
                     const test = filteredTests.find((t) => t.id === activeTestId);
@@ -102,7 +102,7 @@ export function TestListPanel({
                     );
                   })()
                 : null}
-            </DragOverlay>
+            </DragOverlayPortal>
           </DndContext>
         ) : (
           <div className="flex flex-col items-center justify-center h-64 text-slate-400">

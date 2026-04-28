@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAnyRole } from '@/lib/authz';
 import { createAuditLog, getRequestMeta } from '@/lib/audit';
-import { getRecoveryBundleByName, validateRecoveryBundleFile } from '@/lib/recovery-bundles';
+import { getRecoveryBundleByName, testRecoveryBundleRestore, validateRecoveryBundleFile } from '@/lib/recovery-bundles';
 
 export const runtime = 'nodejs';
 
@@ -22,15 +22,17 @@ export async function POST(request: Request, context: RouteContext) {
   }
 
   const validation = await validateRecoveryBundleFile(bundle.absolutePath);
+  const restoreTest = await testRecoveryBundleRestore(bundle.fileName);
 
   await createAuditLog({
     action: 'database.recovery_bundle_test',
-    severity: validation.valid ? 'INFO' : 'CRITICAL',
+    severity: restoreTest.valid ? 'INFO' : 'CRITICAL',
     entity: 'recovery_bundle',
     entityId: bundle.fileName,
     details: {
       fileName: bundle.fileName,
       validation,
+      restoreTest,
     },
     ipAddress: meta.ipAddress,
     userAgent: meta.userAgent,
@@ -39,5 +41,6 @@ export async function POST(request: Request, context: RouteContext) {
   return NextResponse.json({
     fileName: bundle.fileName,
     validation,
+    restoreTest,
   });
 }
